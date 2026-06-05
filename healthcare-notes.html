@@ -8,10 +8,8 @@
 <link rel="stylesheet" href="/files/c.css">
 </head>
 <body>
-
 <div class="layout">
 
-  <!-- SIDEBAR -->
   <nav class="sidebar">
     <div class="sidebar-logo">
       <div class="tag">DE Interview Prep</div>
@@ -21,303 +19,272 @@
       <div class="nav-label">Sections</div>
       <a class="nav-item" href="#s1"><span class="num">01</span>Key Players</a>
       <a class="nav-item" href="#s2"><span class="num">02</span>Data Sources</a>
-      <a class="nav-item" href="#s3"><span class="num">03</span>Cost-Sharing Terms</a>
-      <a class="nav-item" href="#s4"><span class="num">04</span>Code Systems</a>
-      <a class="nav-item" href="#s5"><span class="num">05</span>EDI Files</a>
-      <a class="nav-item" href="#s6"><span class="num">06</span>Claim Lifecycle</a>
-      <a class="nav-item" href="#s7"><span class="num">07</span>Medicare & Medicaid</a>
-      <a class="nav-item" href="#s8"><span class="num">08</span>HIPAA</a>
-      <a class="nav-item" href="#s9"><span class="num">09</span>Your Pipeline</a>
-      <a class="nav-item" href="#s10"><span class="num">10</span>Cheat Sheet</a>
+      <a class="nav-item" href="#s3"><span class="num">03</span>Basic Concepts</a>
+      <a class="nav-item" href="#s4"><span class="num">04</span>Cost-Sharing Terms</a>
+      <a class="nav-item" href="#s5"><span class="num">05</span>Code Systems</a>
+      <a class="nav-item" href="#s6"><span class="num">06</span>EDI Files</a>
+      <a class="nav-item" href="#s7"><span class="num">07</span>Claims</a>
+      <a class="nav-item" href="#s8"><span class="num">08</span>Claim Lifecycle</a>
+      <a class="nav-item" href="#s9"><span class="num">09</span>Medicare &amp; Medicaid</a>
+      <a class="nav-item" href="#s10"><span class="num">10</span>HIPAA</a>
+      <a class="nav-item" href="#s11"><span class="num">11</span>Your Pipeline</a>
+      <a class="nav-item" href="#s12"><span class="num">12</span>Cheat Sheet</a>
     </div>
   </nav>
 
-  <!-- MAIN -->
   <main class="main">
 
     <div class="page-header">
-      <div class="badge">✦ Data Engineering · L2+ Interview Prep</div>
+      <div class="badge">✦ Data Engineering · Interview Prep</div>
       <h1>Healthcare Claims Domain</h1>
       <p>Structured notes covering terminology, data flow, EDI files, HIPAA, and how claims data maps to your Medallion pipeline.</p>
     </div>
 
-    <!-- S1: KEY PLAYERS -->
+    <!-- S1 -->
     <section class="section" id="s1">
-      <div class="section-header">
-        <div class="section-num">01</div>
-        <h2 class="section-title">Key Players in U.S. Healthcare</h2>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Player</th><th>Who They Are</th><th>Example</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Provider</strong></td><td>Delivers medical services — doctors, hospitals, labs, pharmacies</td><td>Apollo, Mayo Clinic</td></tr>
-            <tr><td><strong>Payer / Insurer</strong></td><td>Insurance company that pays the claim after adjudication</td><td>Aetna, Cigna, UHC</td></tr>
-            <tr><td><strong>Member / Subscriber</strong></td><td>The insured individual enrolled in a health plan</td><td>Patient / Employee</td></tr>
-            <tr><td><strong>Purchaser / Employer</strong></td><td>Organization buying insurance and paying premiums for employees</td><td>IBM, Government</td></tr>
-            <tr><td><strong>Clearinghouse</strong></td><td>Intermediary that validates and forwards claims from provider to payer</td><td>Change Healthcare</td></tr>
-            <tr><td><strong>Agent / Broker</strong></td><td>Middlemen between payers and members; facilitate enrollment</td><td>Insurance agents</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="section-header"><div class="section-num">01</div><h2 class="section-title">Key Players in U.S. Healthcare</h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Player</th><th>Who They Are</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Provider</strong></td><td>Entities providing medical services like physicians, nurses, hospitals, pharmacies, and laboratories</td><td>Mayo Clinic</td></tr>
+          <tr><td><strong>Payer / Insurer</strong></td><td>Insurance company that pays the claim after adjudication</td><td>Aetna, Cigna, UHC</td></tr>
+          <tr><td><strong>Member / Subscriber</strong></td><td>The person enrolled in a health plan</td><td>Patient / Employee</td></tr>
+          <tr><td><strong>Purchaser / Employer</strong></td><td>Organization or individual buying insurance and paying premiums</td><td>IBM, Government</td></tr>
+          <tr><td><strong>Clearinghouse</strong></td><td>Intermediary that validates and forwards claims from provider to payer. Checks: invalid codes, missing data, formatting issues</td><td>Change Healthcare</td></tr>
+          <tr><td><strong>Agent / Broker</strong></td><td>Middlemen between payers and members; facilitate enrollment</td><td>Insurance agents</td></tr>
+        </tbody>
+      </table></div>
     </section>
 
     <hr class="divider">
 
-    <!-- S2: DATA SOURCES -->
+    <!-- S2 -->
     <section class="section" id="s2">
-      <div class="section-header">
-        <div class="section-num">02</div>
-        <h2 class="section-title">Four Major Healthcare Data Sources</h2>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Source</th><th>Contains</th><th>Purpose</th></tr></thead>
-          <tbody>
-            <tr><td><strong>EHR</strong> <br><span style="font-size:11px;color:var(--text-dim)">Electronic Health Records</span></td><td>Patient demographics, diagnoses, lab results, medications</td><td>Clinical care and patient treatment</td></tr>
-            <tr><td><strong>Claims Data</strong> <span class="pill pill-green">★ DE Focus</span></td><td>Reimbursement requests from providers to insurers/Medicare</td><td>Billing, reimbursement, cost analysis</td></tr>
-            <tr><td><strong>Disease Registry</strong></td><td>Patients with specific diseases — e.g. cancer registry tracks treatments & outcomes</td><td>Outcome tracking, benchmarking, quality improvement</td></tr>
-            <tr><td><strong>External Reporting</strong></td><td>Data submitted to government agencies and regulatory bodies</td><td>Regulatory compliance, audits, public quality reporting</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="section-header"><div class="section-num">02</div><h2 class="section-title">Four Major Healthcare Data Sources</h2></div>
+      <h4>EHR (Electronic Health Records)</h4>
+      <ul class="notes"><li>Contains: patient demographics, diagnoses, lab results, medications</li><li><strong>Purpose:</strong> Clinical care and patient treatment</li></ul>
+      <h4 style="margin-top:16px;">Claims Data <span class="pill pill-green">★ DE Focus</span></h4>
+      <ul class="notes"><li>Generated when providers submit reimbursement requests to insurers or Medicare</li><li><strong>Purpose:</strong> Billing, reimbursement, and cost analysis</li></ul>
+      <h4 style="margin-top:16px;">Disease Registry</h4>
+      <ul class="notes"><li>Specialized databases tracking patients with specific diseases (e.g., cancer registry tracks treatments and survival outcomes)</li><li><strong>Purpose:</strong> Outcome tracking, benchmarking, quality improvement</li></ul>
+      <h4 style="margin-top:16px;">External Reporting Data</h4>
+      <ul class="notes"><li>Data submitted to government agencies and regulatory organizations</li><li><strong>Purpose:</strong> Regulatory compliance, audits, public quality reporting</li></ul>
     </section>
 
     <hr class="divider">
 
-    <!-- S3: COST TERMS -->
+    <!-- S3 -->
     <section class="section" id="s3">
-      <div class="section-header">
-        <div class="section-num">03</div>
-        <h2 class="section-title">Patient Cost-Sharing Terms</h2>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Term</th><th>Definition</th><th>Example</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Deductible</strong></td><td>Out-of-pocket amount paid before insurance kicks in</td><td>$1,000 deductible → you pay first $1,000</td></tr>
-            <tr><td><strong>Copay</strong></td><td>Fixed flat fee paid for a specific service at time of care</td><td>$20 for a doctor visit regardless of total bill</td></tr>
-            <tr><td><strong>Coinsurance</strong></td><td>% of costs split between patient and insurer after deductible</td><td>You pay 20%, insurer pays 80%</td></tr>
-            <tr><td><strong>Premium</strong></td><td>Monthly amount paid to maintain insurance coverage</td><td>Paid by employer or individual monthly</td></tr>
-            <tr><td><strong>EOB</strong></td><td>Explanation of Benefits — what was covered and patient balance</td><td>Sent to both patient and provider post-adjudication</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="section-header"><div class="section-num">03</div><h2 class="section-title">Basic Healthcare Concepts</h2></div>
+      <h4>Primary Care Physician (PCP)</h4>
+      <p>A general physician responsible for routine healthcare, preventive care, and the initial evaluation of medical conditions. PCPs often coordinate patient care and provide referrals to specialists when needed.</p>
+      <h4>Specialist</h4>
+      <p>A physician who focuses on a specific area of medicine.</p>
+      <ul class="notes"><li>Cardiologist (Heart)</li><li>Oncologist (Cancer)</li><li>Neurologist (Nervous System)</li></ul>
+      <h4 style="margin-top:16px;">Outpatient Services</h4>
+      <p>Medical services provided without requiring an overnight hospital stay or admission.</p>
+      <ul class="notes"><li>Doctor consultations</li><li>Diagnostic tests</li><li>Preventive care visits</li></ul>
+      <h4 style="margin-top:16px;">Ancillary Services</h4>
+      <p>Supportive healthcare services that assist in diagnosis, treatment, and patient care.</p>
+      <ul class="notes"><li>Laboratory Services</li><li>Pharmacy Services</li><li>Radiology / Imaging</li><li>Physical Therapy</li><li>Ambulance Services</li></ul>
     </section>
 
     <hr class="divider">
 
-    <!-- S4: CODE SYSTEMS -->
+    <!-- S4 -->
     <section class="section" id="s4">
-      <div class="section-header">
-        <div class="section-num">04</div>
-        <h2 class="section-title">Medical Code Systems</h2>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Code</th><th>Answers</th><th>Managed By</th><th>Format</th><th>Example</th></tr></thead>
-          <tbody>
-            <tr><td><strong>ICD-10</strong></td><td><span class="pill pill-blue">WHY treated</span> — diagnosis/condition</td><td>WHO</td><td>3–7 chars, string</td><td><code>E11.9</code> = Type 2 Diabetes</td></tr>
-            <tr><td><strong>CPT</strong></td><td><span class="pill pill-green">WHAT was done</span> — procedure/service</td><td>AMA</td><td>5 digits, string</td><td><code>99213</code> = Office consultation</td></tr>
-            <tr><td><strong>NPI</strong></td><td><span class="pill pill-yellow">WHO provided</span> — provider identity</td><td>CMS</td><td>10 digits</td><td>Unique ID per provider</td></tr>
-            <tr><td><strong>HCPCS</strong></td><td><span class="pill pill-red">WHAT (extended)</span> — supplies, drugs, equipment</td><td>CMS</td><td>1 letter + 4 digits</td><td>Medicare/Medicaid billing</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="callout callout-tip">
-        <span class="icon">💡</span>
-        <div><strong>Interview tip:</strong> ICD + CPT must logically match. Diabetes (ICD) + consultation (CPT) ✅ makes sense. Diabetes (ICD) + eye surgery (CPT) ❌ — flags as a data quality issue in Silver layer.</div>
-      </div>
+      <div class="section-header"><div class="section-num">04</div><h2 class="section-title">Patient Cost-Sharing Terms</h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Term</th><th>Definition</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Deductible</strong></td><td>Out-of-pocket amount paid before insurance kicks in</td><td>$1,000 deductible → you pay first $1,000</td></tr>
+          <tr><td><strong>Copay</strong></td><td>Fixed flat fee paid for a specific service at time of care</td><td>$20 for a doctor visit regardless of total bill</td></tr>
+          <tr><td><strong>Coinsurance</strong></td><td>% of costs split between patient and insurer after deductible</td><td>You pay 20%, insurer pays 80%</td></tr>
+          <tr><td><strong>Premium</strong></td><td>Monthly amount paid to maintain insurance coverage</td><td>Paid by employer or individual monthly</td></tr>
+          <tr><td><strong>EOB</strong></td><td>Explanation of Benefits — outlines what was covered and patient balance</td><td>Sent to both patient and provider post-adjudication</td></tr>
+        </tbody>
+      </table></div>
     </section>
 
     <hr class="divider">
 
-    <!-- S5: EDI -->
+    <!-- S5 -->
     <section class="section" id="s5">
-      <div class="section-header">
-        <div class="section-num">05</div>
-        <h2 class="section-title">EDI — Electronic Data Interchange</h2>
-      </div>
-      <p>Standardized format for exchanging healthcare data electronically. Security handled via <strong>SFTP</strong> or <strong>AS2</strong> — not by EDI itself.</p>
-
-      <div class="callout callout-info">
-        <span class="icon">→</span>
-        <div><strong>Key analogy:</strong> 837 = the bill you send &nbsp;|&nbsp; 835 = the receipt you get back</div>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>EDI File</th><th>Direction</th><th>Purpose</th></tr></thead>
-          <tbody>
-            <tr><td><strong>834</strong></td><td>Employer → Payer</td><td>Member enrollment — who is covered under which plan</td></tr>
-            <tr><td><strong>837</strong> <span class="pill pill-blue">Claim</span></td><td>Provider → Payer</td><td>Healthcare claim submission (the bill)</td></tr>
-            <tr><td><strong>835</strong> <span class="pill pill-green">Payment</span></td><td>Payer → Provider</td><td>Claim payment + remittance advice (the receipt)</td></tr>
-            <tr><td><strong>277CA</strong></td><td>Payer → Provider</td><td>Claim status — acknowledgement of 837 receipt</td></tr>
-            <tr><td><strong>999</strong></td><td>Payer → Provider</td><td>Confirms format of submitted 837 file</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Core Fields in an 837 Claim</h3>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Field</th><th>Description</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Claim ID</strong></td><td>Unique identifier for the claim</td></tr>
-            <tr><td><strong>Member / Beneficiary ID</strong></td><td>Identifies the patient covered under the plan</td></tr>
-            <tr><td><strong>Provider ID (NPI)</strong></td><td>10-digit National Provider Identifier</td></tr>
-            <tr><td><strong>Service Date</strong></td><td>Date the medical service was rendered</td></tr>
-            <tr><td><strong>Diagnosis Code (ICD)</strong></td><td>Why the patient was treated</td></tr>
-            <tr><td><strong>Procedure Code (CPT/HCPCS)</strong></td><td>What service was performed</td></tr>
-            <tr><td><strong>Claim Amount</strong></td><td>Total billed amount for the service</td></tr>
-            <tr><td><strong>Claim Line Number</strong></td><td>Line-level granularity within a single claim</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="section-header"><div class="section-num">05</div><h2 class="section-title">Medical Code Systems</h2></div>
+      <h4>ICD Codes (International Classification of Diseases)</h4>
+      <ul class="notes">
+        <li>Classifies diseases and health conditions — explains <strong>WHY</strong> the patient was treated</li>
+        <li>Managed by <strong>WHO</strong>; US currently uses <strong>ICD-10</strong>, latest global version is <strong>ICD-11</strong></li>
+        <li>Format: 3–7 alphanumeric characters, stored as <strong>string fields</strong></li>
+        <li>Example: <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#79c0ff;background:rgba(47,129,247,0.1);padding:1px 5px;border-radius:3px;">E11.9</code> = Type 2 Diabetes</li>
+      </ul>
+      <h4 style="margin-top:16px;">CPT Codes (Current Procedural Terminology)</h4>
+      <ul class="notes">
+        <li>Standardized <strong>5-digit codes</strong> — explains <strong>WHAT</strong> service or treatment was performed</li>
+        <li>Managed by the <strong>American Medical Association (AMA)</strong></li>
+        <li>Stored as <strong>string fields</strong></li>
+        <li>Example: <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#79c0ff;background:rgba(47,129,247,0.1);padding:1px 5px;border-radius:3px;">99213</code> = Office consultation; covers blood tests, X-rays, surgeries</li>
+      </ul>
+      <h3 style="margin-top:24px;">ICD vs CPT — The Key Interview Point</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Code</th><th>Answers</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><strong>ICD-10</strong></td><td><span class="pill pill-blue">WHY treated</span> — condition/diagnosis</td><td><code>E11.9</code> = Type 2 Diabetes</td></tr>
+          <tr><td><strong>CPT</strong></td><td><span class="pill pill-green">WHAT was done</span> — procedure/service</td><td><code>99213</code> = Office consultation</td></tr>
+          <tr><td><strong>NPI</strong></td><td><span class="pill pill-yellow">WHO provided</span> — provider identity</td><td>10-digit ID assigned to each provider</td></tr>
+          <tr><td><strong>HCPCS</strong></td><td><span class="pill pill-red">WHAT (extended)</span> — supplies, drugs, equipment not in CPT</td><td>Used for Medicare/Medicaid billing</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout callout-tip"><span class="icon">💡</span><div><strong>Interview tip:</strong> ICD + CPT must logically match. Diabetes (ICD) + consultation (CPT) ✅. Diabetes (ICD) + eye surgery (CPT) ❌ — flags as a data quality issue.</div></div>
     </section>
 
     <hr class="divider">
 
-    <!-- S6: LIFECYCLE -->
+    <!-- S6 -->
     <section class="section" id="s6">
-      <div class="section-header">
-        <div class="section-num">06</div>
-        <h2 class="section-title">Healthcare Claim Lifecycle</h2>
-      </div>
+      <div class="section-header"><div class="section-num">06</div><h2 class="section-title">EDI — Electronic Data Interchange</h2></div>
+      <p>Standardized format for exchanging healthcare data electronically. Defines structure, mandatory fields, and meaning. Security is handled via <strong>SFTP</strong> or <strong>AS2</strong> transmission protocols — not by EDI itself.</p>
+      <div class="callout callout-info"><span class="icon">→</span><div><strong>Key analogy:</strong> &nbsp;837 = the bill you send &nbsp;|&nbsp; 835 = the receipt you get back</div></div>
+      <h3>EDI File Types</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>EDI File</th><th>Direction</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><strong>834</strong></td><td>Employer / Government → Payer</td><td>Member enrollment — who is covered under which plan</td></tr>
+          <tr><td><strong>837</strong> <span class="pill pill-blue">Claim</span></td><td>Provider → Payer</td><td>Healthcare claim submission (the bill)</td></tr>
+          <tr><td><strong>835</strong> <span class="pill pill-green">Payment</span></td><td>Payer → Provider</td><td>Claim payment + remittance advice (the receipt)</td></tr>
+          <tr><td><strong>277CA</strong></td><td>Payer → Provider</td><td>Claim status — acknowledgement of 837 receipt</td></tr>
+          <tr><td><strong>999</strong></td><td>Payer → Provider</td><td>Confirms format of submitted 837 file</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Core Fields in an 837 Claim</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Field</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Claim ID</strong></td><td>Unique identifier for the claim</td></tr>
+          <tr><td><strong>Member / Beneficiary ID</strong></td><td>Identifies the patient covered under the plan</td></tr>
+          <tr><td><strong>Provider ID (NPI)</strong></td><td>10-digit National Provider Identifier</td></tr>
+          <tr><td><strong>Service Date</strong></td><td>Date the medical service was rendered</td></tr>
+          <tr><td><strong>Diagnosis Code (ICD)</strong></td><td>Why the patient was treated</td></tr>
+          <tr><td><strong>Procedure Code (CPT/HCPCS)</strong></td><td>What service was performed</td></tr>
+          <tr><td><strong>Claim Amount</strong></td><td>Total billed amount for the service</td></tr>
+          <tr><td><strong>Claim Line Number</strong></td><td>Line-level granularity within a single claim</td></tr>
+        </tbody>
+      </table></div>
+    </section>
 
+    <hr class="divider">
+
+    <!-- S7 -->
+    <section class="section" id="s7">
+      <div class="section-header"><div class="section-num">07</div><h2 class="section-title">Claims</h2></div>
+      <h4>What is a Claim?</h4>
+      <p>A claim is a bill submitted by a healthcare provider to an insurance company requesting reimbursement for healthcare services provided to a patient.</p>
+      <h3>Common Claim Fields</h3>
+      <ul class="notes">
+        <li>Claim ID</li><li>Member ID / Beneficiary ID</li><li>Provider ID</li><li>Service Date</li>
+        <li>Diagnosis Code (ICD)</li><li>Procedure Code (CPT/HCPCS)</li><li>Claim Amount</li><li>Paid Amount</li>
+      </ul>
+      <h3 style="margin-top:24px;">Interview Answer</h3>
+      <blockquote>A healthcare claim is a reimbursement request submitted by a provider to an insurance company after delivering medical services. Claims typically contain member information, provider information, diagnosis codes, procedure codes, service dates, and billing amounts, which are used by payers to determine reimbursement.</blockquote>
+    </section>
+
+    <hr class="divider">
+
+    <!-- S8 -->
+    <section class="section" id="s8">
+      <div class="section-header"><div class="section-num">08</div><h2 class="section-title">Healthcare Claim Lifecycle</h2></div>
+      <p>Know this end-to-end — very likely to be asked in domain follow-up.</p>
       <div class="flow">
-        <div class="flow-step"><span class="step-num">01</span>Eligibility<br>Verification</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step"><span class="step-num">02</span>Prior<br>Authorization</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step"><span class="step-num">03</span>Claim<br>Submission (837)</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step"><span class="step-num">04</span>Payer<br>Adjudication</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step"><span class="step-num">05</span>Payment<br>Posting (835)</div>
-        <div class="flow-arrow">→</div>
+        <div class="flow-step"><span class="step-num">01</span>Eligibility<br>Verification</div><div class="flow-arrow">→</div>
+        <div class="flow-step"><span class="step-num">02</span>Prior<br>Authorization</div><div class="flow-arrow">→</div>
+        <div class="flow-step"><span class="step-num">03</span>Claim<br>Submission (837)</div><div class="flow-arrow">→</div>
+        <div class="flow-step"><span class="step-num">04</span>Payer<br>Adjudication</div><div class="flow-arrow">→</div>
+        <div class="flow-step"><span class="step-num">05</span>Payment<br>Posting (835)</div><div class="flow-arrow">→</div>
         <div class="flow-step"><span class="step-num">06</span>Follow-up<br>/ Appeals</div>
       </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Stage</th><th>What Happens</th><th>Key Data Points</th></tr></thead>
-          <tbody>
-            <tr><td><strong>1. Eligibility Verification</strong></td><td>Check if patient is covered on date of service, plan details, copay/deductible</td><td>Member ID, plan effective dates, coverage limits</td></tr>
-            <tr><td><strong>2. Prior Authorization</strong></td><td>Pre-approval from payer for costly/special treatments or surgeries</td><td>Auth code, approved procedure, valid date range</td></tr>
-            <tr><td><strong>3. Claim Submission</strong></td><td>Provider sends 837 to Clearinghouse; clearinghouse validates format, ICD/CPT codes, then forwards to payer</td><td>Claim ID, ICD, CPT, NPI, service date, billed amount</td></tr>
-            <tr><td><strong>4. Payer Adjudication</strong></td><td>Payer verifies codes, coverage, calculates reimbursement → approves, denies, or requests more info</td><td>Allowed amount, denial reason code, adjustment codes</td></tr>
-            <tr><td><strong>5. Payment Posting</strong></td><td>Payer sends 835 (remittance) to provider; EOB sent to patient</td><td>Paid amount, patient responsibility, adjustment</td></tr>
-            <tr><td><strong>6. Follow-up / Appeals</strong></td><td>If denied or partial, provider corrects errors, submits docs, or appeals</td><td>Denial code, corrected claim, appeal outcome</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Stage</th><th>What Happens</th><th>Key Data Points</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1. Eligibility Verification</strong></td><td>Check if patient is covered on date of service, plan details, copay/deductible</td><td>Member ID, plan effective dates, coverage limits</td></tr>
+          <tr><td><strong>2. Prior Authorization</strong></td><td>Pre-approval from payer for costly/special treatments or surgeries</td><td>Auth code, approved procedure, valid date range</td></tr>
+          <tr><td><strong>3. Claim Submission (837)</strong></td><td>Provider sends 837 to Clearinghouse; clearinghouse validates format, ICD/CPT codes, then forwards to payer</td><td>Claim ID, ICD, CPT, NPI, service date, billed amount</td></tr>
+          <tr><td><strong>4. Payer Adjudication</strong></td><td>Payer verifies codes, coverage, calculates reimbursement → approves, denies, or requests more info</td><td>Allowed amount, denial reason code, adjustment codes</td></tr>
+          <tr><td><strong>5. Payment Posting (835)</strong></td><td>Payer sends 835 (remittance) to provider; EOB sent to patient</td><td>Paid amount, patient responsibility, adjustment</td></tr>
+          <tr><td><strong>6. Follow-up / Appeals</strong></td><td>If denied or partial, provider corrects errors, submits additional docs, or appeals</td><td>Denial code, corrected claim, appeal outcome</td></tr>
+        </tbody>
+      </table></div>
     </section>
 
     <hr class="divider">
 
-    <!-- S7: MEDICARE MEDICAID -->
-    <section class="section" id="s7">
-      <div class="section-header">
-        <div class="section-num">07</div>
-        <h2 class="section-title">Medicare &amp; Medicaid</h2>
-      </div>
-
+    <!-- S9 -->
+    <section class="section" id="s9">
+      <div class="section-header"><div class="section-num">09</div><h2 class="section-title">Medicare &amp; Medicaid</h2></div>
       <h3>Medicare</h3>
-      <p>U.S. federal health insurance for individuals <strong>65+</strong>, people with disabilities, and End-Stage Renal Disease (ESRD) patients.</p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Part</th><th>Covers</th><th>Cost</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Part A</strong> — Hospital Insurance</td><td>Inpatient care, skilled nursing, hospice</td><td>Premium-free for most</td></tr>
-            <tr><td><strong>Part B</strong> — Medical Insurance</td><td>Outpatient services, doctor visits, preventive care, equipment</td><td>Monthly premium required</td></tr>
-            <tr><td><strong>Part C</strong> — Medicare Advantage</td><td>Private insurance combining A+B; may include dental/vision/Rx</td><td>Varies by plan</td></tr>
-            <tr><td><strong>Part D</strong> — Prescription Drugs</td><td>Prescription drug coverage through private insurers</td><td>Monthly premium required</td></tr>
-          </tbody>
-        </table>
-      </div>
-
+      <p>U.S. federal health insurance for individuals <strong>65+</strong>, people with <strong>disabilities</strong>, and <strong>End-Stage Renal Disease (ESRD)</strong> patients.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Part</th><th>Covers</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Part A</strong> — Hospital Insurance</td><td>Inpatient care, skilled nursing, hospice</td><td>Premium-free for most</td></tr>
+          <tr><td><strong>Part B</strong> — Medical Insurance</td><td>Outpatient services, doctor visits, preventive care, equipment</td><td>Monthly premium required</td></tr>
+          <tr><td><strong>Part C</strong> — Medicare Advantage</td><td>Private insurance alternative combining A+B; may include dental/vision/Rx</td><td>Varies by plan</td></tr>
+          <tr><td><strong>Part D</strong> — Prescription Drugs</td><td>Prescription drug coverage through private insurers</td><td>Monthly premium required</td></tr>
+        </tbody>
+      </table></div>
       <h3>Medicaid</h3>
       <ul class="notes">
         <li>Healthcare program for <strong>low-income individuals and families</strong></li>
         <li>Eligibility based on income; also covers children, pregnant women, elderly with low income, disabled</li>
         <li>Jointly funded by <strong>federal and state governments</strong></li>
-        <li>Generally free or low-cost for eligible individuals</li>
+        <li>Generally <strong>free or low-cost</strong> for eligible individuals</li>
       </ul>
-
-      <h3>Dual Eligible Beneficiaries</h3>
-      <div class="callout callout-info">
-        <span class="icon">ℹ</span>
-        <div>Individuals who qualify for <strong>both</strong> Medicare and Medicaid. Medicare = primary payer. Medicaid covers remaining costs like premiums, deductibles, or services Medicare doesn't fully cover.</div>
-      </div>
+      <h3 style="margin-top:24px;">Dual Eligible Beneficiaries</h3>
+      <div class="callout callout-info"><span class="icon">ℹ</span><div>Individuals who qualify for <strong>both</strong> Medicare and Medicaid. Medicare = primary payer. Medicaid covers remaining costs like premiums, deductibles, or services Medicare doesn't fully cover.</div></div>
     </section>
 
     <hr class="divider">
 
-    <!-- S8: HIPAA -->
-    <section class="section" id="s8">
-      <div class="section-header">
-        <div class="section-num">08</div>
-        <h2 class="section-title">HIPAA — Data Privacy &amp; Security</h2>
-      </div>
-      <p>Health Insurance Portability and Accountability Act — governs how healthcare organizations must store, access, transmit, and secure sensitive patient data.</p>
-
+    <!-- S10 -->
+    <section class="section" id="s10">
+      <div class="section-header"><div class="section-num">10</div><h2 class="section-title">HIPAA — Data Privacy &amp; Security</h2></div>
+      <p><strong>Health Insurance Portability and Accountability Act</strong> — U.S. regulation governing how healthcare organizations must store, access, transmit, and secure sensitive patient data.</p>
       <h3>PHI — Protected Health Information</h3>
-      <p>Any info that can <strong>identify a patient</strong> AND relates to their health condition, treatment, or payment.</p>
-      <div style="margin:12px 0 20px; display:flex; flex-wrap:wrap; gap:6px;">
-        <span class="pill pill-red">Patient Name</span>
-        <span class="pill pill-red">Address / Phone / Email</span>
-        <span class="pill pill-red">Date of Birth</span>
-        <span class="pill pill-red">SSN</span>
-        <span class="pill pill-red">Medical Record Number</span>
-        <span class="pill pill-red">Medicare Beneficiary ID</span>
-        <span class="pill pill-red">Diagnosis Information</span>
-        <span class="pill pill-red">Treatment Information</span>
-        <span class="pill pill-red">Insurance Information</span>
-        <span class="pill pill-red">Claim Details</span>
+      <p>Any information that can <strong>identify a patient</strong> AND relates to their health condition, treatment, or payment.</p>
+      <div style="margin:12px 0 20px;display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="pill pill-red">Patient Name</span><span class="pill pill-red">Address / Phone / Email</span>
+        <span class="pill pill-red">Date of Birth</span><span class="pill pill-red">Social Security Number</span>
+        <span class="pill pill-red">Medical Record Number</span><span class="pill pill-red">Medicare Beneficiary ID</span>
+        <span class="pill pill-red">Diagnosis Information</span><span class="pill pill-red">Treatment Information</span>
+        <span class="pill pill-red">Insurance Information</span><span class="pill pill-red">Claim Details</span>
       </div>
-
-      <h3>HIPAA Principles → Engineering Implications</h3>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Principle</th><th>Meaning</th><th>Engineering Implication</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Privacy</strong></td><td>Only authorized people access patient data</td><td>RBAC in Unity Catalog</td></tr>
-            <tr><td><strong>Security</strong></td><td>Protect data from breaches, unauthorized access, cyberattacks</td><td>Encryption at rest and in transit, authentication</td></tr>
-            <tr><td><strong>Confidentiality</strong></td><td>PHI must not be exposed to unauthorized users</td><td>No PHI in unsecured emails or logs</td></tr>
-            <tr><td><strong>Integrity</strong></td><td>Data must remain accurate and unaltered</td><td>Audit trails, Delta Lake history</td></tr>
-            <tr><td><strong>Availability</strong></td><td>Authorized users must access data when needed</td><td>DR/HA design, SLAs</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="callout callout-tip">
-        <span class="icon">💡</span>
-        <div><strong>Interview tip:</strong> In Databricks, HIPAA compliance = Unity Catalog column-level security + row filters + audit logs.</div>
-      </div>
+      <h3>HIPAA Key Principles</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Principle</th><th>Meaning</th><th>Engineering Implication</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Privacy</strong></td><td>Only authorized people access patient data</td><td>RBAC in Unity Catalog</td></tr>
+          <tr><td><strong>Security</strong></td><td>Protect data from breaches, unauthorized access, cyberattacks</td><td>Encryption at rest and in transit, authentication</td></tr>
+          <tr><td><strong>Confidentiality</strong></td><td>PHI must not be exposed to unauthorized users</td><td>No PHI in unsecured emails or logs</td></tr>
+          <tr><td><strong>Integrity</strong></td><td>Data must remain accurate and unaltered</td><td>Audit trails, Delta Lake history</td></tr>
+          <tr><td><strong>Availability</strong></td><td>Authorized users must access data when needed</td><td>DR/HA design, SLAs</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout callout-tip"><span class="icon">💡</span><div><strong>Interview tip:</strong> In Databricks, HIPAA compliance is enforced through Unity Catalog column-level security, row filters, and audit logs.</div></div>
     </section>
 
     <hr class="divider">
 
-    <!-- S9: PIPELINE -->
-    <section class="section" id="s9">
-      <div class="section-header">
-        <div class="section-num">09</div>
-        <h2 class="section-title">Claims Data in Your Medallion Pipeline</h2>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Layer</th><th>What You Did</th><th>Domain Context</th></tr></thead>
-          <tbody>
-            <tr><td><span class="pill pill-yellow">Bronze</span></td><td>Raw 837 claim files landed as-is (CSV/EDI format)</td><td>Member ID, Provider NPI, Service Dates, ICD codes, CPT codes, billed amounts — raw, unvalidated</td></tr>
-            <tr><td><span class="pill pill-blue">Silver</span></td><td>Deduplicated on Claim ID, null handling on ICD/CPT, joined member + provider + claim tables</td><td>One row per claim line item. Validated ICD-CPT matches, cleaned NPI references</td></tr>
-            <tr><td><span class="pill pill-green">Gold</span></td><td>Aggregated metrics for reporting</td><td>Total billed vs paid per member, denial rate by provider, cost per diagnosis → Power BI dashboards</td></tr>
-          </tbody>
-        </table>
-      </div>
-
+    <!-- S11 -->
+    <section class="section" id="s11">
+      <div class="section-header"><div class="section-num">11</div><h2 class="section-title">Claims Data in Your Medallion Pipeline</h2></div>
+      <p>Use this framing when asked <em>"walk me through your project."</em></p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Layer</th><th>What You Did</th><th>Domain Context</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill pill-yellow">Bronze</span></td><td>Raw 837 claim files landed as-is (CSV/EDI format)</td><td>Member ID, Provider NPI, Service Dates, ICD codes, CPT codes, billed amounts — raw, unvalidated</td></tr>
+          <tr><td><span class="pill pill-blue">Silver</span></td><td>Deduplicated on Claim ID, null handling on ICD/CPT, joined member + provider + claim tables</td><td>One row per claim line item. Validated ICD-CPT matches, cleaned NPI references</td></tr>
+          <tr><td><span class="pill pill-green">Gold</span></td><td>Aggregated metrics for reporting</td><td>Total billed vs paid per member, denial rate by provider, cost per diagnosis — fed into Power BI dashboards</td></tr>
+        </tbody>
+      </table></div>
       <h3>Deduplication SQL — Silver Layer</h3>
       <div class="code-label">sql</div>
       <pre><code><span class="kw">WITH</span> cte <span class="kw">AS</span> (
@@ -328,33 +295,26 @@
     ) <span class="kw">AS</span> rn
   <span class="kw">FROM</span> claims_silver
 )
-<span class="kw">SELECT</span> * <span class="kw">FROM</span> cte <span class="kw">WHERE</span> rn = <span class="num-lit">1</span>;</code></pre>
-
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> cte <span class="kw">WHERE</span> rn = <span class="nl">1</span>;</code></pre>
       <h3>Likely Follow-up Questions</h3>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Question</th><th>Strong Answer</th></tr></thead>
-          <tbody>
-            <tr><td>What was the grain of your fact table?</td><td>One row per claim line item — Claim ID + Claim Line Number as composite key</td></tr>
-            <tr><td>Primary keys in your claims table?</td><td>Claim ID + Claim Line Number</td></tr>
-            <tr><td>How did you handle duplicate claims?</td><td>ROW_NUMBER() OVER (PARTITION BY claim_id ORDER BY service_date DESC) — keep row 1</td></tr>
-            <tr><td>What aggregations in Gold?</td><td>Total billed amount, paid amount, denial rate by provider, cost per ICD code</td></tr>
-            <tr><td>Did you work with member eligibility?</td><td>Eligibility = whether member was covered on the date of service</td></tr>
-            <tr><td>How was ICD-CPT validated?</td><td>Cross-reference lookup table; flag mismatches as data quality issues in Silver</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Question</th><th>Strong Answer</th></tr></thead>
+        <tbody>
+          <tr><td>What was the grain of your fact table?</td><td>One row per claim line item (Claim ID + Claim Line Number as composite key)</td></tr>
+          <tr><td>Primary keys in your claims table?</td><td>Claim ID + Claim Line Number</td></tr>
+          <tr><td>How did you handle duplicate claims?</td><td>ROW_NUMBER() OVER (PARTITION BY claim_id ORDER BY service_date DESC) — keep row 1</td></tr>
+          <tr><td>What aggregations in Gold?</td><td>Total billed amount, paid amount, denial rate by provider, cost per ICD code</td></tr>
+          <tr><td>Did you work with member eligibility?</td><td>Eligibility = whether member was covered on the date of service</td></tr>
+          <tr><td>How was ICD-CPT validated?</td><td>Cross-reference lookup table; flag mismatches as data quality issues in Silver</td></tr>
+        </tbody>
+      </table></div>
     </section>
 
     <hr class="divider">
 
-    <!-- S10: CHEAT SHEET -->
-    <section class="section" id="s10">
-      <div class="section-header">
-        <div class="section-num">10</div>
-        <h2 class="section-title">Quick-Reference Cheat Sheet</h2>
-      </div>
-
+    <!-- S12 -->
+    <section class="section" id="s12">
+      <div class="section-header"><div class="section-num">12</div><h2 class="section-title">Quick-Reference Cheat Sheet</h2></div>
       <h3>Claims Flow</h3>
       <div class="code-label">end-to-end</div>
       <pre><code>Patient Visit
@@ -364,54 +324,46 @@
   → Payer sends 835 (payment + remittance advice)
   → EOB sent to patient
   → Provider reconciles payment</code></pre>
-
       <h3>Key Acronyms</h3>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Acronym</th><th>Full Form</th><th>One-line Meaning</th></tr></thead>
-          <tbody>
-            <tr><td><strong>EHR</strong></td><td>Electronic Health Record</td><td>Patient clinical data</td></tr>
-            <tr><td><strong>EOB</strong></td><td>Explanation of Benefits</td><td>What insurance paid vs what patient owes</td></tr>
-            <tr><td><strong>EDI</strong></td><td>Electronic Data Interchange</td><td>Standardized format for healthcare data exchange</td></tr>
-            <tr><td><strong>ICD</strong></td><td>International Classification of Diseases</td><td>Diagnosis code — WHY treated</td></tr>
-            <tr><td><strong>CPT</strong></td><td>Current Procedural Terminology</td><td>Procedure code — WHAT was done</td></tr>
-            <tr><td><strong>NPI</strong></td><td>National Provider Identifier</td><td>Unique 10-digit ID for every provider</td></tr>
-            <tr><td><strong>HCPCS</strong></td><td>Healthcare Common Procedure Coding System</td><td>Extended codes for supplies, drugs, equipment</td></tr>
-            <tr><td><strong>DRG</strong></td><td>Diagnosis-Related Group</td><td>Categorizes inpatient hospital cases for billing</td></tr>
-            <tr><td><strong>PHI</strong></td><td>Protected Health Information</td><td>Any patient-identifiable health data — HIPAA protected</td></tr>
-            <tr><td><strong>PCP</strong></td><td>Primary Care Physician</td><td>General practitioner; gateway to specialist referrals</td></tr>
-            <tr><td><strong>FHIR</strong></td><td>Fast Healthcare Interoperability Resources</td><td>Modern API-based standard for healthcare data exchange</td></tr>
-            <tr><td><strong>ERA</strong></td><td>Electronic Remittance Advice</td><td>Another name for the 835 file</td></tr>
-            <tr><td><strong>RCM</strong></td><td>Revenue Cycle Management</td><td>End-to-end process of managing claims and payments</td></tr>
-          </tbody>
-        </table>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Acronym</th><th>Full Form</th><th>One-line Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><strong>EHR</strong></td><td>Electronic Health Record</td><td>Patient clinical data</td></tr>
+          <tr><td><strong>EOB</strong></td><td>Explanation of Benefits</td><td>What insurance paid vs what patient owes</td></tr>
+          <tr><td><strong>EDI</strong></td><td>Electronic Data Interchange</td><td>Standardized format for healthcare data exchange</td></tr>
+          <tr><td><strong>ICD</strong></td><td>International Classification of Diseases</td><td>Diagnosis code — WHY treated</td></tr>
+          <tr><td><strong>CPT</strong></td><td>Current Procedural Terminology</td><td>Procedure code — WHAT was done</td></tr>
+          <tr><td><strong>NPI</strong></td><td>National Provider Identifier</td><td>Unique 10-digit ID for every provider: doctors, hospitals, laboratories, clinics, pharmacies</td></tr>
+          <tr><td><strong>HCPCS</strong></td><td>Healthcare Common Procedure Coding System</td><td>Extended codes for supplies, drugs, equipment</td></tr>
+          <tr><td><strong>DRG</strong></td><td>Diagnosis-Related Group</td><td>Categorizes inpatient hospital cases for billing</td></tr>
+          <tr><td><strong>PHI</strong></td><td>Protected Health Information</td><td>Any patient-identifiable health data — HIPAA protected</td></tr>
+          <tr><td><strong>PCP</strong></td><td>Primary Care Physician</td><td>General practitioner; gateway to specialist referrals</td></tr>
+          <tr><td><strong>FHIR</strong></td><td>Fast Healthcare Interoperability Resources</td><td>Modern API-based standard for healthcare data exchange</td></tr>
+          <tr><td><strong>ERA</strong></td><td>Electronic Remittance Advice</td><td>Another name for the 835 file</td></tr>
+          <tr><td><strong>RCM</strong></td><td>Revenue Cycle Management</td><td>End-to-end process of managing claims and payments</td></tr>
+        </tbody>
+      </table></div>
+      <div style="padding:28px 0 12px;color:var(--text-dim);font-size:12px;font-family:'IBM Plex Mono',monospace;border-top:1px solid var(--border);margin-top:32px;">
+        Last updated: June 2026 · Healthcare Claims Domain · Data Engineering Interview Prep
       </div>
     </section>
-
-    <div style="padding: 32px 0 16px; color: var(--text-dim); font-size: 12px; font-family: 'IBM Plex Mono', monospace; border-top: 1px solid var(--border); margin-top: 32px;">
-      Last updated: June 2026 · Healthcare Claims Domain · Data Engineering Interview Prep
-    </div>
 
   </main>
 </div>
 
 <script>
-  // Highlight active nav item on scroll
   const sections = document.querySelectorAll('section[id]');
   const navItems = document.querySelectorAll('.nav-item');
-
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         navItems.forEach(n => n.classList.remove('active'));
-        const active = document.querySelector(`.nav-item[href="#${entry.target.id}"]`);
-        if (active) active.classList.add('active');
+        const a = document.querySelector('.nav-item[href="#' + entry.target.id + '"]');
+        if (a) a.classList.add('active');
       }
     });
-  }, { threshold: 0.3 });
-
+  }, { threshold: 0.25 });
   sections.forEach(s => observer.observe(s));
 </script>
-
 </body>
 </html>
