@@ -41,7 +41,9 @@ function render() {
       </div>
     </div>`;
   }).join('');
+  Prism.highlightAll();
 }
+
 
 function setcat(c){ active=c; render(); }
 
