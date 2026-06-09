@@ -1,5 +1,14 @@
-<style>
- pre { border-radius: 8px; font-size: 14px; line-height: 1.8; }
+
+code:not(pre code) {
+    background: rgba(207, 181, 135, 0.08) ;
+    color: var(--danger-text);
+    padding: 0.3em 6px;
+    border-radius: 7px;
+    border: 1px solid rgba(228, 225, 219, 0.644);
+    font-family:ui-monospace, monospace;
+    font-size: 1em;
+}
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #ffffff;
@@ -117,4 +126,3 @@ ul ul li::before {
   .node { margin-left: 15px; margin-top: 6px; }
   .node-q { cursor: pointer; font-size: 13px; color: #FF4500   }
   .node-a { display: none; font-size: 12px; color: #F5E8D8; margin-left: 10px; }
-</style>
