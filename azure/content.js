@@ -200,7 +200,13 @@ children:[],
   cat:`CI-CD`,
   q:`What happens when you run <code>git push origin feature2</code> for the first time? -- new branch`,
   answer:`Git uploads the local commits and objects to the remote repository. If the remote branch does not exist, GitHub creates it. After the push, GitHub typically suggests creating a Pull Request so the feature branch can be reviewed and merged into the target branch, such as main.`,
-  children:[],
+  children:[
+    {
+      q:`github vs databricks`,
+      a:`In a local Git environment such as VS Code(using github), creating a branch and committing changes are local operations. The remote repository is updated only after executing <code>git push origin main</code>. <br>In Databricks Repos, branch creation is integrated with the remote Git provider, so creating a branch through the Databricks UI typically creates the corresponding remote branch automatically. However, code changes and commits are not automatically reflected in the remote repository; they still need to be committed and synchronized (pushed) through the Databricks Git integration.`,
+      children:[], 
+    },
+  ],
 
 },
 ]
