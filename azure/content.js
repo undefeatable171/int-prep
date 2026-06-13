@@ -194,4 +194,13 @@ children:[],
 ● This approach ensures secure, granular, and controlled access to sensitive data while minimizing security risks."`,
 children:[],
 },
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
+{
+  cat:`CI-CD`,
+  q:`What happens when you run <code>git push origin feature2</code> for the first time? -- new branch`,
+  answer:`Git uploads the local commits and objects to the remote repository. If the remote branch does not exist, GitHub creates it. After the push, GitHub typically suggests creating a Pull Request so the feature branch can be reviewed and merged into the target branch, such as main.`,
+  children:[],
+
+},
 ]
