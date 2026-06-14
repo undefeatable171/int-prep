@@ -1,3 +1,9 @@
+---
+layout: default
+title: Git Notes
+permalink: /git_questions/
+---
+
 # Git Interview Questions and Answers for Data Engineers
 
 ## 1. What is Git?
