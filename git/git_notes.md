@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Git Notes
-permalink: /git_questions/
+permalink: /git_q/
 ---
 
 # Git Interview Questions and Answers for Data Engineers
