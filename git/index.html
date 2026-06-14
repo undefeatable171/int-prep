@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CI/CD Azure Databricks — Revision Notes</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --code-bg: #1f2937;
+    --table-alt: #1c2128;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 2rem; color: var(--accent); border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; margin: 2rem 0 1rem; }
+  h2 { font-size: 1.4rem; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; margin: 2rem 0 0.8rem; }
+  h3 { font-size: 1.1rem; color: #cdd9e5; margin: 1.4rem 0 0.5rem; }
+  p { margin: 0.6rem 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ul, ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+  li { margin: 0.25rem 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 0.4rem 1rem;
+    margin: 0.8rem 0;
+    color: var(--muted);
+    background: var(--surface);
+    border-radius: 0 6px 6px 0;
+  }
+  code {
+    background: var(--code-bg);
+    color: #79c0ff;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+    font-size: 0.88em;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    margin: 0.8rem 0;
+  }
+  pre code {
+    background: none;
+    color: #cdd9e5;
+    padding: 0;
+    font-size: 0.85em;
+    line-height: 1.6;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9em;
+  }
+  th {
+    background: var(--surface);
+    color: var(--accent);
+    padding: 0.6rem 0.9rem;
+    text-align: left;
+    border: 1px solid var(--border);
+    font-weight: 600;
+  }
+  td {
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--table-alt); }
+  strong { color: #cdd9e5; font-weight: 600; }
+  em { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="container">
+<h1 id="cicd-pipeline-azure-databricks-azure-devops">CI/CD Pipeline — Azure Databricks + Azure DevOps</h1>
+<h3 id="complete-revision-notes-all-6-parts">Complete Revision Notes (All 6 Parts)</h3>
+<hr />
+<h2 id="big-picture-end-to-end-flow">🗺️ Big Picture — End-to-End Flow</h2>
+<div class="codehilite"><pre><span></span><code>Developer (Databricks feature branch)
+        ↓ commit + push
+PR → reviewer approves → merge to main (Azure DevOps)
+        ↓ auto-trigger
+CI Pipeline (Azure DevOps, Windows Agent):
+  • authenticate via Service Connection
+  • get Dev Databricks workspace info (ID + URL)
+  • generate bearer token
+  • copy notebook/ → /live/ (Dev Databricks workspace)
+        ↓ CI success + depends_on satisfied
+⏸ PAUSE — Approval Gate (email to tech lead / ops)
+        ↓ approver reviews Dev, then approves
+CD Pipeline:
+  • same steps with Prod credentials
+  • copy notebook/ → /live/ (Prod Databricks workspace)
+        ↓
+ADF Dev → Dev live/  ✅   |   ADF Prod → Prod live/  ✅
+         Always latest approved code in both environments
+</code></pre></div>
+
+<hr />
+<h2 id="part-1-repo-workspace-setup">Part 1 — Repo &amp; Workspace Setup</h2>
+<h3 id="azure-devops-project-setup">Azure DevOps Project Setup</h3>
+<ul>
+<li><code>dev.azure.com/&lt;org_name&gt;</code> → New Project → name: <code>Databricks CI CD</code> → Private → Git</li>
+<li>Repos → New Repository → name: <code>Databricks CI CD Tutorial</code> → enable <strong>Add README</strong> → initializes <code>main</code> branch</li>
+<li><code>main</code> branch = the only branch that triggers CI/CD</li>
+</ul>
+<h3 id="integrate-devops-repo-with-dev-databricks">Integrate DevOps Repo with Dev Databricks</h3>
+<ul>
+<li>Databricks → Repos → Add Repo → paste HTTPS clone URL from DevOps</li>
+<li>Authentication: ✅ <strong>AAD (Azure Active Directory)</strong> — same user in both Databricks + DevOps, no token needed</li>
+<li>Enable "Create repo by cloning" → repo files copied into Databricks workspace</li>
+</ul>
+<h3 id="protect-the-main-branch">Protect the Main Branch</h3>
+<ul>
+<li>Repos → Branches → <code>main</code> → ⋯ → <strong>Branch Policies</strong></li>
+<li>Enable: <strong>"Require minimum number of reviewers"</strong> → set to <strong>1</strong></li>
+<li>Enable <strong>"Allow requesters to approve their own changes"</strong> → only for demo, NOT prod</li>
+<li>Once enabled → <strong>direct commits to main are blocked</strong>; changes must go via PR</li>
+<li>Real-world best practice: <strong>tech lead / senior dev</strong> reviews PRs, not the same person who raised it</li>
+</ul>
+<h3 id="key-concepts">Key Concepts</h3>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AAD over PAT</td>
+<td>No token management; uses existing user identity</td>
+</tr>
+<tr>
+<td>Protect main</td>
+<td>Enforce code review; prevent accidental direct pushes</td>
+</tr>
+<tr>
+<td>Feature branch from main</td>
+<td>Gets exact copy of stable code</td>
+</tr>
+<tr>
+<td>Delete branch after merge</td>
+<td>Clean repo; avoids confusion</td>
+</tr>
+<tr>
+<td>Commit ≠ synced to DevOps</td>
+<td>Must explicitly commit + push</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-2-ci-pipeline-concept-repo-organization">Part 2 — CI Pipeline: Concept &amp; Repo Organization</h2>
+<h3 id="what-the-ci-pipeline-does">What the CI Pipeline Does</h3>
+<ul>
+<li>Triggers <strong>automatically</strong> when changes merge to <code>main</code></li>
+<li>Creates a <code>/live/</code> folder inside <strong>Dev</strong> Databricks workspace</li>
+<li>Copies latest <code>notebook/</code> folder from main branch → <code>/live/</code></li>
+<li>ADF pipelines always point to <code>/live/</code> — never to repos location</li>
+<li>After CI completes → CD pipeline triggers → deploys <code>/live/</code> to <strong>Prod</strong></li>
+</ul>
+<h3 id="why-the-live-folder-key-interview-concept">Why the <code>live/</code> Folder? (Key Interview Concept)</h3>
+<p><strong>Problem:</strong> ADF notebook activities point to a specific user's repos path (e.g., <code>Mr.K/repos/...</code>). If another engineer merges changes to main, Mr.K's repos path won't reflect those changes until manually pulled. Also, <strong>ADF cannot directly reference the main branch of an Azure DevOps repo</strong>.</p>
+<p><strong>Solution:</strong></p>
+<div class="codehilite"><pre><span></span><code>Main Branch (DevOps)
+      ↓ CI Pipeline copies
+Live Folder (Dev Databricks)   ← ADF always points here
+      ↓ CD Pipeline copies
+Live Folder (Prod Databricks)  ← ADF always points here
+</code></pre></div>
+
+<h3 id="organizing-the-repo-before-ci">Organizing the Repo Before CI</h3>
+<p>Why: repo had mixed files (notebooks + README). CI should deploy <strong>only notebooks</strong>.</p>
+<p><strong>Final repo structure:</strong></p>
+<div class="codehilite"><pre><span></span><code>repo/
+├── notebook/
+│   ├── bronze_to_silver
+│   ├── silver_to_gold
+│   └── storage_mount
+└── extra/
+    └── README.md
+</code></pre></div>
+
+<blockquote>
+<p>CI pipeline deploys <strong>only <code>notebook/</code></strong> — <code>extra/</code> is never pushed to prod(weconfigured that way,else it will pushes).</p>
+</blockquote>
+<h3 id="key-concepts_1">Key Concepts</h3>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>live/ folder</td>
+<td>ADF's stable reference; always = latest main branch code</td>
+</tr>
+<tr>
+<td>Why organize repo</td>
+<td>Deploy only notebooks, not README or other files</td>
+</tr>
+<tr>
+<td>CI triggers</td>
+<td>Any merge to main branch</td>
+</tr>
+<tr>
+<td>CD triggers</td>
+<td>After CI succeeds</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-3-ci-pipeline-yaml-code-walkthrough">Part 3 — CI Pipeline: YAML Code Walkthrough</h2>
+<h3 id="file-structure">File Structure</h3>
+<div class="codehilite"><pre><span></span><code>ci_cd/
+├── scripts/
+│   └── databricks_token.ps1      ← generates bearer token for Databricks auth
+├── templates/
+│   └── deploy_notebooks.yml      ← template: actual deployment logic (reused for dev + prod)
+└── ci_cd_pipeline.yml            ← master file: entry point, triggers pipeline
+</code></pre></div>
+
+<p><strong>Call Chain:</strong></p>
+<div class="codehilite"><pre><span></span><code>ci_cd_pipeline.yml (master)
+        ↓ calls
+deploy_notebooks.yml (template)
+        ↓ calls
+databricks_token.ps1 (PowerShell script)
+</code></pre></div>
+
+<h3 id="master-file-ci_cd_pipelineyml">Master File — <code>ci_cd_pipeline.yml</code></h3>
+<div class="codehilite"><pre><span></span><code><span class="nt">trigger</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main</span><span class="w">                          </span><span class="c1"># fires on every merge to main</span>
+
+<span class="nt">variables</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dbw_cd_dev</span><span class="w">             </span><span class="c1"># pulls from Azure DevOps variable group </span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">vm_image_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">windows-latest</span><span class="w">   </span><span class="c1"># Windows compute agent</span>
+<span class="w">  </span><span class="nt">notebooks_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">notebook</span><span class="w">        </span><span class="c1"># only deploy files inside notebook/ folder</span>
+
+<span class="nt">pool</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">vmImage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$(vm_image_name)</span>
+
+<span class="nt">stages</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">template</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">templates/deploy_notebooks.yml</span>
+<span class="w">    </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">stage_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deploy_to_dev_environment</span>
+<span class="w">      </span><span class="nt">env</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dev</span>
+<span class="w">      </span><span class="nt">environment_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$(environment_name)</span>
+<span class="w">      </span><span class="nt">resource_group_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$(dev_resource_group)</span>
+<span class="w">      </span><span class="nt">service_connection</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$(service_connection)</span>
+<span class="w">      </span><span class="nt">notebooks_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$(notebooks_path)</span>
+</code></pre></div>
+
+<p><strong>Key points:</strong>
+- <code>trigger: main</code> → auto-fires on every merge, no manual trigger needed
+- <code>notebooks_path: notebook</code> → only <code>notebook/</code> folder deployed
+- All environment-specific values come from <strong>variable groups</strong> (not hardcoded)
+- Master file calls template and <strong>passes all params</strong></p>
+<h3 id="variable-groups-azure-devops-library">Variable Groups (Azure DevOps Library)</h3>
+<p><strong>Why:</strong> Dev and Prod have different workspace names, resource groups etc. Each environment gets its own variable group.</p>
+<p><strong>How to create:</strong> DevOps → Pipelines → Library → Variable Groups → New → add variables → Save</p>
+<p><strong>Dev variable group</strong> (<code>dbw_cd_dev</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>environment_name</code></td>
+<td><code>Dev Environment Databricks CI CD</code></td>
+</tr>
+<tr>
+<td><code>dev_resource_group_name</code></td>
+<td><code>org_data_engineering_project</code></td>
+</tr>
+<tr>
+<td><code>service_connection</code></td>
+<td><code>Dev Service Connection</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="environment-azure-devops">Environment (Azure DevOps)</h3>
+<ul>
+<li>DevOps → Pipelines → Environments → Create</li>
+<li>Name: <code>Dev Environment Databricks CI CD</code> | Resource: <strong>None</strong></li>
+<li>Purpose: Track all deployment history (success/failure) in one place</li>
+<li>YAML references: <code>environment: $(environment_name)</code></li>
+</ul>
+<h3 id="service-connection-most-important">Service Connection (Most Important)</h3>
+<p><strong>Why needed:</strong> CI/CD pipeline (Azure DevOps) needs access to Azure resources (Databricks workspace). Can't add Azure DevOps directly to resource group IAM.</p>
+<p><strong>Solution:</strong> Service Connection auto-creates a <strong>Service Principal</strong> → assigns it <strong>Contributor access</strong> to the resource group.</p>
+<p><strong>How to create:</strong>
+- Project Settings → Service Connections → New
+- Type: <strong>Azure Resource Manager</strong> | Auth: <strong>Service Principal (Automatic)</strong>
+- Scope: Dev resource group → Name: <code>Dev Service Connection</code>
+- ❌ Do NOT check "Grant access to all pipelines" (grant manually per pipeline)</p>
+<h3 id="key-concepts_2">Key Concepts</h3>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trigger: main</code></td>
+<td>Pipeline fires on every merge to main</td>
+</tr>
+<tr>
+<td>Variable Groups</td>
+<td>Env-specific values — no hardcoding</td>
+</tr>
+<tr>
+<td>Pool / Agent</td>
+<td>Microsoft-hosted Windows VM runs the pipeline</td>
+</tr>
+<tr>
+<td>Service Connection</td>
+<td>Bridges Azure DevOps ↔ Azure resources via Service Principal</td>
+</tr>
+<tr>
+<td>Service Principal</td>
+<td>Auto-created; gets Contributor access to resource group</td>
+</tr>
+<tr>
+<td>Bearer Token</td>
+<td>Required to authenticate into Databricks workspace</td>
+</tr>
+<tr>
+<td><code>notebooks_path: notebook</code></td>
+<td>Only <code>notebook/</code> deployed — not README or extras</td>
+</tr>
+<tr>
+<td><code>depends_on: null</code></td>
+<td>Dev runs independently; Prod depends on Dev</td>
+</tr>
+<tr>
+<td>Template reuse</td>
+<td>Same <code>deploy_notebooks.yml</code> used for both Dev and Prod</td>
+</tr>
+<tr>
+<td>Environment</td>
+<td>Tracks deployment history per environment</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-4-ci-pipeline-creating-testing">Part 4 — CI Pipeline: Creating &amp; Testing</h2>
+<h3 id="step-2-create-the-pipeline-in-azure-devops">Step 2: Create the Pipeline in Azure DevOps</h3>
+<ul>
+<li>Pipelines → Create Pipeline → Source: <strong>Azure Repos Git YAML</strong></li>
+<li>Repo: <code>Databricks CI CD Tutorial</code></li>
+<li>Config: <strong>Existing Azure Pipelines YAML file</strong> → Branch: <code>main</code> → Path: <code>/ci_cd/ci_cd_pipeline.yml</code></li>
+<li>Click <strong>Save</strong> (not Run yet)</li>
+</ul>
+<h3 id="step-3-grant-pipeline-permissions-3-mandatory-places">Step 3: Grant Pipeline Permissions (3 Mandatory Places)</h3>
+<blockquote>
+<p>⚠️ Pipeline will fail without ALL 3 permissions.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Where to grant</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Environment</strong></td>
+<td>Pipelines → Environments → <code>Dev Environment...</code> → Security → Pipeline Permissions → add pipeline</td>
+</tr>
+<tr>
+<td><strong>Variable Group</strong></td>
+<td>Pipelines → Library → <code>dbw_cd_dev</code> → Pipeline Permissions → add pipeline</td>
+</tr>
+<tr>
+<td><strong>Service Connection</strong></td>
+<td>Project Settings → Service Connections → <code>Dev Service Connection</code> → Security → Pipeline Permissions → add pipeline</td>
+</tr>
+</tbody>
+</table>
+<h3 id="step-4-test-the-ci-pipeline">Step 4: Test the CI Pipeline</h3>
+<ol>
+<li>Create branch <code>testing_ci_pipeline</code> from main (in Databricks)</li>
+<li>Inside <code>notebook/</code> → create <code>test_ci_notebook</code> → code: <code>print(1 + 1)</code></li>
+<li>Commit + push → PR → approve → merge to main → delete branch</li>
+<li>Pipeline auto-triggers ✅ → monitor in Pipelines tab</li>
+</ol>
+<h3 id="step-5-validate-results">Step 5: Validate Results</h3>
+<ul>
+<li>Databricks workspace → refresh → new <code>/live/</code> folder appears ✅</li>
+<li>Inside <code>/live/</code>: all 3 original notebooks + <code>test_ci_notebook</code> ✅</li>
+<li>Pipelines → Environments → <code>Dev Environment...</code> → shows deployment history ✅</li>
+</ul>
+<h3 id="step-6-update-adf-to-point-to-live">Step 6: Update ADF to Point to <code>live/</code></h3>
+<ul>
+<li>ADF Studio → pipeline → each notebook activity → Browse → select from <code>/live/</code> folder</li>
+<li>Publish ADF changes</li>
+<li>Now ADF always runs from <code>live/</code> = always latest code ✅</li>
+</ul>
+<hr />
+<h2 id="part-5-cd-pipeline-creating-testing">Part 5 — CD Pipeline: Creating &amp; Testing</h2>
+<h3 id="what-cd-pipeline-does">What CD Pipeline Does</h3>
+<ul>
+<li>Triggers after CI pipeline completes successfully</li>
+<li>Copies latest <code>notebook/</code> from main branch → <code>/live/</code> in <strong>Prod</strong> Databricks workspace</li>
+<li>Result: Dev <code>live/</code> = Prod <code>live/</code> = exact copy of main branch</li>
+</ul>
+<p><strong>Prod Variable Group</strong> (<code>dbw_cd_prod</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>environment_name</code></td>
+<td><code>Prod Environment Databricks CI CD</code></td>
+</tr>
+<tr>
+<td><code>prod_resource_group_name</code></td>
+<td><code>org_data_engineering_project_prod</code></td>
+</tr>
+<tr>
+<td><code>service_connection</code></td>
+<td><code>Prod Service Connection</code></td>
+</tr>
+</tbody></table>
+<p><strong>Prod Environment:</strong> Pipelines → Environments → New → <code>Prod Environment Databricks CI CD</code> → None → Create</p>
+<p><strong>Prod Service Connection:</strong>
+- Project Settings → Service Connections → New → Azure Resource Manager → Service Principal (Automatic) → Scope: <strong>Prod resource group</strong> → Name: <code>Prod Service Connection</code>
+- Auto-creates SP with Contributor access to Prod resource group ✅</p>
+<p><strong>Grant Permissions (same 3 places, for Prod resources):</strong>
+- Prod Variable Group → Pipeline Permissions → add pipeline
+- Prod Environment → Security → Pipeline Permissions → add pipeline
+- Prod Service Connection → Security → Pipeline Permissions → add pipeline</p>
+<h3 id="the-depends_on-fix-critical">The <code>depends_on</code> Fix (Critical!)</h3>
+<p><strong>Problem:</strong> Without <code>depends_on</code>, both Dev and Prod stages run <strong>in parallel</strong> — if Dev fails, Prod still runs. Dangerous!</p>
+<p><strong>Fix in template file:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">    </span><span class="c1"># default for dev stage (runs independently)</span>
+
+<span class="nt">stages</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">stage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ parameters.stage_id }}</span>
+<span class="w">    </span><span class="nt">dependsOn</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ parameters.depends_on }}</span>
+<span class="w">    </span><span class="c1"># Dev stage  → dependsOn: null           (runs first, independently)</span>
+<span class="w">    </span><span class="c1"># Prod stage → dependsOn: deploy_to_dev  (waits for dev success)</span>
+</code></pre></div>
+
+<p><strong>Result:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="nv">Dev</span><span class="w"> </span><span class="nv">Stage</span><span class="w"> </span><span class="ss">(</span><span class="nv">runs</span><span class="w"> </span><span class="nv">first</span><span class="ss">)</span>
+<span class="w">        </span>↓<span class="w"> </span><span class="nv">only</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nv">success</span>
+<span class="nv">Prod</span><span class="w"> </span><span class="nv">Stage</span><span class="w"> </span><span class="ss">(</span><span class="nv">runs</span><span class="w"> </span><span class="nv">after</span><span class="ss">)</span><span class="w">  </span>✅
+<span class="w">        </span><span class="ss">(</span><span class="k">if</span><span class="w"> </span><span class="nv">dev</span><span class="w"> </span><span class="nv">fails</span><span class="w"> </span>→<span class="w"> </span><span class="nv">prod</span><span class="w"> </span><span class="nv">never</span><span class="w"> </span><span class="nv">runs</span><span class="ss">)</span>
+</code></pre></div>
+
+<h3 id="key-concepts_3">Key Concepts</h3>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CD changes are minimal</td>
+<td>Same template reused, just prod params passed</td>
+</tr>
+<tr>
+<td><code>depends_on: null</code></td>
+<td>Dev stage — runs independently</td>
+</tr>
+<tr>
+<td><code>depends_on: deploy_to_dev</code></td>
+<td>Prod stage — waits for dev success</td>
+</tr>
+<tr>
+<td>Parallel vs sequential</td>
+<td>Before fix = parallel (risky), after fix = sequential (safe)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-6-environment-protection-final-e2e-testing">Part 6 — Environment Protection &amp; Final E2E Testing</h2>
+<h3 id="problem-with-current-setup-before-this-part">Problem with Current Setup (Before This Part)</h3>
+<ul>
+<li>After Dev stage completes → Prod stage starts <strong>immediately</strong></li>
+<li>Real projects need:</li>
+<li>Change request raised and approved</li>
+<li>Deployment only after office hours (e.g., after 5 PM)</li>
+<li>Approval from tech lead / ops team</li>
+<li>Previous setup had none of this → <strong>not production-ready</strong></li>
+</ul>
+<h3 id="solution-approval-gate-on-prod-environment">Solution: Approval Gate on Prod Environment</h3>
+<p><strong>What it does:</strong>
+- Dev stage completes → pipeline <strong>pauses</strong>
+- Approver receives <strong>email from Azure DevOps</strong>
+- Prod stage runs <strong>only after manual approval</strong>
+- Approver can also <strong>reject</strong> to block deployment</p>
+<p><strong>How to configure:</strong>
+- DevOps → Pipelines → Environments → <code>Prod Environment Databricks CI CD</code>
+- Approvals and Checks → <code>+</code> → <strong>Approvals</strong> → add approver (tech lead / ops)
+- Click <strong>Create</strong></p>
+<blockquote>
+<p>✅ Only configure on <strong>Prod</strong> — Dev deploys instantly, no gate needed.</p>
+</blockquote>
+<h3 id="key-concepts-interview-ready">Key Concepts — Interview Ready</h3>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Why approval gate?</td>
+<td>Prod deployments need planning/approval — not instant</td>
+</tr>
+<tr>
+<td>Who approves?</td>
+<td>Tech lead / ops team — <strong>not</strong> the developer</td>
+</tr>
+<tr>
+<td>What if rejected?</td>
+<td>Pipeline stops — prod not deployed</td>
+</tr>
+<tr>
+<td>Pipeline waits how long?</td>
+<td>Until approved or rejected — no timeout by default</td>
+</tr>
+<tr>
+<td><code>depends_on</code> + approval gate</td>
+<td><strong>Two layers</strong> of prod protection</td>
+</tr>
+<tr>
+<td>Dev live/ vs Prod live/</td>
+<td>Both = exact copy of main branch after respective stages</td>
+</tr>
+<tr>
+<td>ADF always points to live/</td>
+<td>Never repos — ensures always latest approved code</td>
+</tr>
+<tr>
+<td>Review button visibility</td>
+<td>Only visible to <strong>configured approvers</strong></td>
+</tr>
+<tr>
+<td>Real-world parallel</td>
+<td>Change request process in organizations</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="quick-reference-cheat-sheet">⚡ Quick Reference — Cheat Sheet</h2>
+<h3 id="branching-rules">Branching Rules</h3>
+<ul>
+<li>Always create feature branch <strong>from main</strong></li>
+<li>Never push directly to main (protected)</li>
+<li>Delete feature branches after merge</li>
+</ul>
+<h3 id="3-mandatory-pipeline-permissions">3 Mandatory Pipeline Permissions</h3>
+<ol>
+<li>Environment → Security → Pipeline Permissions</li>
+<li>Variable Group → Pipeline Permissions</li>
+<li>Service Connection → Security → Pipeline Permissions</li>
+</ol>
+<h3 id="order-of-operations-always">Order of Operations (Always)</h3>
+<ol>
+<li>Write YAML code in VS Code (feature branch)</li>
+<li>PR → merge to main</li>
+<li>Create / update pipeline in Azure DevOps</li>
+<li>Grant permissions</li>
+<li>Test (create notebook → PR → merge → watch pipeline)</li>
+</ol>
+<h3 id="key-files">Key Files</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ci_cd_pipeline.yml</code></td>
+<td>Master — entry point, trigger, variable groups, calls template</td>
+</tr>
+<tr>
+<td><code>deploy_notebooks.yml</code></td>
+<td>Template — reused for dev + prod stages</td>
+</tr>
+<tr>
+<td><code>databricks_token.ps1</code></td>
+<td>PowerShell — generates bearer token for Databricks auth</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-variables-per-environment">Key Variables per Environment</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Dev</th>
+<th>Prod</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Variable Group</td>
+<td><code>dbw_cd_dev</code></td>
+<td><code>dbw_cd_prod</code></td>
+</tr>
+<tr>
+<td>Environment Name</td>
+<td><code>Dev Environment Databricks CI CD</code></td>
+<td><code>Prod Environment Databricks CI CD</code></td>
+</tr>
+<tr>
+<td><code>depends_on</code></td>
+<td><code>null</code></td>
+<td><code>deploy_to_dev_environment</code></td>
+</tr>
+<tr>
+<td>Approval Gate</td>
+<td>❌ None</td>
+<td>✅ Required</td>
+</tr>
+</tbody>
+</table>
+<h3 id="common-mistakes-to-avoid">Common Mistakes to Avoid</h3>
+<table>
+<thead>
+<tr>
+<th>Mistake</th>
+<th>Correct Approach</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create pipeline before merging YAML</td>
+<td>Merge first, then create pipeline</td>
+</tr>
+<tr>
+<td>Allow requestors to approve own PRs</td>
+<td>Have a different reviewer (only OK in demo)</td>
+</tr>
+<tr>
+<td>Hardcode env values in YAML</td>
+<td>Use variable groups</td>
+</tr>
+<tr>
+<td>ADF pointing to repos location</td>
+<td>ADF must point to <code>/live/</code> folder</td>
+</tr>
+<tr>
+<td>Both stages run in parallel</td>
+<td>Use <code>depends_on</code> for sequential execution</td>
+</tr>
+<tr>
+<td>Prod deploys without approval</td>
+<td>Configure approval gate on Prod environment</td>
+</tr>
+<tr>
+<td>Grant all pipelines access to service connection</td>
+<td>Grant per-pipeline manually</td>
+</tr>
+</tbody>
+</table>
+</div>
+</body>
+</html>
