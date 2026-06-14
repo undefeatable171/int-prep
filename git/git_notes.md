@@ -36,8 +36,7 @@ timestamp, and a message.
 **Example:**
 In my healthcare pipeline at TCS, if a bad transformation logic was
 pushed to the Silver layer, we could use `git log --oneline` to find
-the exact commit that introduced the bug and `git reset --hard
-<commit_id>` to revert — without affecting any other files or branches.
+the exact commit that introduced the bug and `git reset --hard <commit_id>` to revert — without affecting any other files or branches.
 
 **Without commits:** you'd only ever have the latest version of every
 file — no history, no rollback, no accountability.
