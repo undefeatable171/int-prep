@@ -1,4 +1,4 @@
-
+ pre { border-radius: 8px; font-size: 14px; line-height: 1.8; }
 code:not(pre code) {
     background: rgba(207, 181, 135, 0.08) ;
     color: var(--danger-text);
