@@ -1,7 +1,6 @@
-
- pre { border-radius: 8px; font-size: 14px; line-height: 1.8; }
+pre { border-radius: 8px; font-size: 14px; line-height: 1.8; }
  code:not(pre code) {
-    background: rgba(207, 181, 135, 0.08) ;
+    background: #cfb58714 ;
     color: var(--danger-text);
     padding: 0.3em 6px;
     border-radius: 7px;
