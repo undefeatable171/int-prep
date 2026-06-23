@@ -1,3 +1,9 @@
+---
+layout: default
+title: Unity catalog
+permalink: /UC/
+---
+
 ## 0. Unity catalog
 
 Unity Catalog is Databricks' centralized governance layer for all data and AI assets across your entire Databricks account.
