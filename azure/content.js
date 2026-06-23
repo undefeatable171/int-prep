@@ -1,4 +1,4 @@
-const cats = ["storage","ADF","key-vault","CI-CD","Scenario"];
+const cats = ["storage","ADF","key-vault","CI-CD","Scenario","UC"];
 const qs = [
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
 
@@ -207,6 +207,82 @@ children:[],
       children:[], 
     },
   ],
+
+},
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
+{
+  cat:`UC`,
+  q:`What is Unity Catalog & Have you used ?`,
+  answer:` 💠 Unity Catalog is a unified data governance solution for Databricks that provides centralized metadata management, lineage tracking, and compliance capabilities.
+  <br> 💠 Yes, I've worked with Unity Catalog in my current project at TCS 
+  <br> 💠 In our project, Unity Catalog is used as the centralized governance layer for ADLS Gen2. Storage access is managed through Storage Credentials and External Locations, allowing secure and governed access to data lake paths.
+  <br> 💠 We organize data using the 3 level namespace i.e,. Catalog → Schema → Table hierarchy. <s>For example, schemas are aligned to Bronze, Silver, and Gold layers of our Medallion architecture</s>. We also use Volumes for governing raw files such as CSV and Excel files.
+  <br>💠 Compared to Hive Metastore which is workspace scoped, Unity Catalog provides whole account scoped centralized governance, fine-grained access control, lineage, and auditing across workspaces.`,
+  children:[
+    {
+      q:`Unity Catalog vs Hive Metastore`,
+      a:`Hive Metastore is workspace-scoped — each workspace has its own isolated metastore, so tables can't be shared across teams without duplicating data. Access control is coarse (table-level only), there's no lineage or audit logging, and ADLS access requires service principals hardcoded in notebooks.
+<br> 💠 Unity Catalog is account-scoped — one metastore shared across all workspaces, enabling cross-team data sharing without duplication. It adds fine-grained access control (column and row level), built-in data lineage, audit logs, and ADLS connectivity via Access Connector — no credentials in code.`,
+      children:[],
+    },
+    {
+      q:`Storage credentials vs External locations`,
+      a:`A Storage Credential is a UC object which  defines how Databricks authenticates to cloud storage(ADLS), typically through a managed identity (Access Connector).
+      <br> 💠 An External Location maps a storage path with a Storage Credential, allowing Unity Catalog to securely govern access to that path.`,
+      children:[],
+    },
+    {
+        q:`managed vs external tables/volumes`,
+        a:` Managed tables are fully owned by Unity Catalog means both metadata + data files. so dropping the table removes both metadata and data <b>Managed tables are stored in the metastore-managed storage location.</b>.
+        <br> 💠 External tables store metadata in Unity Catalog but keep data in a user-managed ADLS location; dropping the table removes only metadata while the underlying files remain. `,
+        children:[],
+    },
+    {
+      q:`what is a volume`,
+      a:`Volumes allow governance of non-tabular files such as CSV, Excel, JSON, PDFs, and images under Unity Catalog without registering them as tables.`,
+      children:[],
+    },
+    {
+      q:`Why direct storage access not given to users / what happens`,
+      a:` In our project, end users are not given direct ADLS access. If a user has direct access to the storage account, they can bypass Unity Catalog completely and read the raw files as-is . That means sensitive fields such as SSN, member identifiers, or PII data would be visible in their original form.
+      <br> 💠 So only the Access Connector managed identity holds the IAM roles on the storage account. Every data request flows through Databricks and UC — governance is enforced consistently across notebooks, BI tools, and APIs`,
+      children:[],
+    },
+    {
+      q:`HOw &who permissions are managed`,
+      a:` In our project, permissions are managed by the platform and governance teams through Azure AD groups that are synchronized into Databricks. Permissions are assigned to groups rather than individual users, making access management scalable and easier to govern.
+      <br> 💠 Storage access is handled through Storage Credentials backed by a Managed Identity, and users consume data through Unity Catalog objects rather than directly through ADLS.
+<br> 💠 Overall, the principle followed is least privilege access, where each role receives only the permissions required to perform its responsibilities.
+    <pre><code class="language-sql">-- To a group (recommended — manage membership, not individual grants)
+        GRANT SELECT ON TABLE ustechcentral.gold.claims TO "analyst_team";
+        -- To a specific user (not recommended)
+        GRANT SELECT ON TABLE ustechcentral.gold.claims TO "prathap@company.com"
+    </code></pre>`,
+      children:[
+        {
+          q:` do you have access to sensitive data like SSN, DOB, MemberID, ProviderID?`,
+          a:`In our project, sensitive fields like SSN and home address are handled at the source level itself — data comes from the client's PostgreSQL system already tokenized  before landing in our pipeline. 
+<br> 💠 we work with business identifiers like MemberID, SubscriberID, ClaimID for all ETL operations since they are not considered hard PIIs. <s>DOB only use year for age based analytics</s> Raw PII visibility is restricted to the client's compliance team — we don't interact with it at any layer of our Medallion pipeline.`,
+          children:[],
+        }
+      ],
+    },
+
+  ],
+
+},
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
+{
+  cat:`UC`,
+  q:`How HIpaa is followed`,
+  answer:`HIPAA compliance in our project is handled at multiple levels.
+  <ul>
+  <li>In our project, sensitive fields like SSN and home address are handled at the source level itself — data comes from the client's PostgreSQL system already tokenized  before landing in our pipeline.</li>
+  <li>Business identifiers like MemberID, ClaimID, ProviderID, NDC codes are accessible as they're needed for ETL and joins — these are not considered hard PII under HIPAA.  Raw PII visibility is restricted to the client's compliance team — we don't interact with it at any layer of our Medallion pipeline.</li>
+  <li>At the pipeline level, no PII fields are logged or printed in notebook outputs or job logs.</li>
+  <li>Access is controlled through Azure AD groups synced into Databricks via SCIM — we follow the least privilege principle, each group gets exactly what their job needs.</li>
+  <ul>`,
+  children:[],
 
 },
 ]
