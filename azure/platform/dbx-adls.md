@@ -113,7 +113,7 @@ Azure Portal
 
 ## 1. Access Connector (Azure Resource)
 
-> **What it is:** An Azure-managed identity resource that lets Unity Catalog talk to ADLS without hardcoding credentials.
+> **What it is:** The Access Connector is an Azure resource that provides a Managed Identity and lets Unity Catalog talk to ADLS without hardcoding credentials.
 
 **Create it:**
 - Azure Portal → search "Access Connector for Azure Databricks" → Create
