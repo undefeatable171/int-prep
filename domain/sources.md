@@ -68,7 +68,7 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 | Upsert via MERGE         | encounters, claims, claims_adjudication                          |
 | Full reload (reference)  | icd10_reference, cpt_reference, fee_schedule, quality_benchmarks |
 | PII / HIPAA sensitive    | patients (ssn_hash), lab_results, eligibility                    |
-| Watermark-driven         | All 7 PostgreSQL tables via `updated_at`                       |
+| Watermark-driven         | All 7 PostgreSQL tables via`updated_at`                        |
 | Drop-zone (no watermark) | All CSV + Excel — filename date or ingest_date partition        |
 
 ---
@@ -96,7 +96,7 @@ One parameterized notebook, ~18 parallel tasks — one per Bronze table.
 
 ## cluster strategy
 
-We use job clusters across all pipelines — DBR 14.3 LTS, autoscaling on Silver and Gold, Photon enabled where MERGE and aggregations benefit. Pipeline processes 8 to 10 GB per run, 45 to 50 GB daily.
+We use job clusters across all pipelines — DBR 16.4 LTS(spark 3.5.2 , scala 2/12), standard DS3_v2(14 gb memory,4cores) autoscaling on Silver and Gold(1 to 8), Photon enabled where MERGE and aggregations benefit. Pipeline processes 8 to 10 GB per run, 45 to 50 GB daily.
 
 #### KPIs — Gold Layer
 
