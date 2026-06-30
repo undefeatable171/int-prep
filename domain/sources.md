@@ -28,12 +28,12 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 
 ## Source 2 — CSV Files (ADLS Gen2 Landing Zone)
 
-**Who sends them:** External parties — payers, lab vendors, clearinghouses | **Ingestion:** Filename date or ingest_date partition (no watermark)
+**Who sends them:** External parties — payers, clearinghouses | **Ingestion:** Filename date or ingest_date partition (no watermark)
 
 | File                                 | Who Sends It                     | Key Columns                                                                                               | What It Means                                                                                    | Fact/Dim  | Frequency            |
 | ------------------------------------ | -------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | --------- | -------------------- |
 | `eligibility_extract_YYYYMMDD.csv` | Payer (insurance company)        | member_id, plan_id, effective_date, termination_date                                                      | Payer's version of member enrollment                                                             | Dim       | Daily                |
-| `lab_results_YYYYMMDD.csv`         | Lab vendor (Quest/LabCorp style) | patient_id,encounter_id, order_id(lab internal), loinc_code, result_value, abnormal_flag, collection_date | Test results per patient — LOINC codes(what test done), result values, abnormal flags           | Fact      | Daily                |
+| `payer_auth_response_YYYYMMDD.csv`         | Payer/clearingHouse |auth_id,auth_status,payer_id,claim_id,auth_start_date,auth_end_date, denial_reason  | Payer's decision on prior authorization requests — approved or denied, units authorized, validity window| Fact      | Daily                |
 | `claims_adjudication_YYYYMMDD.csv` | Clearinghouse / Payer            | claim_id, paid_amount, denial_code, claim_status, payment_date                                            | Adjudication result — approved/denied, paid amount, denial codes. Updates Gold claims via MERGE | Fact      | Daily                |
 | `icd10_reference.csv`              | CMS (we download, drop to ADLS)  | icd10_code, description                                                                                   | Code to description mapping for ICD-10 — 70K+ codes                                             | Reference | Annual (full reload) |
 | `cpt_reference.csv`                | CMS (we download, drop to ADLS)  | cpt_code, description                                                                                     | Code to description mapping for CPT procedures — 10K+ codes                                     | Reference | Annual (full reload) |
@@ -44,21 +44,15 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 
 **Who sends them:** Internal business teams | **Ingestion:** Ad-hoc / scheduled uploads — not real-time
 
-| File                                 | Who Sends It                | Key Columns                                                                       | What It Means                                                                                      | Fact/Dim | Frequency |
-| ------------------------------------ | --------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------- | --------- |
-| `prior_auth_tracker_YYYYMMDD.xlsx` | Utilization management team | auth_id, patient_id, cpt_code, payer_id, auth_status, approved_units, expiry_date | Insurance pre-approvals needed before procedures — was auth in place before service was rendered? | Fact     | Daily     |
-| `daily_census_YYYYMMDD.xlsx`       | Facility operations team    | facility_id, unit, date, total_beds, occupied_beds, discharges, admissions        | Daily bed occupancy snapshot per facility/unit — feeds capacity and throughput KPIs in Gold       | Fact     | Daily     |
+| File | Who Sends It | Key Columns | What It Means | Fact/Dim | Frequency |
+|---|---|---|---|---|---|
+| fee_schedule_YYYY.xlsx | Finance team | cpt_code, payer, allowed_amount, effective_date | What each payer has contractually agreed to reimburse for each CPT code — used to compute expected vs actual reimbursement | Reference | Annual |
+| provider_roster_MMM_YYYY.xlsx | Credentialing team | npi, specialty, contract_tier, in_network_flag, effective_date | Manual credentialing updates — contract tier and in-network status per provider, used to determine network status at time of service | Reference | Monthly |
 
----
+###### Key Definitions
 
-### Monthly / Annual (Reference — slow changing)
-
-| File                              | Who Sends It                   | Key Columns                                                    | What It Means                                                                                   | Fact/Dim   | Frequency |
-| --------------------------------- | ------------------------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------- | --------- |
-| `provider_roster_MMM_YYYY.xlsx` | Credentialing / Contracts team | npi, specialty, contract_tier, in_network_flag, effective_date | Manual provider updates — contract tier, in-network status. Merged into Provider Dim via MERGE | Dim (SCD2) | Monthly   |
-| `fee_schedule_YYYY.xlsx`        | Finance team                   | cpt_code, payer, allowed_amount, effective_date                | What each payer reimburses per CPT code — used to compute expected vs actual reimbursement     | Reference  | Annual    |
-
----
+**In-network flag:** Indicates whether a provider has a contract with a payer. In-network claims usually have predictable reimbursement and lower patient costs, while out-of-network claims have higher denial risk and less predictable payments. Used to analyze denials and reimbursements. |
+**Contract tier:** The specific reimbursement level negotiated between a provider and payer,within-in-network flag. It varies by provider (NPI) based on factors like specialty, volume, and bargaining power, and is used to analyze reimbursement differences across providers and service lines.
 
 ## Quick Reference — Gold Layer Treatment
 
@@ -66,8 +60,8 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 | ------------------------ | ---------------------------------------------------------------- |
 | SCD Type 2 (MERGE)       | patients, providers, eligibility_extract                         |
 | Upsert via MERGE         | encounters, claims, claims_adjudication                          |
-| Full reload (reference)  | icd10_reference, cpt_reference, fee_schedule, quality_benchmarks |
-| PII / HIPAA sensitive    | patients (ssn_hash), lab_results, eligibility                    |
+| Full reload (reference)  | icd10_reference, cpt_reference, fee_schedule, provider_roster |
+| PII / HIPAA sensitive    | patients (ssn_hash), Address, Phonenumber                   |
 | Watermark-driven         | All 7 PostgreSQL tables via`updated_at`                        |
 | Drop-zone (no watermark) | All CSV + Excel — filename date or ingest_date partition        |
 
@@ -107,3 +101,63 @@ We use job clusters across all pipelines — DBR 16.4 LTS(spark 3.5.2 , scala 2/
 | Denial Rate by CPT Code         | Which procedures get denied most                        | Finance / Revenue Cycle |
 | Bed Occupancy Rate              | % of beds occupied per facility per day                 | Operations              |
 | Prior Auth Approval Rate        | % of pre-authorizations approved by payer               | Utilization Management  |
+
+# Requirement Documents (Quick Revision)
+
+## 1. Functional Requirements
+**What to build**
+- Business objective
+- Features
+- Refresh frequency
+- High-level requirements
+
+Example: Refresh claims data every 4 hours.
+
+---
+
+## 2. Mapping Document
+**How to build**
+- Source → Target mapping
+- Data types
+- Transformation rules
+- Join keys
+
+Example: patients.name → dim_patient.patient_name (Trim)
+
+---
+
+## 3. Required Fields
+**What columns are needed**
+- Mandatory output columns
+- Target schema
+
+Example: claim_id, patient_id, claim_status
+
+---
+
+## 4. Business Rules
+**How data should behave**
+- Validation
+- Filtering
+- Default values
+- SCD/Derived logic
+
+Example: NULL status → "PENDING"
+
+---
+
+## 5. Expected Output
+**How to verify**
+- Sample output
+- Expected values
+- Validation dataset
+
+Used to compare actual vs expected results.
+
+---
+
+## Data Engineer Role
+- Understand requirements
+- Clarify ambiguities
+- Implement transformations
+- Validate output
