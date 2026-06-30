@@ -272,17 +272,5 @@ children:[],
 
 },
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
-{
-  cat:`UC`,
-  q:`How HIpaa is followed`,
-  answer:`HIPAA compliance in our project is handled at multiple levels.
-  <ul>
-  <li>In our project, sensitive fields like SSN and home address are handled at the source level itself — data comes from the client's PostgreSQL system already tokenized  before landing in our pipeline.</li>
-  <li>Business identifiers like MemberID, ClaimID, ProviderID, NDC codes are accessible as they're needed for ETL and joins — these are not considered hard PII under HIPAA.  Raw PII visibility is restricted to the client's compliance team — we don't interact with it at any layer of our Medallion pipeline.</li>
-  <li>At the pipeline level, no PII fields are logged or printed in notebook outputs or job logs.</li>
-  <li>Access is controlled through Azure AD groups synced into Databricks via SCIM — we follow the least privilege principle, each group gets exactly what their job needs.</li>
-  <ul>`,
-  children:[],
 
-},
 ]
