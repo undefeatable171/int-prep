@@ -236,13 +236,19 @@ Each job: 3 sequential tasks, linear dependency, fully independent of Jobs 1–3
 ### Control Table — Single Mechanism Across All 7 Jobs
 
 Delta table: `job_name | table_name | run_id | status | rows_written | timestamp`
+| Column           | Type      | Purpose                                              |
+| ---------------- | --------- | ---------------------------------------------------- |
+| `pipeline_name`  | STRING    | Bronze_Postgres, Bronze_CSV, Silver, Gold            |
+| `source_name`    | STRING    | claims, patients, eligibility, provider_roster       |
+| `run_id`         | STRING    | Unique pipeline execution ID                         |
+| `business_date`  | DATE      | Business date of the data/file                       |
+| `file_name`      | STRING    | CSV/Excel filename (NULL for PostgreSQL)             |
+| `status`         | STRING    | SUCCESS, FAILED, SKIPPED_FILE_NOT_FOUND|
+| `rows_processed` | BIGINT    | Number of records processed                          |
+| `start_time`     | TIMESTAMP | Pipeline start time                                  |
+| `end_time`       | TIMESTAMP | Pipeline completion time                             |
+| `error_message`  | STRING    | Error details if failed                              |
 
-| Status                 | Meaning                           | Downstream behavior                       |
-| ---------------------- | --------------------------------- | ----------------------------------------- |
-| SUCCESS                | Loaded normally                   | Proceed                                   |
-| SKIPPED_FILE_NOT_FOUND | CSV/Excel file absent at trigger  | Skip downstream for this table, alert ops |
-| SKIPPED_NO_NEW_DATA    | Silver/Gold MERGE found zero rows | No-op, carry forward last known state     |
-| FAILED                 | PostgreSQL retries exhausted      | Pipeline fails, page DE on-call           |
 
 **PostgreSQL tasks also write to control table** — not for skip logic, but for audit trail and partial rerun efficiency (know which tables already succeeded if rerunning after a fix).
 
