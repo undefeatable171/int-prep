@@ -54,6 +54,22 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 **In-network flag:** Indicates whether a provider has a contract with a payer. In-network claims usually have predictable reimbursement and lower patient costs, while out-of-network claims have higher denial risk and less predictable payments. Used to analyze denials and reimbursements. |
 **Contract tier:** The specific reimbursement level negotiated between a provider and payer,within-in-network flag. It varies by provider (NPI) based on factors like specialty, volume, and bargaining power, and is used to analyze reimbursement differences across providers and service lines.
 
+**Why Excel is justified:** Both are low-frequency, human-managed internal business processes. No system generates fee schedules or credentialing rosters automatically. Annual/monthly cadence makes them operationally safe as Excel.
+
+---
+
+---
+
+## Cadence Rationale — Defensible
+
+| Source              | Cadence                         | Why                                                                                                                                                                            |
+| ------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| PostgreSQL          | Every 4 hours                   | Clinical/claims data changes intraday. Finance/ops need same-day visibility into submissions, not just next-day. Not real-time — batch is appropriate, but daily is too slow. |
+| CSV transactional   | Daily, fixed cutoff (e.g. 7 AM) | Payer/clearinghouse sends one batch file per day. Checking more often wastes compute — there's nothing to pull. CSV is exactly as fresh as the vendor allows.                 |
+| CSV/Excel reference | Monthly or annual               | Matches business cycle — CMS publishes ICD-10 annually, finance renegotiates fee schedules annually, credentialing reviews rosters monthly.                                   |
+
+**Mixed cadence is standard, not a flaw.** Each source refreshes based on when its data actually changes, not to match an artificial uniform schedule.
+
 ---
 
 ---
@@ -172,26 +188,110 @@ Gold Layer - Derived Business Columns
 
 ---
 
-## Pipeline Architecture — 8 Pipelines Total
+---
 
-### Bronze Layer (3 Pipelines)
+## Orchestration — 7 Databricks Workflow Jobs
 
-One parameterized notebook per pipeline. Each table/file runs as a parallel task with different parameters.
-Postgres =>7 parallel tasks
-Excel=> 2 parallel tasks
-csv=> 5 parallel task
+### Job 1 — Bronze PostgreSQL
 
-### Silver Layer (1 Pipeline)
+- **Trigger:** Every 4 hours, cron
+- **Tasks:** 6 parallel, independent DAG nodes
+- **Failure:** Retry 2x → pipeline fails → DE on-call → manual fix and rerun. Watermark unchanged, safe reprocessing.
+- **Control table:** Writes SUCCESS or FAILED per table per run
 
-One parameterized notebook, ~18 parallel tasks — one per Bronze table.
+### Job 2 — Bronze Daily CSV
 
-### Gold Layer (3 Pipelines)
+- **Trigger:** Once daily, fixed cutoff time (e.g. 7 AM)
+- **Tasks:** 3 parallel (eligibility, adjudication, auth_response)
+- **File check:** Single existence check, no polling. Present → process. Absent → SKIPPED_FILE_NOT_FOUND, ops alert, continue.
+- **Control table:** Writes SUCCESS or SKIPPED_FILE_NOT_FOUND per file
 
-| Pipeline             | What It Does                                                                            |
-| -------------------- | --------------------------------------------------------------------------------------- |
-| Gold — Dims         | SCD Type 2 MERGE on patients, providers, eligibility, provider roster                   |
-| Gold — Facts        | MERGE upsert on encounters, claims, lab results, adjudication, prior auth, availability |
-| Gold — Aggregations | KPI summary tables on top of facts                                                      |
+### Job 3 — Silver + Gold Core
+
+- **Trigger:** After Job 1 completes (Workflows job dependency)
+- **Runs:** Every 4 hours
+- **Stage 1 — Silver (parallel):**
+  - 9 transactional Silver tasks
+  - CSV-backed tasks check control table first — if SKIPPED_FILE_NOT_FOUND → no-op, carry forward
+  - Dedup → null handling → MERGE
+- **Stage 2 — Gold Dims (after Silver):**
+  - 2 tasks: dim_patients, dim_providers
+  - SCD2 MERGE — no-op if nothing changed
+- **Stage 3 — Gold Facts (parallel with Dims, after Silver):**
+  - 6 tasks — join to dims + reference tables, derive business columns, upsert MERGE
+  - CSV-backed fact tasks complete as no-op on cycles where Silver had no new data
+- **No aggregation stage** — BI builds on top of enriched facts via views
+
+### Jobs 4–7 — Reference Source Pipelines (Self-Contained E2E)
+
+| Job                      | Schedule | Source | Pattern                                                        |
+| ------------------------ | -------- | ------ | -------------------------------------------------------------- |
+| Job 4 — icd10           | Annual   | CSV    | Bronze → Silver (reload) → Gold (reload ref_icd10)           |
+| Job 5 — cpt             | Annual   | CSV    | Bronze → Silver (reload) → Gold (reload ref_cpt)             |
+| Job 6 — fee_schedule    | Annual   | Excel  | Bronze → Silver (reload) → Gold (reload ref_fee_schedule)    |
+| Job 7 — provider_roster | Monthly  | Excel  | Bronze → Silver (reload) → Gold (reload ref_provider_roster) |
+
+Each job: 3 sequential tasks, linear dependency, fully independent of Jobs 1–3.
+
+### Control Table — Single Mechanism Across All 7 Jobs
+
+Delta table: `job_name | table_name | run_id | status | rows_written | timestamp`
+
+| Status                 | Meaning                           | Downstream behavior                       |
+| ---------------------- | --------------------------------- | ----------------------------------------- |
+| SUCCESS                | Loaded normally                   | Proceed                                   |
+| SKIPPED_FILE_NOT_FOUND | CSV/Excel file absent at trigger  | Skip downstream for this table, alert ops |
+| SKIPPED_NO_NEW_DATA    | Silver/Gold MERGE found zero rows | No-op, carry forward last known state     |
+| FAILED                 | PostgreSQL retries exhausted      | Pipeline fails, page DE on-call           |
+
+**PostgreSQL tasks also write to control table** — not for skip logic, but for audit trail and partial rerun efficiency (know which tables already succeeded if rerunning after a fix).
+
+### Dependency Chain
+
+```
+Job 1: Bronze PostgreSQL (4hr)
+    │
+    ▼
+Job 3: Silver + Gold Core (4hr)
+    ├── Silver MERGE (all 9 transactional tables)
+    ├── Gold Dims SCD2 (after Silver)
+    └── Gold Facts upsert (after Silver, parallel with Dims)
+ 
+Job 2: Bronze Daily CSV (daily 7AM)
+    │ (writes to control table)
+    └── Silver CSV tasks pick up status on next Job 3 cycle
+ 
+Jobs 4-7: Reference E2E pipelines (own cron, fully independent)
+    └── Gold reference tables updated, joined into facts on next Gold run
+```
+
+---
+
+## Consumption
+
+- **BI team:** Power BI connects to views on top of Gold Delta tables — never raw tables directly
+- **Data science team:** Delta time travel on Gold facts for historical model training
+- **Finance / ops teams:** Consume via BI views — claim denial patterns, days in AR, reimbursement gaps, prior auth compliance
+
+---
+
+## Senior Keywords — Say These Out Loud
+
+`incremental watermark` · `idempotent` · `cumulative Delta table` · `MERGE on business key` · `dedup on incoming batch before MERGE` · `SCD Type 2 close-and-insert` · `full reload for reference data` · `pipeline control table` · `status-driven downstream processing` · `single file-presence check, no polling` · `Delta ACID atomic commit or rollback` · `graceful skip vs hard failure` · `task-level isolation in DAG` · `source-aligned Silver, consumption-aligned Gold` · `derived columns where business rules live` · `Delta time travel` · `Photon-enabled MERGE workloads`
+
+---
+
+## What Not to Say
+
+- ~~"We build KPIs"~~ → say "we build the data layer that powers those metrics"
+- ~~"We joined with stakeholders to define KPI formulas"~~ → say "we implement against specs from BI/business analysts"
+- ~~"Silver does SCD Type 2"~~ → SCD2 is Gold only. Silver holds current state via MERGE upsert.
+- ~~"Snowflake"~~ → not in this architecture. Don't mention it.
+- ~~"CSV refreshes every 4 hours"~~ → CSV is daily, vendor sends once per day
+- ~~"Daily census Excel"~~ → removed. Not in final design.
+- ~~"Lab results CSV"~~ → removed. Didn't connect to any Gold output.
+
+---
 
 ## cluster strategy
 
