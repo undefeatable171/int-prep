@@ -32,7 +32,6 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 
 | File                                 | Who Sends It                    | Key Columns                                                                        | What It Means                                                                                             | Fact/Dim  | Frequency            |
 | ------------------------------------ | ------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------- | -------------------- |
-| `eligibility_extract_YYYYMMDD.csv` | Payer (insurance company)       | member_id, plan_id, effective_date, termination_date                               | Payer's version of member enrollment                                                                      | Dim       | Daily                |
 | `payer_auth_response_YYYYMMDD.csv` | Payer/clearingHouse             | auth_id,auth_status,payer_id,claim_id,auth_start_date,auth_end_date, denial_reason | Payer's decision on prior authorization requests — approved or denied, units authorized, validity window | Fact      | Daily                |
 | `claims_adjudication_YYYYMMDD.csv` | Clearinghouse / Payer           | claim_id, paid_amount, denial_code, claim_status, payment_date                     | Adjudication result — approved/denied, paid amount, denial codes. Updates Gold claims via MERGE          | Fact      | Daily                |
 | `icd10_reference.csv`              | CMS (we download, drop to ADLS) | icd10_code, description                                                            | Code to description mapping for ICD-10 — 70K+ codes                                                      | Reference | Annual (full reload) |
@@ -87,21 +86,20 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 
 ## Transactional Tables (MERGE Pattern)
 
-| Table               | Merge Key    | Critical Null Drop                 |
-| ------------------- | ------------ | ---------------------------------- |
-| patients            | patient_id   | patient_id                         |
-| providers           | npi          | npi                                |
-| encounters          | encounter_id | encounter_id, patient_id           |
-| claims              | claim_id     | claim_id, patient_id, encounter_id |
-| diagnoses           | diagnosis_id | diagnosis_id, icd10_code           |
-| procedures          | procedure_id | procedure_id, cpt_code             |
-| eligibility_extract | member_id    | member_id, plan_id                 |
-| claims_adjudication | claim_id     | claim_id                           |
-| payer_auth_response | auth_id      | auth_id, patient_id                |
+| Table                   | Merge Key    | Critical Null Drop                 |
+| ----------------------- | ------------ | ---------------------------------- |
+| patients                | patient_id   | patient_id                         |
+| providers               | npi          | npi                                |
+| encounters              | encounter_id | encounter_id, patient_id           |
+| claims                  | claim_id     | claim_id, patient_id, encounter_id |
+| diagnoses               | diagnosis_id | diagnosis_id, icd10_code           |
+| procedures              | procedure_id | procedure_id, cpt_code             |
+| claims_adjudication     | claim_id     | claim_id                           |
+| payer_auth_response     | auth_id      | auth_id, patient_id                |
 
 ---
 
-## Reference Tables (Full Truncate-Reload Pattern — No Merge Key)
+## Reference Tables (Full Truncate-Reload Pattern — No Merge Key) Till silver Only
 
 | Table           | Source         | Reload Trigger   | Notes                                      |
 | --------------- | -------------- | ---------------- | ------------------------------------------ |
@@ -142,7 +140,7 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 | ------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | fact_encounters          | silver.encounters          | dim_patients (patient_id), dim_providers (provider_npi)                                                                                    | encounter_id | None significant — pass-through with dimension context attached                                                           |
 | fact_claims              | silver.claims              | dim_patients, dim_providers, ref_fee_schedule (cpt_code+payer_id), fact_claims_adjudication (claim_id), ref_provider_roster (provider_npi) | claim_id     | days_in_ar, ar_bucket, expected_reimbursement, actual_reimbursement, reimbursement_gap, underpayment_flag, in_network_flag |
-| fact_diagnoses           | silver.diagnoses           | ref_icd10 (icd10_code)                                                                                                                     | diagnosis_id | diagnosis_description                                                                                                      |
+| fact_diagnoses           | silver.diagnoses           | ref_icd10 (icd10_code<br />)                                                                                                               | diagnosis_id | diagnosis_description                                                                                                      |
 | fact_procedures          | silver.procedures          | ref_cpt (cpt_code)                                                                                                                         | procedure_id | procedure_description                                                                                                      |
 | fact_claims_adjudication | silver.claims_adjudication | fact_claims (claim_id)                                                                                                                     | claim_id     | denial_flag, denial_reason                                                                                                 |
 | fact_payer_auth_response | silver.payer_auth_response | fact_encounters (patient_id+cpt_code, date range)                                                                                          | auth_id      | auth_match_flag, service_before_auth_flag, units_utilized                                                                  |
@@ -177,14 +175,10 @@ Gold Layer - Derived Business Columns
 
 | Category                 | Tables                                                        |
 | ------------------------ | ------------------------------------------------------------- |
-| SCD Type 2 (MERGE)       | patients, providers, eligibility_extract                      |
+| SCD Type 2 (MERGE)       | patients, providers                |
 | Upsert via MERGE         | encounters, claims, claims_adjudication                       |
 | Full reload (reference)  | icd10_reference, cpt_reference, fee_schedule, provider_roster |
 | PII / HIPAA sensitive    | patients (ssn_hash), Address, Phonenumber                     |
-| Watermark-driven         | All 7 PostgreSQL tables via`updated_at`                     |
-| Drop-zone (no watermark) | All CSV + Excel — filename date or ingest_date partition     |
-
-
 
 ---
 
@@ -202,7 +196,7 @@ Gold Layer - Derived Business Columns
 ### Job 2 — Bronze Daily CSV
 
 - **Trigger:** Once daily, fixed cutoff time (e.g. 7 AM)
-- **Tasks:** 3 parallel (eligibility, adjudication, auth_response)
+- **Tasks:** 2 parallel ( adjudication, auth_response)
 - **File check:** Single existence check, no polling. Present → process. Absent → SKIPPED_FILE_NOT_FOUND, ops alert, continue.
 - **Control table:** Writes SUCCESS or SKIPPED_FILE_NOT_FOUND per file
 
@@ -211,7 +205,7 @@ Gold Layer - Derived Business Columns
 - **Trigger:** After Job 1 completes (Workflows job dependency)
 - **Runs:** Every 4 hours
 - **Stage 1 — Silver (parallel):**
-  - 9 transactional Silver tasks
+  - 8 transactional Silver tasks
   - CSV-backed tasks check control table first — if SKIPPED_FILE_NOT_FOUND → no-op, carry forward
   - Dedup → null handling → MERGE
 - **Stage 2 — Gold Dims (after Silver):**
@@ -236,19 +230,19 @@ Each job: 3 sequential tasks, linear dependency, fully independent of Jobs 1–3
 ### Control Table — Single Mechanism Across All 7 Jobs
 
 Delta table: `job_name | table_name | run_id | status | rows_written | timestamp`
-| Column           | Type      | Purpose                                              |
-| ---------------- | --------- | ---------------------------------------------------- |
-| `pipeline_name`  | STRING    | Bronze_Postgres, Bronze_CSV, Silver, Gold            |
-| `source_name`    | STRING    | claims, patients, eligibility, provider_roster       |
-| `run_id`         | STRING    | Unique pipeline execution ID                         |
-| `business_date`  | DATE      | Business date of the data/file                       |
-| `file_name`      | STRING    | CSV/Excel filename (NULL for PostgreSQL)             |
-| `status`         | STRING    | SUCCESS, FAILED, SKIPPED_FILE_NOT_FOUND|
-| `rows_processed` | BIGINT    | Number of records processed                          |
-| `start_time`     | TIMESTAMP | Pipeline start time                                  |
-| `end_time`       | TIMESTAMP | Pipeline completion time                             |
-| `error_message`  | STRING    | Error details if failed                              |
 
+| Column             | Type      | Purpose                                            |
+| ------------------ | --------- | -------------------------------------------------- |
+| `pipeline_name`  | STRING    | Bronze_Postgres, Bronze_CSV, Silver, Gold          |
+| `source_name`    | STRING    | claims, patients, ==eligi==bility, provider_roster |
+| `run_id`         | STRING    | Unique pipeline execution ID                       |
+| `business_date`  | DATE      | Business date of the data/file                     |
+| `file_name`      | STRING    | CSV/Excel filename (NULL for PostgreSQL)           |
+| `status`         | STRING    | SUCCESS, FAILED, SKIPPED_FILE_NOT_FOUND            |
+| `rows_processed` | BIGINT    | Number of records processed                        |
+| `start_time`     | TIMESTAMP | Pipeline start time                                |
+| `end_time`       | TIMESTAMP | Pipeline completion time                           |
+| `error_message`  | STRING    | Error details if failed                            |
 
 **PostgreSQL tasks also write to control table** — not for skip logic, but for audit trail and partial rerun efficiency (know which tables already succeeded if rerunning after a fix).
 
@@ -259,7 +253,7 @@ Job 1: Bronze PostgreSQL (4hr)
     │
     ▼
 Job 3: Silver + Gold Core (4hr)
-    ├── Silver MERGE (all 9 transactional tables)
+    ├── Silver MERGE (all 8 transactional tables)
     ├── Gold Dims SCD2 (after Silver)
     └── Gold Facts upsert (after Silver, parallel with Dims)
  
