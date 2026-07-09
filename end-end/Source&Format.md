@@ -71,10 +71,12 @@ df = spark.createDataFrame(all_records)
 ---
 
 ## Spark Abstractions — RDD vs DataFrame vs Dataset
+
 An abstraction is a simplified way of interacting with something complex by hiding the implementation details.
 
 **RDD** (Resilent Distributed dataset ) - The lowest-level abstraction in Spark, representing a distributed collection of objects. Gives full control over data processing but lacks built-in query optimizations, so it's generally slower for ETL.
-**DataFrame** - A DataFrame is distributed colletion of data organized into named columns with schema, similar to a SQL table — but split across multiple Spark executor nodes. 
+**DataFrame** - A DataFrame is distributed colletion of data organized into named columns with schema, similar to a SQL table — but split across multiple Spark executor nodes.
+
 - It is schema-aware, support SQL operations, and benefit from Catalyst Optimizer and the Tungsten execution engine, making them much faster and more suitable for production ETL pipelines.
 
  **Dataset**  - RDD type-safety + DataFrame optimization. Scala/Java only — not available in PySpark.
@@ -117,12 +119,12 @@ Parquet, ORC, Delta store typed structured data → no malformed-row handling ne
 ## Write Modes
 
 
-| Mode            | Behavior                                      |
-| ----------------- | ----------------------------------------------- |
-| `append`        | Adds new data to existing                     |
-| `overwrite`     | Replaces existing data                        |
-| `ignore`        | No-op if data already exists                  |
-| `errorIfExists` | Throws error if data already exists (default) |
+| Mode            | Behavior  if path exists                      | Behaviour if  path empty    |
+| ----------------- | ----------------------------------------------- | ----------------------------- |
+| `append`        | Adds new data to existing                     | writes data to empty folder |
+| `overwrite`     | Replaces existing data                        | writes data to empty folder |
+| `ignore`        | No-op if data already exists                  | writes data to empty folder |
+| `errorIfExists` | Throws error if data already exists (default) | throws error even if empty  |
 
 **Delta overwrite** is transactional — writes new files, commits via `_delta_log`, marks old files obsolete.
 **CSV/Parquet overwrite** physically deletes existing files and rewrites.
@@ -133,22 +135,47 @@ Parquet, ORC, Delta store typed structured data → no malformed-row handling ne
 
 **Schema Enforcement** — write-time validation. Incoming data must match target schema. Incompatible columns or types → write rejected.
 
-- Supported by: Delta Lake, Iceberg, Hudi
-- Not supported by: CSV, JSON, Parquet (file formats have no enforcement mechanism)
+- Delta, Hudi, Iceberg enforce schema during **writes** (fails if changes) because they are table formats with metadata/transaction logs and validate write.
+  - If the incoming schema changes & Evolution req : Append → `mergeSchema=true` ; Overwrite → `OverwriteSchema=true` ; Merge → s`park.databricks.delta.schema.autoMerge.enabled=true`
+- Parquet, CSV, JSON, Excel are file formats. They do not enforce a table schema, so different-schema files can coexist in the same folder.
+
+#### During Reads (multiple files):
+
+- **Delta** → Reads using the schema stored in the transaction log. Files are expected to conform, so no schema merging is normally required.
+- **Parquet/ORC** → Each file stores its own schema in metadata. If schemas differ across files, use: ```python .option("mergeSchema", "true")```
+- CSV/JSON/Excel → No mergeSchema support. Spark either: infers schema / need to give explicit schema. If files differ, Spark reads only the first file(Random) and assumes remaining files have same schema and if not defaults to NULL.
 
 **Schema Evolution** — controlled schema changes (add columns, widen types) without recreating the table. Existing files not rewritten — metadata updated. Reads return NULL for new columns missing in older files.
 
-- Fully supported by: Delta Lake, Iceberg, Hudi
-- Parquet: limited, engine-dependent only
 
-> is parquet allows enforcement ?
-Parquet stores schema in file footer metadata but does not enforce it during writes. Enforcement is a table-format concern, not a file-format concern.
+| Format      | Schema enforced on**write**? | Schema evolution on**write**                  | Multiple-file**read**  behavior                                                                             |
+| ------------- | ------------------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Delta**   | ✅ Yes                       | `mergeSchema`, `overwriteSchema`, `autoMerge` | Reads schema from`_delta_log`; consistent                                                                   |
+| **Hudi**    | ✅ Yes                       | Supported                                     | Uses table metadata                                                                                         |
+| **Iceberg** | ✅ Yes                       | Supported                                     | Uses table metadata                                                                                         |
+| **Parquet** | ❌ No                        | ❌ N/A                                        | Different schemas can coexist; use`mergeSchema=true` to merge                                               |
+| **ORC**     | ❌ No                        | ❌ N/A                                        | Supports schema merging similar to Parquet                                                                  |
+| **JSON**    | ❌ No                        | ❌ N/A                                        | Infers a**union schema**; missing fields become `NULL`                                                      |
+| **CSV**     | ❌ No                        | ❌ N/A                                        | Expects same schema; no merging. If schemas differ, behavior is unpredictable (depends on file read order). |
+| **Excel**   | ❌ No                        | ❌ N/A                                        | Similar to CSV; expects same schema, no merging.                                                            |
 
 ---
+
 ---
+
 ---
 
 ## File Formats
+
+**Spark reads files by specifying the file format and the path. If a directory is provided, it automatically reads all files of that format in the directory. Use wildcards only when you want to read a subset of files matching a specific pattern.**
+
+```python
+# Reads all CSV files in the folder
+spark.read.format("csv").load("/landing/")
+
+# Reads only claims files
+spark.read.parquet("/landing/claims_*.parquet")
+```
 
 ### CSV
 
@@ -185,13 +212,14 @@ df = spark.read \
 ```
 
 **JSON file vs JSON string column — critical distinction:**
-| Method              | Used In                   | Purpose                                                          |
-| ------------------- | ------------------------- | ---------------------------------------------------------------- |
-| `response.json()`   | Python `requests` library | Converts an **HTTP API response** into a Python dictionary/list. |
-| `spark.read.json()` | PySpark                   | Reads **JSON files** into a Spark DataFrame.                     |
-| `from_json()`       | PySpark                   | Parses a **JSON string column** into a Struct/Array/Map.         |
-| `to_json()`         | PySpark                   |  Spark struct to string (serialize)                             |
 
+
+| Method              | Used In                  | Purpose                                                         |
+| --------------------- | -------------------------- | ----------------------------------------------------------------- |
+| `response.json()`   | Python`requests` library | Converts an**HTTP API response** into a Python dictionary/list. |
+| `spark.read.json()` | PySpark                  | Reads**JSON files** into a Spark DataFrame.                     |
+| `from_json()`       | PySpark                  | Parses a**JSON string column** into a Struct/Array/Map.         |
+| `to_json()`         | PySpark                  | Spark struct to string (serialize)                              |
 
 ```python
 # Parse JSON string column → Struct
@@ -256,6 +284,28 @@ df = spark.read.format("parquet").load("abfss://container@storage.dfs.core.windo
 
 **Cons:** No schema enforcement (file format — not a table format) · No ACID · No versioning · No time travel
 
+**Why Prefereable for Big Data** :  Because its Columnar and its faster for: Aggregations, Filtering specific cols, and supports Optimizations like Predicate Pushdown, Column Pruning, and Compression which makes highly efficient for Bigdata Analytics.
+
+**Run Length Encoding** — stores consecutive repeated values as value + count instead of repeating the value multiple times. Reduces file size and speeds up reads.
+
+**compression** - Parquet stores data column-wise, so similar values are grouped together, allowing compression algorithms like Snappy, Gzip, and ZSTD to achieve much higher compression than row-based formats while maintaining fast reads.
+
+Parquet File
+│
+├── Footer
+├── Row Group 1
+│     ├── ID Column Chunk
+│     │      ├── Page 1
+│     │      ├── Page 2
+│     ├── Name Column Chunk
+│     │      ├── Page 1
+│     │
+│     └── Age Column Chunk
+│
+├── Row Group 2
+│
+└── Row Group 3
+
 ---
 
 ## What is Delta?
@@ -264,9 +314,15 @@ Open-source storage layer on top of Parquet. Adds ACID, versioning, and schema e
 
 ```python
 df = spark.read.format("delta").load("abfss://container@storage.dfs.core.windows.net/silver/patients/")
-df_v5 = spark.read.format("delta").option("versionAsOf", 5).load(path)
-df_ts = spark.read.format("delta").option("timestampAsOf", "2024-01-15").load(path)
+df_v5 = spark.read.format("delta").option("versionAsOf", 5).load(path).select("age","gender")
+df_ts = spark.read.format("delta").option("timestampAsOf", "2024-01-15").load(path).filter("gender = 'male' and age>35")
 ```
+
+1. Read by table name → Use spark.read.table() or spark.table() to read a registered Hive/Unity Catalog table.
+2. Read by storage path → Use spark.read.format("delta").load(path) to read Delta files directly from ADLS/S3/local storage.
+3. Rule of thumb → Table name → table(), Storage path → load(). load() does not accept a table name.
+
+- can filter with .select / .filter while reading only.
 
 ---
 
@@ -349,48 +405,73 @@ Write Commit JSON → New Version Created → Transaction Visible
 ```
 
 ---
+
+We can create a delta table directly with a new path / registering with UC. No schema req.
+
+```python
+path="abfss://data@undefeatable.dfs.core.windows.net/ustechcentral/external/xx/"
+df.write.format("delta").save(path) 
+df.write.format("delta").saveAsTable(ustechcentral.test.test1)
+
+#For registering External path as delta table:
+create table ustechcentral.test.test1 using delta location "abfss://data@undefeatable.dfs.core.windows.net/ustechcentral/external/xx/"
+```
+
+✅ Folder contains a valid Delta table (_delta_log exists) → Registers the existing Delta table.
+✅ Folder does not exist or is empty → Creates an empty Delta table at that location.
+❌ Folder contains Parquet/CSV/other files but no _delta_log → Fails with DELTA_MISSING_TRANSACTION_LOG.
+
 ---
+
 ---
+
 # Data Ingestion Patterns — Reference Notes
 
 ## 1. Ingestion Modes
 
-| Mode | Description | Examples |
-|---|---|---|
-| **Batch** | Processes data periodically in chunks. Reliable and cost-effective, but trades off data freshness. | Hourly, daily, every 4 hours |
-| **Streaming** | Continuously processes incoming data with very low latency. | Kafka, Event Hub |
+
+| Mode          | Description                                                                                        | Examples                     |
+| --------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------ |
+| **Batch**     | Processes data periodically in chunks. Reliable and cost-effective, but trades off data freshness. | Hourly, daily, every 4 hours |
+| **Streaming** | Continuously processes incoming data with very low latency.                                        | Kafka, Event Hub             |
 
 ## 2. Load Strategies / Patterns
 
 ### A. Full Load
+
 Loads the entire source dataset every run, regardless of changes.
 
 **When to use:** initial load, small datasets, reference/dimension data.
 
 Two ways to implement it:
+
 - **Overwrite** —  Delta's overwrite mode is transactional, preserves table structure, files  and Retains table history; supports time travel until `VACUUM` runs.
 - **Drop and recreate** — Completely new table; schema can change freely. **Avoided** in practice because it destroys transaction history.
 
 ### B. Incremental Load
+
 Loads only new or modified records since the previous successful run, using a checkpoint that stores the last successfully processed value.
 
-| Technique | How it works | Notes |
-|---|---|---|
-| Timestamp watermark | `updated_at > last_run_time` | Most common; requires a reliable `updated_at` column maintained by the application |
-| Sequence / ID-based | `id > last_max_id` | Requires a monotonically increasing key — new rows always have higher IDs |
-| Offset-based | Tracks stream offsets | Used in Kafka / event streaming |
+
+| Technique           | How it works                 | Notes                                                                             |
+| --------------------- | ------------------------------ | ----------------------------------------------------------------------------------- |
+| Timestamp watermark | `updated_at > last_run_time` | Most common; requires a reliable`updated_at` column maintained by the application |
+| Sequence / ID-based | `id > last_max_id`           | Requires a monotonically increasing key — new rows always have higher IDs        |
+| Offset-based        | Tracks stream offsets        | Used in Kafka / event streaming                                                   |
 
 **Limitation:** incremental loading based on watermarks/IDs cannot detect deletes unless the source explicitly provides delete events.
 
 ### C. CDC (Change Data Capture)
+
 An ingestion pattern used to identify changes in a source system — most commonly relational databases like PostgreSQL, MySQL, SQL Server, and Oracle. It captures inserts, updates, and deletes, so downstream systems process only the changed data instead of reprocessing entire tables.
 
-- **How it works:** It typically works by reading database transaction logs (e.g., PostgreSQL WAL, MySQL Binlog, SQL Server Transaction Log and Tools like Debezium, Azure Data Factory CDC, AWS DMS, Oracle GoldenGate captures the changes generate CDC events. 
+- **How it works:** It typically works by reading database transaction logs (e.g., PostgreSQL WAL, MySQL Binlog, SQL Server Transaction Log and Tools like Debezium, Azure Data Factory CDC, AWS DMS, Oracle GoldenGate captures the changes generate CDC events.
 - In Databricks, CDC events are typically applied to Delta tables via `MERGE`.
 - **Benefits:** This reduces load on the source system, minimizes data movement, enables efficient incremental pipelines.
 - **File format:** CDC files in ADLS contain only changed records (not the full table), stored as JSON, Avro, Parquet, or Delta. Each event carries the operation type (INSERT/UPDATE/DELETE), key, changed data, and metadata such as timestamps.
 
 ##### C.1 Delta Change Data Feed (CDF)
+
 A Delta Lake feature that records row-level changes (inserts, updates, deletes) made to a Delta table. Downstream pipelines read only the changed rows between table versions via `table_changes()`, instead of scanning the entire table.
 
 Workflow: enable CDF on the source Delta table → read changed rows between two versions → apply changes to the target via `MERGE`.
@@ -424,13 +505,15 @@ The returned DataFrame includes change metadata columns `_change_type` and `_com
 
 ## 3. File Ingestion Mechanisms
 
-| Mechanism | Description | Best for |
-|---|---|---|
-| **Direct Spark file read** | `spark.read.csv`, `spark.read.json`, etc. | Simplest option, ad-hoc / one-off loads |
-| **COPY INTO** | SQL command to load files from cloud storage into Delta tables. Tracks processed files internally via the Delta log, so re-runs are safe (idempotent) by default. | Scheduled batch file loads, simple SQL-based ingestion |
-| **Auto Loader** | Databricks feature for incrementally ingesting new files from cloud storage, avoiding a full folder rescan on every run. | Continuously/frequently arriving files needing scalable, incremental ingestion with schema evolution |
+
+| Mechanism                  | Description                                                                                                                                                       | Best for                                                                                             |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Direct Spark file read** | `spark.read.csv`, `spark.read.json`, etc.                                                                                                                         | Simplest option, ad-hoc / one-off loads                                                              |
+| **COPY INTO**              | SQL command to load files from cloud storage into Delta tables. Tracks processed files internally via the Delta log, so re-runs are safe (idempotent) by default. | Scheduled batch file loads, simple SQL-based ingestion                                               |
+| **Auto Loader**            | Databricks feature for incrementally ingesting new files from cloud storage, avoiding a full folder rescan on every run.                                          | Continuously/frequently arriving files needing scalable, incremental ingestion with schema evolution |
 
 **COPY INTO example:**
+
 ```sql
 COPY INTO bronze.claims
 FROM 'abfss://landing/claims/'
@@ -438,6 +521,7 @@ FILEFORMAT = CSV;
 ```
 
 **Auto Loader example:**
+
 ```python
 df = spark.readStream \
     .format("cloudFiles") \
@@ -456,10 +540,12 @@ df.writeStream \
 Auto Loader maintains a checkpoint with metadata of processed files. On each run it checks the checkpoint and ingests only new files, giving incremental, exactly-once file processing.
 
 **File discovery modes:**
+
 - **Directory listing** (default) — lists all files, compares against the processed list. Simple, works everywhere.
 - **File notification** (production) — Azure Event Grid triggers on each new file arrival. Near real-time, no polling overhead, scales to millions of files.
 
 **Trigger modes:**
+
 - `trigger(availableNow=True)` — processes all pending files then stops (batch-like behavior).
 - `trigger(processingTime="1 hour")` — fixed-interval micro-batch.
 
@@ -467,18 +553,22 @@ Auto Loader maintains a checkpoint with metadata of processed files. On each run
 
 ## 4. Write Strategies
 
-| Strategy | Behavior | Best for |
-|---|---|---|
-| **Append** | Only inserts new rows; fast, writes new files only | Immutable/raw data (typically Bronze) |
-| **Overwrite** | Transactional, replaces the entire table with new data; preserves table structure and handles deletions cleanly | Full reloads of reference/dimension tables |
-| **Merge** | Upserts (INSERT + UPDATE + DELETE) based on a key; reads existing data and rewrites affected files | Mutable/curated data (typically Silver/Gold) |
-| **Replace Where** | Overwrites only the partitions/rows matching a predicate, leaving the rest of the table untouched | Partition-level reprocessing/backfills |
+
+| Strategy      | Behavior                                                                                                        | Best for                                     | if Incoming DF schema changes(schema Enforcement) | Enable Evolution                                                                                        |
+| --------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Append**    | Only inserts new rows; fast, writes new files only                                                              | Immutable/raw data (typically Bronze)        | ❌ Fails if schema changes                        | mergeSchema=true                                                                                        |
+| **Overwrite** | Transactional, replaces the entire table with new data; preserves table structure and handles deletions cleanly | Full reloads of reference/dimension tables   | ❌ Fails if schema changes                        | OverwriteSchema=true                                                                                    |
+| **Merge**     | Upserts (INSERT + UPDATE + DELETE) based on a key; reads existing data and rewrites affected files              | Mutable/curated data (typically Silver/Gold) | ❌ Fails if schema changes                        | spark.databricks.delta.schema.autoMerge.enabled=true (or MERGE WITH SCHEMA EVOLUTION in Databricks SQL) |
+
+**schema enforcement** is supported only by Delta, Iceberg, and Hudi. Not supported by CSV, JSON, Parquet.
+----------------------------------------------------------------------------------------------------------
 
 ## 5. Summary Matrix
 
-| Ingestion Strategy | Processing Mode | Write Strategy | Example |
-|---|---|---|---|
-| Full Load | Batch | Overwrite | Reload reference table |
-| Incremental | Batch | Append | Immutable event/log data (Bronze) |
-| Incremental | Batch | Merge | Mutable tables with updates (Silver/Gold) |
-| CDC | Streaming/Batch | Merge | Apply inserts, updates, deletes |
+
+| Ingestion Strategy | Processing Mode | Write Strategy | Example                                   |
+| -------------------- | ----------------- | ---------------- | ------------------------------------------- |
+| Full Load          | Batch           | Overwrite      | Reload reference table                    |
+| Incremental        | Batch           | Append         | Immutable event/log data (Bronze)         |
+| Incremental        | Batch           | Merge          | Mutable tables with updates (Silver/Gold) |
+| CDC                | Streaming/Batch | Merge          | Apply inserts, updates, deletes           |

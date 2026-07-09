@@ -1,4 +1,4 @@
-const cats = ["Sources","Read","write","CSV","JSON","Delta","Parquet"];
+const cats = ["Sources","Read","write","Optimizations"];
 const qs = [
 //* <pre><code class="language-python">
 //df.filter(col("status") == "A")
@@ -93,5 +93,26 @@ children:[],
 
 },
 ////////////////////////////////////////////////////////
+{
+  cat:`Optimizations`,
+  q:`Optimizations`,
+  answer:``,
+  children:[
+    {
+      q:`PartitionBy`,
+      a:` <code>partitionBy()</code> physically stores data in separate folders based on column values during writes. When queries filter on the partition column, Spark uses partition pruning to read only the required folders instead of scanning the entire dataset, improving query performance.
+      <pre><code  class="language-python"> /sales/
+   country=US/
+      part-0001.parquet
+      part-0002.parquet
 
+   country=IN/
+      part-0003.parquet
+
+   country=UK/
+      part-0004.parquet</pre></code>`,
+      children:[],
+    },
+  ],
+},
 ]
