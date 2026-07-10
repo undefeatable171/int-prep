@@ -9,7 +9,7 @@
 In our project we used Unity Catalog configured with Storage Credentials and External Locations pointing to ADLS Gen2. Access files via UC Volumes — no direct mounts, no account keys. Structured data via managed Delta tables. Gives centralized governance, RBAC, secure access.
 
 ```python
-df = spark.read.csv("/Volumes/catalog/schema/raw_files/customer.csv")
+df = srtitionpark.read.csv("/Volumes/catalog/schema/raw_files/customer.csv")
 ```
 
 ---

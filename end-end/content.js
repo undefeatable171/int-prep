@@ -117,6 +117,7 @@ children:[],
       q:`partition Pruning`,
       a:` Partition pruning skips entire partition directories based on filters on partition columns. This avoids scanning unnecessary files and significantly reduces the amount of data read.<br>
       Spark uses the partition column in the WHERE clause to identify which folders to read.<br>
+      💠 Partition Pruning → Works for all partitioned formats by skipping partition directories.(delta,parquet,csv,json) <br>
       <pre><code class='language-sql'>SELECT * FROM sales WHERE year = 2026 -- Here sales is partitioned by Year</pre></code>`,
       children:[],
     },
@@ -130,7 +131,17 @@ children:[],
   .saveAsTable("users")</pre></code>
 
       </ol>`,
-      children:[],
+      children:[
+        {
+          q:`How hashing works in general`,
+          a:`
+          <code class ="language-python"> 
+           from pyspark.sql.functions import hash, col
+df.withColumn("hash_value", hash(col("patient_id"))).show()
+# Returns Murmur3 hash as integer</code>`,
+          children:[],
+        },
+      ],
     },
     {
       q:`Column Pruning`,

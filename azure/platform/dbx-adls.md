@@ -3,13 +3,13 @@ layout: default
 title: Unity catalog
 permalink: /UC/
 ---
-
 ## 0. Unity catalog
 
-Unity Catalog is Databricks' centralized governance layer for all data and AI assets across your entire Databricks account.
-
-
----
+- Unity Catalog is Databricks' centralized governance layer for all data assets — tables, files, models, and notebooks — across workspaces.
+- It provides a three-level namespace (`catalog.schema.table`), fine-grained access control down to row and column level, full data lineage, and audit logging — all in one place.
+- In our project we use it to enforce PHI access control via column-level security on patient and claims tables.
+- Unity Catalog supports both — column masking returns the column with hidden or nulled values, column-level deny drops the column from results entirely.
+  - In our healthcare pipeline we use masking(redacted) for PHI columns so downstream users see the structure but not the actual sensitive values."
 
 ## The Problem(before UC)
 
@@ -29,7 +29,8 @@ After UC:
 - Audit logs — who accessed what, when
 - ADLS access via Access Connector — no credentials in code
 
-Also 
+Also
+
 - Data Lakes like ADLS is just a file system. No concept of tables, permissions, or organization. You can dump files anywhere. When 10 teams work on the same storage account — who owns what? Who can access what? How do you find anything?
 
 Unity Catalog solves this with a 3-level namespace:
@@ -82,7 +83,6 @@ Without volumes → you access `abfss://...` directly → bypasses UC permission
 
 ---
 
-
 ## End-to-End Setup Flow
 
 ```
@@ -101,36 +101,38 @@ Azure Portal
 └── Table               ← managed (inherits location chain) or external (own path)
 ```
 
-
- 
 ### Step 1 — Create Resources (Single Resource Group- DEV_RG)
- 
-| Resource | Notes |
-|----------|-------|
-| Azure Databricks Workspace | Any pricing tier |
-| ADLS Gen2 | Enable hierarchical namespace |
-| Access Connector for Azure Databricks | Managed identity resource |
+
+
+| Resource                              | Notes                         |
+| --------------------------------------- | ------------------------------- |
+| Azure Databricks Workspace            | Any pricing tier              |
+| ADLS Gen2                             | Enable hierarchical namespace |
+| Access Connector for Azure Databricks | Managed identity resource     |
 
 ## 1. Access Connector (Azure Resource)
 
 > **What it is:** The Access Connector is an Azure resource that provides a Managed Identity and lets Unity Catalog talk to ADLS without hardcoding credentials.
 
 **Create it:**
+
 - Azure Portal → search "Access Connector for Azure Databricks" → Create
 - Assign to your resource group, give it a name, pick region → Deploy
 
 **Assign IAM Roles on the Storage Account:**
 
-| Role | Purpose |
-|------|---------|
-| Storage Blob Data Contributor | Read / write / delete blobs |
-| Storage Account Contributor | Manage storage account |
-| Storage Queue Data Contributor | Queue access |
+
+| Role                           | Purpose                     |
+| -------------------------------- | ----------------------------- |
+| Storage Blob Data Contributor  | Read / write / delete blobs |
+| Storage Account Contributor    | Manage storage account      |
+| Storage Queue Data Contributor | Queue access                |
 
 **Assign on Resource Group (for file-based triggers):**
 
-| Role | Purpose |
-|------|---------|
+
+| Role                                    | Purpose                   |
+| ----------------------------------------- | --------------------------- |
 | EventGrid EventSubscription Contributor | File-based trigger access |
 
 > **Remember:** Access Connector = Azure Resource. Storage Credential = Unity Catalog wrapper around it.
@@ -159,6 +161,7 @@ CREATE EXTERNAL LOCATION med_loc
 ```
 
 **Create via UI:**
+
 - Catalog → Manage → External Locations → Create External Location
 - Name, Storage Type: Azure, URL, Storage Credential → Create → **Test Location** (must be green)
 
@@ -176,9 +179,11 @@ CREATE EXTERNAL LOCATION med_loc
 
 - Created once → assigned to workspaces in that region
 - Has its own default managed storage (auto-created by Databricks):
+
   ```
   abfss://unity-catalog-storage@dbstorageXXXX.dfs.core.windows.net/
   ```
+
   (lives in `databricks-rg-XXXXXXXX` managed resource group)
 
 ---
@@ -210,6 +215,7 @@ CREATE SCHEMA medical.bronze
 Schema storage can be completely different from the catalog's location. Fully flexible.
 
 **Typical layout (example):**
+
 ```
 gold   → abfss://data@.../dali/gold
 silver → abfss://data@.../integrationmodel/silver
@@ -223,12 +229,13 @@ bronze → abfss://data@.../ustechcentral/files       (file-based sources)
 
 > This distinction **only exists at table and volume level.**
 
+
 | Object  | Managed vs External? |
-|---------|---------------------|
-| Catalog | ❌ No |
-| Schema  | ❌ No |
-| Table   | ✅ Yes |
-| Volume  | ✅ Yes |
+| --------- | ---------------------- |
+| Catalog | ❌ No                |
+| Schema  | ❌ No                |
+| Table   | ✅ Yes               |
+| Volume  | ✅ Yes               |
 
 ### Managed Table
 
@@ -293,6 +300,7 @@ Metastore default storage
 Managed tables can store data in metastore's default storage (`unity-catalog-storage`) without any external location setup.
 
 External locations are **required only** for:
+
 - External tables (`LOCATION 'abfss://...'`)
 - External volumes (`LOCATION 'abfss://...'`)
 - Direct ADLS path access from notebooks
@@ -301,13 +309,14 @@ External locations are **required only** for:
 
 ## 10. Hive Metastore vs Unity Catalog
 
-| | Hive Metastore | Unity Catalog |
-|--|--|--|
-| Scope | Workspace-scoped | Account-scoped |
-| Access control | Coarse (table-level) | Fine-grained (column/row-level) |
-| Data lineage | ❌ No | ✅ Yes |
-| Multi-workspace governance | ❌ No | ✅ Yes |
-| Centralized governance | ❌ No | ✅ Yes |
+
+|                            | Hive Metastore       | Unity Catalog                   |
+| ---------------------------- | ---------------------- | --------------------------------- |
+| Scope                      | Workspace-scoped     | Account-scoped                  |
+| Access control             | Coarse (table-level) | Fine-grained (column/row-level) |
+| Data lineage               | ❌ No                | ✅ Yes                          |
+| Multi-workspace governance | ❌ No                | ✅ Yes                          |
+| Centralized governance     | ❌ No                | ✅ Yes                          |
 
 ---
 
@@ -325,23 +334,24 @@ Access Connector (Azure) → Storage Credential (UC) → External Location (UC) 
 
 ## 12. Interview One-Liners
 
-| Question | Answer |
-|----------|--------|
-| What is an Access Connector? | Azure managed identity resource; bridges UC to ADLS without code-level credentials |
-| What is a Storage Credential? | UC object wrapping the managed identity — defines WHO can access storage |
-| What is an External Location? | UC object mapping an ADLS path to a storage credential — defines WHICH path is accessible |
-| Why does a read fail after UC setup? | Missing external location for that container; register it and retry |
-| Can schemas have different storage than their catalog? | Yes — metastore, catalog, and each schema can all point to different paths |
-| Managed vs External table difference? | Managed: UC owns data + metadata, DROP deletes both. External: UC owns metadata only, DROP keeps data |
-| Hive vs Unity Catalog? | Hive = workspace-scoped, no fine-grained control. UC = account-scoped, column/row security, lineage, cross-workspace governance |
-| How to set up UC from scratch? | Metastore → Access Connector (Azure) → IAM role on storage → Storage Credential (UC) → External Location → Catalog → Schema |
+
+| Question                                               | Answer                                                                                                                            |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| What is an Access Connector?                           | Azure managed identity resource; bridges UC to ADLS without code-level credentials                                                |
+| What is a Storage Credential?                          | UC object wrapping the managed identity — defines WHO can access storage                                                         |
+| What is an External Location?                          | UC object mapping an ADLS path to a storage credential — defines WHICH path is accessible                                        |
+| Why does a read fail after UC setup?                   | Missing external location for that container; register it and retry                                                               |
+| Can schemas have different storage than their catalog? | Yes — metastore, catalog, and each schema can all point to different paths                                                       |
+| Managed vs External table difference?                  | Managed: UC owns data + metadata, DROP deletes both. External: UC owns metadata only, DROP keeps data                             |
+| Hive vs Unity Catalog?                                 | Hive = workspace-scoped, no fine-grained control. UC = account-scoped, column/row security, lineage, cross-workspace governance   |
+| How to set up UC from scratch?                         | Metastore → Access Connector (Azure) → IAM role on storage → Storage Credential (UC) → External Location → Catalog → Schema |
 
 ## Access Control
- 
+
 ### The Full Grant Chain
- 
+
 All three must be granted — missing any one = access denied.
- 
+
 ```
 GRANT USE CATALOG ON CATALOG ustechcentral     ← can see the catalog
         ↓
@@ -349,23 +359,24 @@ GRANT USE SCHEMA ON SCHEMA ustechcentral.gold  ← can see the schema
         ↓
 GRANT SELECT ON TABLE ustechcentral.gold.claims ← can read the table
 ```
- 
+
 ### Common Privileges
- 
-| Privilege | Applies To | What It Allows |
-|-----------|-----------|----------------|
-| `USE CATALOG` | Catalog | Navigate into catalog |
-| `USE SCHEMA` | Schema | Navigate into schema |
-| `SELECT` | Table / View / Volume | Read data |
-| `MODIFY` | Table | Insert / update / delete |
-| `CREATE TABLE` | Schema | Create tables inside schema |
-| `CREATE VOLUME` | Schema | Create volumes inside schema |
-| `ALL PRIVILEGES` | Any | Everything |
- 
+
+
+| Privilege        | Applies To            | What It Allows               |
+| ------------------ | ----------------------- | ------------------------------ |
+| `USE CATALOG`    | Catalog               | Navigate into catalog        |
+| `USE SCHEMA`     | Schema                | Navigate into schema         |
+| `SELECT`         | Table / View / Volume | Read data                    |
+| `MODIFY`         | Table                 | Insert / update / delete     |
+| `CREATE TABLE`   | Schema                | Create tables inside schema  |
+| `CREATE VOLUME`  | Schema                | Create volumes inside schema |
+| `ALL PRIVILEGES` | Any                   | Everything                   |
+
 ### Granting to Azure AD Groups (via SCIM)
- 
+
 Groups are managed in **Azure Active Directory** and synced into Databricks via **SCIM**.
- 
+
 ```
 Azure AD
   └── Group: ops / dev / analyst
@@ -373,9 +384,9 @@ Azure AD
 Databricks Account Console
   └── Same groups — usable in GRANT statements
 ```
- 
+
 When someone joins/leaves a group in AAD → reflects in Databricks automatically. No manual user management in DBX needed.
- 
+
 ```sql
 -- Grant to AAD group (synced via SCIM)
 GRANT USE CATALOG ON CATALOG ustechcentral TO `dev`;
@@ -387,24 +398,24 @@ GRANT USE CATALOG ON CATALOG ustechcentral TO `ops`;
 GRANT USE SCHEMA ON SCHEMA ustechcentral.bronze TO `ops`;
 GRANT ALL PRIVILEGES ON SCHEMA ustechcentral.bronze TO `ops`;
 ```
- 
+
 Always grant to **groups**, not individual users — manage membership in AAD, not in DBX.
- 
+
 ### View / Revoke
- 
+
 ```sql
 SHOW GRANTS ON TABLE ustechcentral.gold.claims;
 SHOW GRANTS ON SCHEMA ustechcentral.gold;
  
 REVOKE SELECT ON TABLE ustechcentral.gold.claims FROM `analyst`;
 ```
- 
+
 ---
- 
+
 ## Row & Column Level Security
- 
+
 ### Column Mask — control what value is seen
- 
+
 ```sql
 -- Create masking function
 CREATE FUNCTION ustechcentral.gold.mask_ssn(ssn STRING)
@@ -418,11 +429,11 @@ ALTER TABLE ustechcentral.gold.members
 ALTER COLUMN ssn
 SET MASK ustechcentral.gold.mask_ssn;
 ```
- 
+
 `ops` group → sees real SSN. Everyone else → sees masked value. Same table, same query.
- 
+
 ### Row Filter — control which rows are seen
- 
+
 ```sql
 -- Create filter function
 CREATE FUNCTION ustechcentral.gold.filter_region(region STRING)
@@ -436,21 +447,22 @@ END;
 ALTER TABLE ustechcentral.gold.claims
 SET ROW FILTER ustechcentral.gold.filter_region ON (region);
 ```
- 
+
 `dev` → US rows only. `ops` → all rows. Others → nothing. Invisible at query time.
- 
-| | Row Filter | Column Mask |
-|--|--|--|
-| Controls | Which rows you see | What value you see |
-| Applied on | Table | Column |
-| Bypass possible | ❌ No | ❌ No |
- 
+
+
+|                 | Row Filter         | Column Mask        |
+| ----------------- | -------------------- | -------------------- |
+| Controls        | Which rows you see | What value you see |
+| Applied on      | Table              | Column             |
+| Bypass possible | ❌ No              | ❌ No              |
+
 UC enforces both at query time — notebooks, BI tools, APIs — no exceptions.
- 
+
 ---
- 
+
 ## Full Architecture
- 
+
 ```
 Azure Portal (Single Resource Group)
 ├── Databricks Workspace
@@ -476,4 +488,3 @@ Databricks Unity Catalog
       ├── Row Filter    ← which rows per group
       └── Column Mask   ← which values per group
 ```
- 
