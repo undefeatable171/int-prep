@@ -229,4 +229,218 @@ Data Skipping → Skip the entire file.</code>`,
     
   ],
 },
+{
+  cat:`Optimizations`,
+  q:`SHuffle/join Optimization`,
+  answer:`
+  I will start with
+  <ul>
+  <li>
+    <span style="color:#1F4E79;"><b>Choosing the right join strategy.</b></span>
+    If one table is small (default <b>≤ 10 MB</b>, configurable via
+    <code>spark.sql.autoBroadcastJoinThreshold</code>), use a
+    <b>Broadcast Join</b> to eliminate shuffle. If required, force it using the
+    <code>broadcast()</code> hint.
+  </li>
+
+  <li>
+    <span style="color:#1F4E79;"><b>Reduce data before the join.</b></span>
+    Apply filters as early as possible and select only the required columns to
+    minimize the amount of data shuffled across the cluster.
+  </li>
+
+  <li>
+    <span style="color:#1F4E79;"><b>Keep Delta tables optimized.</b></span>
+    Run <b>OPTIMIZE</b> to compact small files and <b>Z-ORDER</b> on frequently
+    joined or filtered columns so Spark reads fewer files through better data
+    skipping.
+  </li>
+
+  <li>
+    <span style="color:#1F4E79;"><b>Repartition large tables carefully.</b></span>
+    Repartition on the join key only when redistribution is required to balance
+    partitions and reduce skew. Since <code>repartition()</code> performs a full
+    shuffle, use it only when redistribution is necessary..
+  </li>
+
+  <li>
+    <span style="color:#1F4E79;"><b>Leverage AQE (Adaptive Query Execution).</b></span>
+    Dynamically switch join strategies (e.g., <b>Sort Merge Join → Broadcast Join</b>),
+    coalesce shuffle partitions, and mitigate data skew using runtime statistics.
+  </li>
+
+  <li>
+    <span style="color:#1F4E79;"><b>Tune <code>spark.sql.shuffle.partitions</code>.</b></span>
+    For shuffle-intensive operations like joins and aggregations, instead of
+    always using the default value of <b>200</b>, size it based on the cluster's
+    parallelism and shuffle data volume, typically targeting
+    <b>128–256 MB per shuffle partition</b> while maintaining enough partitions
+    (roughly <b>2–3× total executor cores</b>) for good parallelism. With AQE
+    enabled, use this as a starting point and let Spark coalesce partitions if
+    needed.
+  </li>
+
+  <li>
+    <span style="color:#1F4E79;"><b>Handle severe data skew.</b></span>
+    If AQE cannot fully resolve skew, use techniques such as
+    <b>salting</b> for highly skewed keys to distribute the workload evenly
+    across executors.
+  </li>
+</ul>
+  `,
+  children:[]
+},
+{
+  cat:`Optimization`,
+  q:`Skew & Salting`,
+  a:``,
+  children:[
+    {
+      q:`What is data skew`,
+      a:`Data skew occurs when the data is not evenly distributed across the cluster, causing some partitions to become significantly larger than others.
+<br>This leads to long-running tasks, poor parallelism, and possible OOM errors.
+<br>For example, in a join operation, if one key has a disproportionately large number of records (e.g., a popular product in an e-commerce application), all records for that key are sent to the same partition. That partition takes much longer to process than the others, slowing down the entire job while the remaining executors finish early and sit idle. This is known as <b>data skew</b>.
+      <br> This leads to long-running tasks, poor parallelism, and possible OOM errors. `,
+children:[],
+    },
+    {
+      q:`how do you handle skew`,
+      a:`
+      <ul>
+  <li>
+    <span style="color:#1F4E79;"><b>Identify skew.</b></span>
+  For identifying Skew,   Use the <b>Spark UI</b> to identify  tasks  taking significantly longer than others. Spark UI → Stages tab → look for one task 10x longer than median
+  </li>
+
+  <li>
+    <span style="color:#1F4E79;"><b>Profile the join key.</b></span>
+    Run a <code>groupBy(join_key).count()</code> to identify highly skewed values responsible for the imbalance.
+  </li>
+
+  <li>
+    <span style="color:#1F4E79;"><b>Reduce data before the join.</b></span>
+    Apply filters early (where business logic permits) and select only the required columns to minimize the amount of data participating in the join.
+  </li>
+
+  <li>
+    <span style="color:#1F4E79;"><b>Leverage AQE.</b></span>
+    Enable <code>spark.sql.adaptive.skewJoin.enabled=true</code> so Spark can automatically detect and split skewed shuffle partitions at runtime.
+  </li>
+
+  <li>
+    <span style="color:#1F4E79;"><b>Apply salting if AQE isn't sufficient.</b></span>
+    Append a random salt to the skewed join key in the large table and explode (duplicate) the corresponding keys in the smaller table with the same salt range.
+  </li>
+
+  <li>
+    <span style="color:#1F4E79;"><b>Join on the salted key.</b></span>
+    This distributes the skewed records across multiple partitions, balancing the workload and improving parallelism.
+  </li>
+
+  <li>
+    <span style="color:#1F4E79;"><b>Remove the temporary salt column.</b></span>
+    After the join, drop the salt column since it is only used for balancing the workload.
+  </li>
+</ul>
+      `,
+      children:[],
+    },
+    {
+      q:`What is salting`,
+      a:`Salting is a manual preventative technique used to distribute a skewed join key across multiple partitions by appending a random value (salt) to the join key.
+
+<br>At the same time, the corresponding keys in the non-skewed (smaller) table are exploded with the same range of salt values so that each salted key from the large table still finds a matching record during the join.
+<br> Instead of sending all records with the same skewed key to a single partition, salting spreads them across multiple partitions, balancing the workload and improving parallelism.
+<br>
+<pre><code class="language-sql">
+salt=3
+salted_large_df = large_df.withColumn(
+    "salted_key",
+    concat(
+        col("user_id"),
+        lit("_"),
+        (rand() * salt).cast("int")
+    )
+)
+salted_large_df.show(30)
+
+# Salt the small DataFrame
+small_df.withColumn("array", array([lit(i) for i in range(salt)])) 
+            .withColumn("exploded",explode("array")) 
+            .withColumn("salted_key",concat(col("user_id"),lit("_"),col("exploded")))
+            .drop("array","exploded").display()
+salted_small_df.show(100)
+
+# Join on salted_key
+joined_df = salted_large_df.join(
+    salted_small_df,
+    on="salted_key",
+    how="inner"
+).drop("salted_key")
+
+display(joined_df)</pre></code>
+
+<pre><code>
+BEFORE SALTING:
+─────────────────────────────────────────────────
+df_encounters (large):       df_patients (small):
+patient_id | encounter_id    patient_id | name
+9999       | E001            9999       | John
+9999       | E002
+9999       | E003
+9999       | E004
+9999       | E005
+9999       | E006
+
+
+AFTER SALTING / EXPLODE:
+─────────────────────────────────────────────────
+df_encounters_salted:        df_patients_exploded:
+salted_key | encounter_id    salted_key | name
+9999_2     | E001            9999_0     | John
+9999_0     | E002            9999_1     | John
+9999_1     | E003            9999_2     | John
+9999_0     | E004
+9999_2     | E005
+9999_1     | E006
+
+
+DURING JOIN (what happens on each executor):
+─────────────────────────────────────────────────
+Executor 1 → salted_key = 9999_0:
+             E002 joins John
+             E004 joins John
+
+Executor 2 → salted_key = 9999_1:
+             E003 joins John
+             E006 joins John
+
+Executor 3 → salted_key = 9999_2:
+             E001 joins John
+             E005 joins John
+
+All 3 executors work in parallel — no straggler
+
+
+AFTER JOIN (df_result):
+─────────────────────────────────────────────────
+encounter_id | patient_id | name
+E001         | 9999       | John
+E002         | 9999       | John
+E003         | 9999       | John
+E004         | 9999       | John
+E005         | 9999       | John
+E006         | 9999       | John
+
+Same 6 rows. Correct result. No duplicates.
+salted_key dropped — clean output.
+</code></pre>
+`
+
+,
+children:[],
+    }
+  ],
+
+},
 ]
