@@ -113,6 +113,120 @@ children:[],
       part-0004.parquet</pre></code>`,
       children:[],
     },
+    {
+      q:`partition Pruning`,
+      a:` Partition pruning skips entire partition directories based on filters on partition columns. This avoids scanning unnecessary files and significantly reduces the amount of data read.<br>
+      Spark uses the partition column in the WHERE clause to identify which folders to read.<br>
+      <pre><code class='language-sql'>SELECT * FROM sales WHERE year = 2026 -- Here sales is partitioned by Year</pre></code>`,
+      children:[],
+    },
+    {
+      q:`Bucketing`,
+      a:`<ol><li>Bucketing is a write-time optimization that divides data into a fixed number of buckets (files) based on the hash of a column (hash(col) % numBuckets).</li>
+      <li>It's best used for large tables that are frequently joined on the same high-cardinality column.</li>
+      <li> If both tables are bucketed on the same column with the same number of buckets, Spark can directly join corresponding buckets, reducing or eliminating shuffle and improving join performance. </li>
+            <pre><code class='language-python'>df.write \
+  .bucketBy(8, "user_id") \
+  .saveAsTable("users")</pre></code>
+
+      </ol>`,
+      children:[],
+    },
+    {
+      q:`Column Pruning`,
+      a:` Column pruning is a Spark optimization that reads only the columns required by the query instead of the entire dataset. It reduces disk I/O, memory usage, and improves query performance.<br>
+      <pre><code class='language-sql'>SELECT name FROM employee;</pre></code>`,
+      children:[],
+    },
+    {
+      q:`Predicate PushDown`,
+      a:`Predicate pushdown pushes filter conditions to the underlying data sources, allowing formats like Parquet to skip irrelevant row groups using metadata like min/max statistics. This reduces disk reads and speeds up query execution.<br>
+      It's most effective with columnar formats like Parquet, ORC, and Delta, but not with text formats like CSV or JSON.`,
+      children:[],
+    },
+    {
+      q:`Data Skipping in delta lake`,
+      a:`Data skipping is a Delta Lake optimization that uses _delta_log maintained file level statistics like min/max and null count statistics to avoid reading entire Parquet files before they're even opened. <br>
+      `,
+      children:[
+        {
+        q:`data skipping VS Predicate pushdown`,
+        a:` Delta uses predicate pushdown on Parquet and additionally uses _delta_log file statistics for more aggressive file skipping.
+         <pre><code class='language-sql'> SELECT * FROM claims WHERE age > 60;</pre></code>
+        <br> 
+        <ol><li> <code>data SKipping</code>Before opening Parquet files, Delta checks _delta_log statistics and skips entire files whose min/max values prove they cannot satisfy age > 60.</li>
+        <li><code>Predicate Pushdown</code> Spark opens a Parquet file and uses its row-group metadata (min/max) to skip row groups that can't contain age > 60. </li></ol>
+        <code> Predicate Pushdown → Skip inside a file (row groups/pages).<br>
+Data Skipping → Skip the entire file.</code>`,
+        children:[],
+        },
+      ],
+    },
+    {
+      q:`(File Compaction)Optimize`,
+      a:`<ol><li>Frequent writes, MERGEs, creates many small files, increasing task scheduling overhead, metadata lookups, and file-open costs, which slow down queries</li>
+      <li> OPTIMIZE compacts many small Parquet files into fewer larger files, reducing task scheduling overhead, metadata operations, and file-open costs.</li>
+      <li>Since it's an expensive rewrite operation, we schedule it periodically as a maintenance job rather than running it after every pipeline</li></ol>`,
+      children:[],
+    },
+    {
+      q:`Z-Order`,
+      a:` Z-ORDER physically co-locates (clusters) similar values of frequently queried columns into the same Parquet files. This creates tighter file-level statistics, making Delta's data skipping more effective by eliminating more files before reading them<br>
+      We typically run OPTIMIZE along with ZORDER BY as a scheduled maintenance job on large Delta tables. OPTIMIZE compacts small files, while Z-ORDER clusters frequently queried columns, improving data skipping and overall query performance
+               <pre><code class='language-sql'> OPTIMIZE claims ZORDER BY (patient_id, provider_id) 
+               -- There is no standalone zorder by. Must use along with Optimize</pre></code>
+`,
+      children:[],
+    },
+    {
+      q:`caching`,
+      a:`Caching stores a DataFrame's partitions in executor memory after the first action, allowing subsequent actions to reuse the cached data instead of recomputing the entire lineage.<br> It's useful when the same DataFrame is accessed multiple times, reducing execution time, but should be avoided for one-time use due to memory overhead.`,
+      children:[],
+    },
+    {
+      q:`Broadcast Join`,
+      a:`Broadcast Join sends the entire small table to every executor, allowing each executor to join it locally with its partition of the large table without shuffling the large dataset.
+      <br> By default, Spark automatically broadcasts tables up to 10 MB (spark.sql.autoBroadcastJoinThreshold), and this threshold is configurable.
+      <br> It's ideal for joining large fact tables with small dimension or lookup tables, significantly reducing network I/O and improving performance.
+      <br>We can override the optimizer using the broadcast() hint when we know broadcasting is beneficial."
+      <code>df = fact.join(broadcast(dim), "id")</code>`,
+      children:[],
+    },
+    {
+      q:`AQE`,
+      a:` <code>AQE (Adaptive Query Execution) is a Spark SQL optimization introduced in Spark 3.0 that re-optimizes the physical execution plan at runtime using actual execution statistics.</code>
+       <ol>
+      <li> Before AQE, Spark used a static execution plan. It generated a logical plan, applied Catalyst optimizations such as column pruning and predicate pushdown, created a physical plan, and executed it without any changes during runtime.</li>
+      <li> If the actual data size or distribution differed from the estimates, Spark could choose inefficient join strategies, create too many shuffle partitions, or suffer from data skew, leading to poor performance.</li>
+      <li>AQE solves this by collecting runtime statistics after shuffle stages and dynamically re-optimizing the remaining execution plan. It can switch join strategies, coalesce shuffle partitions, and mitigate data skew, improving query performance automatically.</li>
+      <li>For example, Spark may estimate that the filtered providers table is too large and choose a Sort Merge Join. During execution, it finds only 2 MB of matching data after the filter, so AQE switches to a Broadcast Join, eliminating the shuffle.</li>
+      <code> Static optimization uses estimated statistics, whereas AQE uses actual runtime statistics to optimize the remaining execution plan.</code>
+
+      </ol>`,
+      children:[],
+    },
+    {
+      q:`Coalesce`,
+      a:`coalesce() reduces the number of partitions by merging existing partitions with minimal or no shuffle.<br> It's mainly used after filtering or before writing data to reduce the number of small output files, task scheduling overhead, and metadata operations.<br> Since it avoids a full shuffle, it's much more efficient than repartition() for decreasing partitions.
+      <>               <pre><code class='language-python'> df.coalesce(10)
+      df.rdd.getNumPartitions() -- check partitions</pre></code>`,
+      children:[],
+
+    },
+    {
+      q:`Repartition`,
+      a:`repartition() redistributes data across the specified number of partitions by performing a full shuffle.
+      <br>It's used to increase or decrease partitions, evenly distribute data, or repartition data by a key to improve parallelism.
+      <br> It's commonly used before joins by repartitioning on the join key, ensuring matching records are colocated and workloads are balanced across executors.
+      <br>Since it performs a full shuffle, it's relatively expensive and should be used only when redistribution is required.
+      <br>
+      <pre><code class='language-python'> df.repartition(10) 
+       df.repartition("claim_id") 
+       df.repartition(10,"claim_id") --Repartition by number + columns ⭐ Most common </pre></code>`,
+      children:[],
+
+    },
+    
   ],
 },
 ]
