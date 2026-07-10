@@ -14,6 +14,24 @@ df = srtitionpark.read.csv("/Volumes/catalog/schema/raw_files/customer.csv")
 
 ---
 
+#### databricks secret Scopes
+
+- Secret Scopes are used to securely store and manage sensitive information such as passwords, API tokens, storage account keys, SAS tokens, and database credentials.
+- Instead of hardcoding these values in notebooks or code, applications retrieve them securely at runtime using dbutils.secrets.get(), improving security and simplifying credential management.
+
+```python
+# List all secret scopes
+dbutils.secrets.listScopes()
+
+# List all keys in a scope
+dbutils.secrets.list("my-scope")
+
+# Read/Get a secret
+secret = dbutils.secrets.get("my-scope", "storage-key")
+```
+
+---
+
 ### database (Postgres)
 
 Databricks connects to the on-prem PostgreSQL database using a JDBC connection. connection URL and credentials stored in Azure Key Vault, accessed through Databricks secret scope.
@@ -161,6 +179,11 @@ Parquet, ORC, Delta store typed structured data → no malformed-row handling ne
 
 ---
 
+**Widening data** types means changing a column to a compatible type that can hold all existing values plus larger or more precise values, without data loss.
+Int to BigINT
+float- double
+decimal(10,2) to decimal(20,4)
+
 ---
 
 ---
@@ -259,7 +282,9 @@ df = spark.read \
   - `'Sheet1'!A3` → skip first 2 rows
   - `'Employees'!A14:D50` → specific range only
 
-**Cons:** Third-party library dependency (must be on all cluster nodes) · Not splittable — single executor reads entire file · Not suitable at scale — practical only for small human-generated reports
+**Cons:** Third-party libr
+
+ary dependency (must be on all cluster nodes) · Not splittable — single executor reads entire file · Not suitable at scale — practical only for small human-generated reports
 
 ---
 
@@ -272,6 +297,7 @@ df = spark.read.format("parquet").load("abfss://container@storage.dfs.core.windo
 ```
 
 **Internal structure:** `File → Footer → Row Groups → Column Chunks → Pages`
+
 
 - **Footer** — schema, row group locations, column statistics (min/max, null count), encoding, compression. Spark reads footer first to plan execution.
 - **Row Group** — horizontal partition inside the file. Each independent → Spark reads multiple Row Groups in parallel (splittable).
@@ -382,7 +408,8 @@ Read only required Parquet files → Return DataFrame
 
 ## Snapshot Isolation:
 
-- A mechanism where every transaction reads a consistent snapshot of the table.
+- A mechanism where every transaction reads a consistent snapshot of the table conflicts are fetched at write time
+- .
 
 ---
 
