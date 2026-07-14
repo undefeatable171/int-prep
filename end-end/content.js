@@ -234,7 +234,43 @@ Data Skipping → Skip the entire file.</code>`,
       <pre><code class='language-python'> df.repartition(10) 
        df.repartition("claim_id") 
        df.repartition(10,"claim_id") --Repartition by number + columns ⭐ Most common </pre></code>`,
-      children:[],
+      children:[
+        {
+          q:`When do you use Repartition and why`,
+          a:`
+          
+          <div style="font-family: Arial, sans-serif; line-height:1.6;">
+
+<p>
+<code>repartition()</code> is used when I need to explicitly redistribute data across the cluster.
+Since it always performs a full shuffle, I use it only when the benefit outweighs the shuffle cost.
+</p>
+
+<p>⭐ <b>Main Use Case – Increase Parallelism</b> If I observe in the Spark UI that only a few tasks are running while many executor cores are idle, it indicates the DataFrame has too few partitions.<br> I then use repartition() so Spark can create more tasks and better utilize the cluster.</p>
+<p>⭐ Internally, it shuffles and redistributes the data across the specified number of partitions, trying to keep them approximately equal in size.
+<br>💠 However, it does not solve key skew; for that I rely on AQE or techniques like salting.</p>
+
+
+<h4>Project Experience</h4>
+
+In our project, we used <code>repartition()</code> only when we needed explicit control over the number of partitions. If the goal was simply to reduce the number of partitions before writing data, we preferred <code>coalesce()</code> because it avoids a full shuffle.
+
+</div>`,
+          children:[
+            {
+            q:`when used in project`,
+            a:`We didn't decide upfront. While monitoring the job in the Spark UI, if we notice that only a few tasks were running and many executor cores were idle. That indicated insufficient parallelism, so we need to increase the partition count using repartition().`,
+            children:[
+              {
+              q:`why not AQE`,
+              a:`AQE can coalesce partitions, but it only reduces the number of partitions after a shuffle. It doesn't increase them. If the DataFrame has too few partitions to begin with, AQE won't help. In that case, we explicitly use repartition() to increase parallelism.`,
+              children:[],
+              },
+                        ],
+                      },
+          ],
+        },
+      ],
 
     },
     
