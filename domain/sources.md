@@ -200,51 +200,33 @@ Gold Layer - Derived Business Columns
 - **File check:** Single existence check, no polling. Present → process. Absent → SKIPPED_FILE_NOT_FOUND, ops alert, continue.
 - **Control table:** Writes SUCCESS or SKIPPED_FILE_NOT_FOUND per file
 
-### Job 3 — Silver + Gold Core
+### Job 3 — Silver
 
 - **Trigger:** After Job 1 completes (Workflows job dependency)
 - **Runs:** Every 4 hours
 - **Stage 1 — Silver (parallel):**
   - 8 transactional Silver tasks
-  - CSV-backed tasks check control table first — if SKIPPED_FILE_NOT_FOUND → no-op, carry forward
+  - CSV-backed tasks check folder and if no files — skip → no-op, carry forward
   - Dedup → null handling → MERGE
-- **Stage 2 — Gold Dims (after Silver):**
+### Job 4 - Gold dims
+- **Stage 1 — Gold Dims (after Silver):**
   - 2 tasks: dim_patients, dim_providers
   - SCD2 MERGE — no-op if nothing changed
-- **Stage 3 — Gold Facts (parallel with Dims, after Silver):**
+### Job 5 - Gold facts
+- **Stage 1 — Gold Facts (incremental):**
+ - Incremental :- read last processed watermark of target gold fact table and read only new records from silver tables
   - 6 tasks — join to dims + reference tables, derive business columns, upsert MERGE
-  - CSV-backed fact tasks complete as no-op on cycles where Silver had no new data
+  - if any respective silver has no data, fact tasks complete as no-op 
 - **No aggregation stage** — BI builds on top of enriched facts via views
 
-### Jobs 4–7 — Reference Source Pipelines (Self-Contained E2E)
+### Jobs 6–9 — Reference Source Pipelines (Self-Contained E2E)
 
 | Job                      | Schedule | Source | Pattern                                                        |
 | ------------------------ | -------- | ------ | -------------------------------------------------------------- |
-| Job 4 — icd10           | Annual   | CSV    | Bronze → Silver (reload) → Gold (reload ref_icd10)           |
-| Job 5 — cpt             | Annual   | CSV    | Bronze → Silver (reload) → Gold (reload ref_cpt)             |
-| Job 6 — fee_schedule    | Annual   | Excel  | Bronze → Silver (reload) → Gold (reload ref_fee_schedule)    |
-| Job 7 — provider_roster | Monthly  | Excel  | Bronze → Silver (reload) → Gold (reload ref_provider_roster) |
-
-Each job: 3 sequential tasks, linear dependency, fully independent of Jobs 1–3.
-
-### Control Table — Single Mechanism Across All 7 Jobs
-
-Delta table: `job_name | table_name | run_id | status | rows_written | timestamp`
-
-| Column             | Type      | Purpose                                            |
-| ------------------ | --------- | -------------------------------------------------- |
-| `pipeline_name`  | STRING    | Bronze_Postgres, Bronze_CSV, Silver, Gold          |
-| `source_name`    | STRING    | claims, patients, ==eligi==bility, provider_roster |
-| `run_id`         | STRING    | Unique pipeline execution ID                       |
-| `business_date`  | DATE      | Business date of the data/file                     |
-| `file_name`      | STRING    | CSV/Excel filename (NULL for PostgreSQL)           |
-| `status`         | STRING    | SUCCESS, FAILED, SKIPPED_FILE_NOT_FOUND            |
-| `rows_processed` | BIGINT    | Number of records processed                        |
-| `start_time`     | TIMESTAMP | Pipeline start time                                |
-| `end_time`       | TIMESTAMP | Pipeline completion time                           |
-| `error_message`  | STRING    | Error details if failed                            |
-
-**PostgreSQL tasks also write to control table** — not for skip logic, but for audit trail and partial rerun efficiency (know which tables already succeeded if rerunning after a fix).
+| Job 6 — icd10           | Annual   | CSV    | Bronze → Silver (reload) → Gold (reload ref_icd10)           |
+| Job 7 — cpt             | Annual   | CSV    | Bronze → Silver (reload) → Gold (reload ref_cpt)             |
+| Job 8 — fee_schedule    | Annual   | Excel  | Bronze → Silver (reload) → Gold (reload ref_fee_schedule)    |
+| Job 9 — provider_roster | Monthly  | Excel  | Bronze → Silver (reload) → Gold (reload ref_provider_roster) |
 
 ### Dependency Chain
 
@@ -252,16 +234,19 @@ Delta table: `job_name | table_name | run_id | status | rows_written | timestamp
 Job 1: Bronze PostgreSQL (4hr)
     │
     ▼
-Job 3: Silver + Gold Core (4hr)
-    ├── Silver MERGE (all 8 transactional tables)
-    ├── Gold Dims SCD2 (after Silver)
-    └── Gold Facts upsert (after Silver, parallel with Dims)
+Job 3: Silver MERGE (all 8 transactional tables)
+    |
+    ▼
+Job 4: Gold Dims SCD2 (after Silver)
+    |
+    ▼
+Job 5 : Gold Facts upsert (after Gold Dims)
  
 Job 2: Bronze Daily CSV (daily 7AM)
     │ (writes to control table)
     └── Silver CSV tasks pick up status on next Job 3 cycle
  
-Jobs 4-7: Reference E2E pipelines (own cron, fully independent)
+Jobs 6-9: Reference E2E pipelines (own cron, fully independent)
     └── Gold reference tables updated, joined into facts on next Gold run
 ```
 
@@ -272,12 +257,6 @@ Jobs 4-7: Reference E2E pipelines (own cron, fully independent)
 - **BI team:** Power BI connects to views on top of Gold Delta tables — never raw tables directly
 - **Data science team:** Delta time travel on Gold facts for historical model training
 - **Finance / ops teams:** Consume via BI views — claim denial patterns, days in AR, reimbursement gaps, prior auth compliance
-
----
-
-## Senior Keywords — Say These Out Loud
-
-`incremental watermark` · `idempotent` · `cumulative Delta table` · `MERGE on business key` · `dedup on incoming batch before MERGE` · `SCD Type 2 close-and-insert` · `full reload for reference data` · `pipeline control table` · `status-driven downstream processing` · `single file-presence check, no polling` · `Delta ACID atomic commit or rollback` · `graceful skip vs hard failure` · `task-level isolation in DAG` · `source-aligned Silver, consumption-aligned Gold` · `derived columns where business rules live` · `Delta time travel` · `Photon-enabled MERGE workloads`
 
 ---
 
