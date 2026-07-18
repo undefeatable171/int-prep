@@ -243,12 +243,12 @@ The BI team builds dashboards and KPIs on top of the Gold tables, while our resp
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
   {
     cat: `Behavioral`,
-    q: ``,
+    q: `Behavioral`,
     answer: ``,
     children: [
       {
-        q: ``,
-        a: ``,
+        q: ` Tell me about a time you improved performance.`,
+        a: ` The major performance improvement done by me is Reducing the long running Gold layer pipeline runtime by 40–45% through Spark and Delta Lake optimizations — broadcast hints for small reference tables, OPTIMIZE for file compaction, and Z-ORDER to improve MERGE performance `,
         children: [],
       },
       {
