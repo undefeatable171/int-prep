@@ -1,4 +1,4 @@
-const cats = ["Self Introduction", "Project Ownership", "Production Support & Incident Handling", "Design Decisions", "Collaboration & Teamwork", "Behavioral", "Ownership & Decision Making", "Achievements", "Stakeholder Management", "Career & Motivation", "Company-Specific Questions", "Quick Revision Sheet"];
+const cats = ["Self Introduction", "Project Ownership", "Production Support & Incident Handling", "Design Decisions", "Collaboration & Teamwork", "Behavioral", "Ownership & Decision Making", "Achievements", "Stakeholder Management", "Career & Motivation", "Company-Specific Questions"];
 const qs = [
   {
     cat: `Self Introduction`,
@@ -85,7 +85,7 @@ print("updated count:" ,updated)
       },
       {
         q: `why leave your current role?`,
-        a: `I've had a good learning experience in my current role, where I've worked on building and maintaining production ETL pipelines using Azure Databricks, PySpark, and SQL<br> I'm now looking for an opportunity to work on more challenging data engineering problems, gain exposure to different business domains and contribute to impactful data solutions.`,
+        a: `I've had a good learning experience in my current role, where I've worked on building and maintaining production ETL pipelines using Azure Databricks, PySpark, and SQL<br> I'm now looking for an opportunity to work on more challenging projects, gain exposure to different business domains and broaden my technical exposure.`,
         children: [
           {
             q: `why now / specific reason for leaving?`,
@@ -252,13 +252,13 @@ The BI team builds dashboards and KPIs on top of the Gold tables, while our resp
         children: [],
       },
       {
-        q: ``,
-        a: ``,
+        q: `Suppose another team is blocking your work. How do you handle it?`,
+        a: `I first try to understand the reason for the dependency by discussing it directly with the concerned team. <br> If the blocker can't be removed immediately, I continue with independent work like developing transformations, testing with sample data, or preparing the remaining pipeline so my work doesn't stop. <br>  If it's impacting timelines and can't be resolved between teams, I escalate to my lead with clear context — what's blocked, the impact, and what I've already tried. I always come with a suggestion, not just the problem.`,
         children: [],
       },
       {
-        q: ``,
-        a: ``,
+        q: ` How long would you take to develop a pipeline?`,
+        a: ` It depends on the complexity, business rules, source systems and testing effort. <br> A straightforward ingestion pipeline with basic transformations — I can turn that around in 2 to 3 days. <br> For more complex pipelines, like the ones I worked on in our healthcare project involving the Medallion architecture, SCD Type 2 , development typically took a few weeks including testing and UAT. <br> . I always break it into phases — design, development, testing, and deployment — and give estimates per phase so stakeholders have visibility throughout."`,
         children: [],
       },
       {
@@ -270,12 +270,146 @@ The BI team builds dashboards and KPIs on top of the Gold tables, while our resp
 
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
   {
-    cat: ``,
-    q: ``,
-    answer: ``,
+    cat: `Stakeholder Management`,
+    q: `Have you ever had direct interaction with the client?`,
+    answer: `<ul><li>I haven't been the primary point of contact for the client. Most communication happens through our Business Analyst and onshore lead. </li>
+    <li>That said, I've been part of requirement clarification sessions where technical inputs were needed, so I've had exposure to those conversations.</li>
+    <li> My core responsibility has been on the implementation side — building the pipeline, optimizing performance,</li>
+    <li>I'm comfortable engaging with clients on technical topics and I'm actively looking to take on more client-facing responsibilities as I grow in my career.</li></ul>`,
     children: [{
+      q: `Have you ever attended a client interview?`,
+      a: `Yes. I attended a client interview during the project onboarding process. <br> The discussion was mainly around my technical skills, project experience, communication, and understanding of the technologies required for the project. After clearing the interview, I was onboarded to the project.`,
+      children: [
+        {
+         q:`who conducted`,
+        a:`It was conducted by the client-side technical lead and project manager as part of the project onboarding process.`,
+        children:[],},
+      ],
+    },
+    {
       q: ``,
       a: ``,
+      children: [],
+    },
+    {
+      q: ``,
+      a: ``,
+      children: [],
+    },
+    {
+      q: ``,
+      a: ``,
+      children: [],
+    },],
+
+  },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
+  {
+    cat: `Ownership & Decision Making`,
+    q: `What factors do you consider while developing a data pipeline?`,
+    answer: ` 
+    <p>
+There are a few key factors I consider while designing a data pipeline.
+</p>
+
+<ul>
+    <li>
+        <b style="color:#D32F2F;">Data Volume & Frequency</b>
+        <ul>
+            <li>Understand how much data is being ingested and how often.</li>
+            <li>Helps decide partitioning strategy, cluster sizing, and whether we need batch or near-real-time processing..</li>
+        </ul>
+    </li>
+
+    <li>
+        <b style="color:#D32F2F;">Source System Characteristics</b>
+        <ul>
+            <li>I identify whether the source is a database or files, whether we should use full or incremental loads, and how to handle schema changes</li>
+            <li>In my project, PostgreSQL uses <b>watermark-based incremental loading</b>, while reference data is ingested from ADLS files.</li>
+        </ul>
+    </li>
+
+    <li>
+        <b style="color:#D32F2F;"> Data Quality</b>
+        <ul>
+            <li> building in checks at each layer so bad data doesn't propagate downstream.</li>
+            <li>n my pipeline, we handle nulls, duplicates, and schema mismatches in the Silver layer before anything hits Gold..</li>
+        </ul>
+    </li>
+
+    <li>
+        <b style="color:#D32F2F;">Performance & Scalability</b>
+        <ul>
+            <li>I focus on partitioning, minimizing shuffles, selecting appropriate join strategies, and optimizing Delta tables</li>
+            <li>We  used broadcast joins for ref tables joining, OPTIMIZE and Z-ORDER, which improved some pipeline runtimes by around 40–45%.</li>
+        </ul>
+    </li>
+
+    <li>
+        <b style="color:#D32F2F;">Reliability</b>
+        <ul>
+            <li>I build pipelines to be idempotent, include proper logging and exception handling, and ensure rerunning a failed job doesn't create duplicate data.</li>
+        </ul>
+    </li>
+
+    <li>
+        <b style="color:#D32F2F;">Security & Governance</b>
+        <ul>
+            <li>Protect sensitive healthcare data using role-based access and column-level security.</li>
+            <li>Use <b>Unity Catalog</b> for governance.</li>
+        </ul>
+    </li>
+
+    <li>
+        <b style="color:#D32F2F;" >Maintainability</b>
+        <ul>
+            <li>Write modular, reusable code with meaningful logging and documentation.</li>
+            <li>This makes the pipeline easier to debug, enhance, and support.</li>
+        </ul>
+    </li>
+</ul>
+    `,
+    children: [{
+      q: ` What do you know about good data engineering design principles?`,
+      a: ` 
+      <div style="padding: 1rem 0; display: flex; flex-direction: column; gap: 14px;">
+
+  <div>
+    <h2 style="font-size:15px; font-weight:500; color:#7F77DD; margin:0 0 4px;">Idempotency</h2>
+    <p style="font-size:14px; color:#888; margin:0;">Reruns should produce the same result without duplicates or data loss. Critical for reliable batch pipelines.</p>
+  </div>
+
+  <div>
+    <h2 style="font-size:15px; font-weight:500; color:#1D9E75; margin:0 0 4px;">Modularity</h2>
+    <p style="font-size:14px; color:#888; margin:0;">Break pipelines into reusable, independently testable components rather than one monolithic job.</p>
+  </div>
+
+  <div>
+    <h2 style="font-size:15px; font-weight:500; color:#378ADD; margin:0 0 4px;">Scalability</h2>
+    <p style="font-size:14px; color:#888; margin:0;">Design for data growth from day one — right partitioning, file formats, and cluster sizing so it doesn't break at 10x volume.</p>
+  </div>
+
+  <div>
+    <h2 style="font-size:15px; font-weight:500; color:#D85A30; margin:0 0 4px;">Data quality at the source</h2>
+    <p style="font-size:14px; color:#888; margin:0;">Validate and cleanse early, ideally at the Bronze/Silver boundary, so bad data never reaches downstream consumers.</p>
+  </div>
+
+  <div>
+    <h2 style="font-size:15px; font-weight:500; color:#D4537E; margin:0 0 4px;">Separation of concerns</h2>
+    <p style="font-size:14px; color:#888; margin:0;">Keep ingestion, transformation, and serving layers distinct — medallion architecture enforces this naturally.</p>
+  </div>
+
+  <div>
+    <h2 style="font-size:15px; font-weight:500; color:#BA7517; margin:0 0 4px;">Observability</h2>
+    <p style="font-size:14px; color:#888; margin:0;">Proper logging, monitoring, and alerting so you know when something breaks, why it broke, and where.</p>
+  </div>
+
+  <div>
+    <h2 style="font-size:15px; font-weight:500; color:#639922; margin:0 0 4px;">Security by design</h2>
+    <p style="font-size:14px; color:#888; margin:0;">Access controls, PII masking, and audit trails built in from the start — not bolted on after the fact.</p>
+  </div>
+
+</div>
+      `,
       children: [],
     },
     {
@@ -296,55 +430,45 @@ The BI team builds dashboards and KPIs on top of the Gold tables, while our resp
 
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
   {
-    cat: ``,
-    q: ``,
-    answer: ``,
-    children: [{
-      q: ``,
-      a: ``,
-      children: [],
-    },
-    {
-      q: ``,
-      a: ``,
-      children: [],
-    },
-    {
-      q: ``,
-      a: ``,
-      children: [],
-    },
-    {
-      q: ``,
-      a: ``,
-      children: [],
-    },],
-
-  },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
-  {
-    cat: ``,
-    q: ``,
-    answer: ``,
+    cat: `Collaboration & Teamwork`,
+    q: ` where do you maintain version history`,
+    answer: `
+    We use Azure DevOps Repos with Git for version control. We create feature branches for our work, commit changes regularly, and raise Pull Requests for code review.<br> After the review and approval, the code is merged into the target branch, which gives us complete version history and traceability of every change.
+    `,
     children: [
       {
-        q: ``,
-        a: ``,
+        q: `What is Azure DevOps used for?`,
+        a: ` Azure DevOps is an ALM (Application Lifecycle Management.) platform that helps manage the complete software development lifecycle.<br> In our project we use : <br><li> Azure Boards to manage user stories, tasks, and bugs</li><li> Azure Repos provides Git-based version control, and Azure Pipelines handles our CI/CD deployments.</li> In my role, I primarily work with Azure Repos by creating feature branches, committing code, and raising Pull Requests for review before merging into the target branch`,
         children: [],
       },
       {
-        q: ``,
-        a: ``,
+        q: `Have you deployed your pipelines?`,
+        a: ` Yes. We use Azure DevOps-based CI/CD pipelines for deployments. My responsibility is to raise pull requests, complete code reviews, resolve comments and support deployment activities while the release process is handled through the pipeline.`,
         children: [],
       },
       {
-        q: ``,
-        a: ``,
+        q: `What is SLC`,
+        a: ` SDLC stands for Software Development Life Cycle.it is the structured process used to develop software. It consists of Planning, Analysis, Design, Development, Testing, Acceptance, and Maintenance to ensure software is delivered with quality and meets business requirements.`,
         children: [],
       },
       {
-        q: ``,
-        a: ``,
+ q:`What are different software development methodologies?`,
+        a:` The common approaches are Waterfall and Agile. In modern projects, Agile is often combined with DevOps practices, where Agile manages the development process and DevOps automates building, testing, deployment, and operations through CI/CD`,
+        children:[],
+      },
+      {
+        q: `Difference between Waterfall, Agile, and DevOps?`,
+        a: ` Waterfall follows a sequential approach with fixed requirements. Agile develops software in short iterations with continuous customer feedback, while DevOps extends Agile by automating build, testing, deployment, and monitoring to enable faster and more frequent releases.`,
         children: [],
+      },
+      {
+         q:`which methodology isused in your project`,
+        a:` We followed Agile using the Scrum framework. We worked in two-week sprints, participated in sprint planning, daily stand-ups, sprint reviews, and retrospectives. <br>Code was managed in Git and deployed through Azure DevOps CI/CD pipelines to different environments, while Databricks Workflows orchestrated our production jobs. `,
+        children:[{
+           q:`why not waterfall`,
+        a:`Our requirements evolved based on business needs and data changes, so Agile allowed us to deliver pipeline enhancements incrementally and incorporate stakeholder feedback quickly. Waterfall is more suitable when requirements are fixed and changes are minimal.`,
+        children:[],
+        }],
       },
     ],
 
