@@ -89,25 +89,23 @@ print("updated count:" ,updated)
         children: [
           {
             q: `why now / specific reason for leaving?`,
-            a: `I've been with TCS for about three years, and it's been a great learning experience. I feel this is the right time to take on new challenges and broaden my experience while building on the strong foundation I've gained.`,
+            a: `My current project is coming to an end, so I saw this as the right time to make a planned career move. I'm now looking for new challenges, broader project exposure, and continued professional growth.`,
             children: [],
           },
-          {
-            q: `why Infosys/ us?`,
-            a: ` The role aligns well with my experience in Azure Databricks and data engineering, and I believe it offers opportunities to work on diverse projects and business domains.`,
-            children: [],
 
-          },
-          {
-            q: `Why should we hire you? / what makes you a good fit for this role?`,
-            a: ` <ul><li>Based on the JD, I believe my technical skills and production experience align well with your requirements</li>
-        <li>I have hands-on experience with Azure Databricks, PySpark, SQL, Delta Lake,  building end-to-end ETL pipelines.</li>
-        <li>so I'm confident I can start contributing from day one while learning your domain and business processes.</li></ul> `,
-            children: [],
-          }
+
         ],
       },
-
+      {
+        q: `Why should we hire you? / what makes you a good fit for this role?`,
+        a: ` <ul><li>Based on the JD, I believe my technical skills and production experience align well with your requirements</li>
+        <li>I have hands-on experience with Azure Databricks, PySpark, SQL, Delta Lake,  building end-to-end ETL pipelines.</li>
+        <li>so I'm confident I can start contributing from day one while learning your domain and business processes.</li></ul> `,
+        children: [],
+      },
+      { q:`Do you have any other concerns? / questions`,
+a:`Yes, thank you. Could you tell me a bit about the team I'll be working with and the kind of projects they're currently handling? Also, what would you expect from someone in this role during the first few months?`,
+        children:[],},
 
 
 
@@ -232,9 +230,9 @@ The BI team builds dashboards and KPIs on top of the Gold tables, while our resp
         `,
         children: [
           {
-           q:`Would you still keep the same design?`,
-        a:`Yes. Based on our project's requirements, I think the design was appropriate. If the business later started receiving files continuously or required stronger schema governance in the raw layer, then I'd evaluate moving Bronze to Delta and using Auto Loader.<br> Architecture should evolve with changing requirements rather than adopting every available feature from the start." `,
-        children:[],
+            q: `Would you still keep the same design?`,
+            a: `Yes. Based on our project's requirements, I think the design was appropriate. If the business later started receiving files continuously or required stronger schema governance in the raw layer, then I'd evaluate moving Bronze to Delta and using Auto Loader.<br> Architecture should evolve with changing requirements rather than adopting every available feature from the start." `,
+            children: [],
           },
         ],
       },
@@ -262,10 +260,53 @@ The BI team builds dashboards and KPIs on top of the Gold tables, while our resp
         children: [],
       },
       {
-        q: ``,
-        a: ``,
+        q: `how many members in your team`,
+        a: ` Our core development team consisted of 6 members—4 Data Engineers, including me, 1 Technical Lead, and 1 Scrum Master. We worked collaboratively during each sprint. The Technical Lead provided technical guidance and reviewed our code, while the Scrum Master facilitated sprint planning, daily stand-ups <br> 💠 <b>DOn't mention but remember:</b> Business Analyst were part of the larger project team`,
+        children: [
+
+          {
+            q: ` What was your role among the 4 developers? `,
+            a: ` I was one of the Data Engineers responsible for developing and maintaining data pipelines, implementing business transformations in PySpark, optimizing Spark jobs, fixing production defects, participating in code reviews, and performing testing before deployment`,
+            children: [],
+          },
+          {
+            q: `Do you have a separate QA team?`,
+            a: ` No. We don't have a dedicated QA within our development team. We follow peer or cross-testing, where another developer validates the changes before deployment. This helps us catch issues early and ensures the pipeline works as expected before it's released.`,
+            children: [],
+          },
+          {
+            q: `How exactly do you test?`,
+            a: ` After completing my development, another developer performs cross-testing by validating the business logic, record counts, and expected outputs. Similarly, I test other developers' changes. This peer validation, along with unit testing and code reviews, helps us maintain quality before deployment. `,
+            children: [],
+          },
+        ],
+      },
+      {
+        q: `--- Walk me through how a requirement gets delivered / end-end flow of your project (business perspective)`,
+        a: `<ul><li>The flow starts with the client sharing business requirements with the Business Analyst. The BA documents the requirements and prepares user stories, which are discussed during backlog refinement and sprint planning. Based on priority, the Scrum Master and Technical Lead assign tasks to the developers.</li><li> Before starting development, we review the requirements, clarify any doubts with the BA or Technical Lead, and then begin implementation. After development, we perform unit testing and peer or cross-testing, where another developer validates the changes.</li> <li> We then raise a Pull Request in Azure DevOps for code review by the Technical Lead. Once approved, the changes are deployed through the Azure DevOps CI/CD pipeline. If any change requests come after deployment, they follow the same process </li> </ul> `,
+        children: [
+          {
+            q: `Who tells you the requirements`,
+            a: ` The Business Analyst explains the business requirements. If we need any technical clarification, we discuss it with the BA or our Technical Lead before starting development `,
+            children: [],
+          },
+        ],
+      },
+      {
+        q: `--- How does the task get assigned to you?`,
+        a: ` During sprint planning, user stories are discussed and estimated by the team. Based on sprint priorities, workload, and ownership, the Scrum Master or Technical Lead assigns tasks to developers. Once assigned, I analyze the requirements, estimate the effort, and begin development`,
         children: [],
       },
+      {
+        q: `--- Since how long have you been working on this project?`,
+        a: ` I've been working on this healthcare project for around 1.5 years, where I've been involved in developing and enhancing multiple production data pipelines."`,
+        children: [],
+      },
+      {
+        q: `--- Is there any daily Scrum call? Who leads that?`,
+        a: `Yes. We have a daily Scrum meeting every working day, usually for about 15 minutes. It is led by the Scrum Master. During the meeting, each team member shares what they completed yesterday, what they're working on today, and whether they have any blockers`,
+        children: [],
+      }
     ],
 
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
@@ -281,9 +322,10 @@ The BI team builds dashboards and KPIs on top of the Gold tables, while our resp
       a: `Yes. I attended a client interview during the project onboarding process. <br> The discussion was mainly around my technical skills, project experience, communication, and understanding of the technologies required for the project. After clearing the interview, I was onboarded to the project.`,
       children: [
         {
-         q:`who conducted`,
-        a:`It was conducted by the client-side technical lead and project manager as part of the project onboarding process.`,
-        children:[],},
+          q: `who conducted`,
+          a: `It was conducted by the client-side technical lead and project manager as part of the project onboarding process.`,
+          children: [],
+        },
       ],
     },
     {
@@ -452,9 +494,9 @@ There are a few key factors I consider while designing a data pipeline.
         children: [],
       },
       {
- q:`What are different software development methodologies?`,
-        a:` The common approaches are Waterfall and Agile. In modern projects, Agile is often combined with DevOps practices, where Agile manages the development process and DevOps automates building, testing, deployment, and operations through CI/CD`,
-        children:[],
+        q: `What are different software development methodologies?`,
+        a: ` The common approaches are Waterfall and Agile. In modern projects, Agile is often combined with DevOps practices, where Agile manages the development process and DevOps automates building, testing, deployment, and operations through CI/CD`,
+        children: [],
       },
       {
         q: `Difference between Waterfall, Agile, and DevOps?`,
@@ -462,35 +504,35 @@ There are a few key factors I consider while designing a data pipeline.
         children: [],
       },
       {
-         q:`which methodology isused in your project`,
-        a:` We followed Agile using the Scrum framework. We worked in two-week sprints, participated in sprint planning, daily stand-ups, sprint reviews, and retrospectives. <br>Code was managed in Git and deployed through Azure DevOps CI/CD pipelines to different environments, while Databricks Workflows orchestrated our production jobs. `,
-        children:[{
-           q:`why not waterfall`,
-        a:`Our requirements evolved based on business needs and data changes, so Agile allowed us to deliver pipeline enhancements incrementally and incorporate stakeholder feedback quickly. Waterfall is more suitable when requirements are fixed and changes are minimal.`,
-        children:[],
+        q: `which methodology isused in your project`,
+        a: ` We followed Agile using the Scrum framework. We worked in two-week sprints, participated in sprint planning, daily stand-ups, sprint reviews, and retrospectives. <br>Code was managed in Git and deployed through Azure DevOps CI/CD pipelines to different environments, while Databricks Workflows orchestrated our production jobs. `,
+        children: [{
+          q: `why not waterfall`,
+          a: `Our requirements evolved based on business needs and data changes, so Agile allowed us to deliver pipeline enhancements incrementally and incorporate stakeholder feedback quickly. Waterfall is more suitable when requirements are fixed and changes are minimal.`,
+          children: [],
         }],
       },
     ],
 
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
   {
-    cat: ``,
-    q: ``,
+    cat: `Company-Specific Questions`,
+    q: `Company-Specific Questions`,
     answer: ``,
     children: [
       {
-        q: ``,
-        a: ``,
+        q: ` Why do you want to join Infosys? `,
+        a: ` The role directly matches my stack — Azure Databricks, PySpark, Delta Lake. Beyond the tech fit, Infosys Topaz is their AI-first platform focused on enterprise-scale data and AI transformation — making data AI-ready across engineering, governance, and GenAI. That's exactly the direction I want to grow in, and this role gives me that exposure across diverse domains and larger-scale engagements`,
         children: [],
       },
       {
-        q: ``,
-        a: ``,
+        q: `will you leave US ater somtime ? how long you stay`,
+        a: ` My focus is to contribute and continue growing. As long as I'm working on challenging projects, learn new technologies, and add value, I'd be happy to build a long-term career with the organization.`,
         children: [],
       },
       {
-        q: ``,
-        a: ``,
+        q: `but Both TCS and Infosys are service-based companies.`,
+        a: ` I agree, and my decision isn't based on the company type — it's about the opportunities available. Different organizations have different clients, projects, and technologies. <br> I feel this is the right time to broaden my experience in a new environment, take on more ownership, and work on diverse data engineering engagements.`,
         children: [],
       },
       {
