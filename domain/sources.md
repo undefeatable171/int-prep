@@ -158,6 +158,19 @@ Gold Layer - Derived Business Columns
 - **auth_match_flag:** `1` if the encounter falls within an approved authorization period.
 - **service_before_auth_flag:** `1` if the service occurred before the authorization start date.
 
+---
+### Gold DQ validations
+| Validation                  | How it's implemented                                                                                                                                               |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Patient Validation**      | Join Claims with `dim_patient`; if no match, write to exception table.                                                                                             |
+| **Provider Validation**     | Join Claims with `dim_provider`; unmatched records go to exception table.                                                                                          |
+| **ICD Validation**          | Join diagnosis code with `dim_icd`; invalid codes are flagged.                                                                                                     |
+| **CPT Validation**          | Join procedure code with `dim_cpt`; invalid or unmapped procedures are flagged.                                                                                    |
+| **Eligibility Validation**  | Join Claims with the Eligibility dataset and check `service_date` falls between `effective_date` and `termination_date`.                                           |
+
+- Records that fail critical validations, such as missing patient or provider references or invalid medical codes, are written to an exception table along with the validation reason. 
+- The team then investigates whether the issue is due to incorrect source data or an ETL logic issue. Source data issues are communicated to the upstream data owners, while ETL issues are fixed and the affected records are reprocessed.
+---
 ## Reference Tables — Standalone (Full Reload, Joined Where Needed, No MERGE)
 
 | Table               | Pulled From            | Used By (Joined Into)                                        |
