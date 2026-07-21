@@ -1,4 +1,4 @@
-const cats = ["Self Introduction", "Project Ownership", "Production Support & Incident Handling", "Design Decisions", "Collaboration & Teamwork", "Behavioral", "Ownership & Decision Making", "Stakeholder Management", "Company-Specific Questions"];
+const cats = ["Self Introduction", "Project Ownership", "Production Support & Incident Handling", "Design Decisions", "Collaboration & Teamwork", "Behavioral", "Stakeholder Management", "Company-Specific Questions"];
 const qs = [
   {
     cat: `Self Introduction`,
@@ -157,21 +157,24 @@ print("updated count:" ,updated)
         },],
       },
       {
-        q: `what is biggest challenging part of your projct? <span style="color:green;"><b>Q25</b></span>`,
-        a: `The most challenging part is ensuring reliable incremental processing while maintaining data quality --  processing only new or changed records without duplicates or missing data, while handling schema changes, late-arriving files, and production failures, all with downstream reporting depending on it<br>
-        To handle this we use Delta Lake's MERGE for upserts, watermark-based incremental loads to track what's been processed, and data quality checks at the Silver layer before anything reaches Gold. For schema changes ,We follow a fixed schema contract — if an unexpected schema change comes in, the pipeline fails fast. Any intentional change goes through a CR process and is updated before deployment.  <br>
-        And another major challenge was Gold layer performance as the volume grows .....(project prep content )
+        q: `Describe a time you took ownership.`,
+        a: ` One example was when one of our daily pipeline executions started taking significantly longer than usual as data volume increased. <br>
+        Although it wasn't assigned specifically to me, I investigated the issue using the Spark UI and execution plan. I identified inefficient joins and full table scans during merge operations. So (.... 40-45 %optimization )`,
+        children: [],
+      },
+
+      {
+        q: `How do you handle criticism`,
+        a: ` "I see constructive criticism as an opportunity to improve. Whenever I receive feedback, I first try to understand the reason behind it instead of becoming defensive. <br> 
+        For example, during a code review, I received feedback that one of my deduplication logic could be simplified and made more readable. I discussed the suggestions with the reviewer, updated the implementation, and adopted those coding practices in my future developments.
+<br>
+I believe good feedback improves both code quality and professional growth."
         `,
         children: [],
       },
       {
         q: `---Tell me about a feature you built independently.`,
         a: ``,
-        children: [],
-      },
-      {
-        q: `---What production issue took the longest to resolve?`,
-        a: `One production issue that took the longest to resolve involved a sudden increase in rejected claims during the Silver processing. Our pipeline itself was healthy, but many records started failing validation. We investigated the rejected records and found that the upstream application had started sending an unexpected value in one of the business-critical columns, which violated our validation rules. We coordinated with the upstream team to confirm the change, assessed its business impact, updated the transformation and validation logic after approval, reprocessed the affected data, and verified the downstream reports.`,
         children: [],
       },
       {
@@ -312,13 +315,23 @@ The BI team builds dashboards and KPIs on top of the Gold tables, while our resp
         children: [],
       },
       {
-        q: ``,
-        a: ``,
-        children: [],
+        q: `What would you do if production failed after deployment?`,
+        a: `
+        The first priority is to understand the impact and restore service safely. If it's severe and impactig downstreams, initiate a rollback immediately using the previous deployment. <br>
+I would review the job logs, Spark logs, and error messages to identify the root cause. <br> Once service is restored, I would perform root cause analysis, fix the issue in a lower environment, validate the solution thoroughly, and redeploy through the normal release process.
+<br> Finally, I'd document the RCA and identify preventive measures, such as adding additional validations or automated tests, to reduce the chance of similar issues in the future.
+        `,
+        children: [
+          {
+            q: `--- How roll back is done`,
+            a: ``,
+            children: [],
+          }
+        ],
       },
       {
-        q: ``,
-        a: ``,
+        q: `What production issue took the longest to resolve / Tell me about a production issue you resolved.? <span style="color:green;"><b>Q25</b></span>`,
+        a: `(One production issue that took the longest to resolve involved a)/Once there is a  sudden increase in rejected procedures during the Silver processing. Our pipeline itself was healthy, but many records started failing validation. We investigated the rejected records and found that the upstream application had started sending an unexpected value in one of the business-critical columns, which violated our validation rules. We coordinated with the upstream team to confirm the change, assessed its business impact, updated the transformation and validation logic after approval, reprocessed the affected data, and verified the downstream reports.`,
         children: [],
       },
     ],
@@ -326,261 +339,34 @@ The BI team builds dashboards and KPIs on top of the Gold tables, while our resp
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
   {
     cat: `Design Decisions`,
-    q: `If you could redesign the project today, what would you improve?`,
-    answer: ` <li>I would consider using Delta for the Bronze layer as well to benefit from schema enforcement and easier reprocessing</li>
-    <li>I would also evaluate Auto Loader for file ingestion to simplify handling of new files and schema evolution. Apart from these improvements, the current architecture has been stable and scalable for our workload </li> `,
+    q: `Design Decisions`,
+    answer: ``,
     children: [
       {
-        q: `If Delta Bronze and Auto Loader are better, why didn't you implement them?`,
-        a: `
+        q: `If you could redesign the project today, what would you improve?`,
+        a: ` <li>I would consider using Delta for the Bronze layer as well to benefit from schema enforcement and easier reprocessing</li>
+    <li>I would also evaluate Auto Loader for file ingestion to simplify handling of new files and schema evolution. Apart from these improvements, the current architecture has been stable and scalable for our workload </li> `,
+        children: [
+          {
+            q: `If Delta Bronze and Auto Loader are better, why didn't you implement them?`,
+            a: `
         <li>Those are good improvements, but every design decision depends on the project requirements.</li>
         <li>In our project, Bronze was only a raw landing layer where we stored immutable source data without any updates or deletes. Since we didn't need ACID transactions or MERGE operations at that stage, Parquet was sufficient and kept storage and processing lightweight.</li>
         <li>Similarly, our file sources were delivered on a fixed schedule—typically one file per day—so a scheduled batch ingestion met the business requirement. Auto Loader is more beneficial when you're continuously receiving large numbers of files or dealing with frequent schema evolution. Given our volume and delivery pattern, the additional complexity wasn't justified </li>   
         `,
-        children: [
-          {
-            q: `Would you still keep the same design?`,
-            a: `Yes. Based on our project's requirements, I think the design was appropriate. If the business later started receiving files continuously or required stronger schema governance in the raw layer, then I'd evaluate moving Bronze to Delta and using Auto Loader.<br> Architecture should evolve with changing requirements rather than adopting every available feature from the start." `,
-            children: [],
-          },
-        ],
-      },
-    ],
-
-  },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
-  {
-    cat: `Behavioral`,
-    q: `Behavioral`,
-    answer: ``,
-    children: [
-      {
-        q: ` Tell me about a time you improved performance.`,
-        a: ` The major performance improvement done by me is Reducing the long running Gold layer pipeline runtime by 40–45% through Spark and Delta Lake optimizations — broadcast hints for small reference tables, OPTIMIZE for file compaction, and Z-ORDER to improve MERGE performance `,
-        children: [],
-      },
-      {
-        q: `Suppose another team is blocking your work. How do you handle it? conflicts <span style="color:green;"><b>Q25</b></span>`,
-        a: `I first try to understand the reason for the dependency by discussing it directly with the concerned team. <br> If the blocker can't be removed immediately, I continue with independent work like developing transformations, testing with sample data, or preparing the remaining pipeline so my work doesn't stop. <br>  If it's impacting timelines and can't be resolved between teams, I escalate to my lead with clear context — what's blocked, the impact, and what I've already tried. I always come with a suggestion, not just the problem.`,
-        children: [
-          {
-            q: `common blockers`,
-            a: ` Waiting for business clarification from the BA. <br>
-Waiting for PR/code review approval. <br>
-Waiting for an upstream pipeline or source data. <br>
-Waiting for UAT/business validation.`,
-            children: [],
+            children: [
+              {
+                q: `Would you still keep the same design?`,
+                a: `Yes. Based on our project's requirements, I think the design was appropriate. If the business later started receiving files continuously or required stronger schema governance in the raw layer, then I'd evaluate moving Bronze to Delta and using Auto Loader.<br> Architecture should evolve with changing requirements rather than adopting every available feature from the start." `,
+                children: [],
+              },
+            ],
           },
         ],
       },
       {
-        q: `  How do you handle conflicts within the team? <span style="color:green;"><b>Q25</b></span>`,
-        a: `
-        I try to resolve technical disagreements at the team level first by understanding the other person's perspective and the reasoning behind their approach. Then we evaluate both options based on factors like performance, maintainability, and business requirements.
-        <br> If needed, I'll support the discussion with data,or a small proof of concept rather than debating opinions. If we're still unable to reach a decision, we involve our lead or architect to make the final call.
-        My focus is always on finding the best solution for the project, not proving that my approach is right.`,
-        children: [
-          {
-            q: `Example`,
-            a: ` We had a discussion on whether to repartition the data before writing to Delta. One approach was to keep the existing partitions to avoid an extra shuffle, while the other was to repartition for more balanced output files. We tested both approaches and compared execution time and file sizes. Based on the results, we chose repartitioning because it produced more balanced files and improved downstream performance.`,
-            children: [],
-          },
-        ],
-
-      },
-      {
-        q: `How do you keep yourself updated with new technologies? <span style="color:green;"><b>Q25</b></span> `,
-        a: ` Since data engineering technologies evolve quickly:
-        <br> I stay updated through Databricks release notes, official docs, and blogs. One thing I track closely is runtime versions — currently DBR 17.3 LTS is the stable production runtime based on Spark 4.0, DBR 18 runs on Spark 4.1, and DBR 19 Beta is on Spark 4.2. In production, most teams stick with LTS for stability and evaluate newer runtimes in lower environments first. <br>
-       <br> Completing the Databricks Data Engineer Associate and Professional certifications also helped me strengthen my understanding of Spark and Delta Lake beyond my day-to-day project work.
-                `,
-        children: [
-          {
-            q: `whats new features/ news`,
-            a: ` 
-        One feature I found interesting in Spark 4.0 is the VARIANT data type — it simplifies working with semi-structured JSON. Earlier we had to use from_json() with a predefined schema, but now nested fields can be accessed directly without explicit parsing. 
-        <br>DBR 18 also introduced Real-Time Mode for Structured Streaming, enabling millisecond-latency workloads.
-      <pre><code class="language-python">df = df.withColumn("patient", from_json("json_col", schema))
-df.select(col("patient.name"), col("patient.age")).show()
-##new
-df.select(col("patient")["name"], col("patient")["age"]).show()
- </code></pre>`
-            ,
-            children: [],
-          },
-          {
-            q: `whats dbr`,
-            a: ` Databricks Runtime (DBR) is the optimized execution environment provided by Databricks. It includes Apache Spark plus Databricks-specific enhancements like Delta Lake, Photon, Unity Catalog integration, security patches, and performance optimizations.`,
-            children: [],
-          },
-          {
-            q: `Difference between Databricks Runtime (DBR) versions`,
-            a: `Each new DBR version bundles a newer Spark version along with improvements in performance, security, bug fixes, Delta Lake, ML libraries, and new Databricks features. Upgrading gives access to new capabilities while maintaining compatibility. `,
-            children: [],
-          }
-        ],
-      },
-      {
-        q: `Where do you see yourself in the next 3 years and 5 years? <span style="color:green;"><b>Q25</b></span>`,
+        q: `What factors do you consider while developing a data pipeline?`,
         a: ` 
-        In the next three years, I want to become a strong senior data engineer,  designing scalable data platforms, taking more technical ownership, and mentoring junior engineers. I also want to build expertise in AI-ready data platforms and modern cloud technologies.
-<br>
-In the next five years, I see myself leading data engineering initiatives, contributing to architecture decisions, and helping build scalable, AI-enabled data solutions while staying hands-on with technology.
-        `,
-        children: [],
-      },
-      {
-        q: ` Are you okay working in different time zones? <span style="color:green;"><b>Q25</b></span>`,
-        a: ` Absolutely — I already work with a US-based healthcare client, so overlap hours are part of my routine. I'm comfortable adjusting my schedule based on project needs.`,
-        children: [],
-      },
-      {
-        q: `Have you read the Job Description? <span style="color:green;"><b>Q25</b></span>`,
-        a: ` Yes, I went through it carefully. The role aligns well with my stack — Azure Databricks, PySpark, Delta Lake — and what excites me is the opportunity to work on more complex, large-scale engagements with greater architectural ownership, which is exactly what I'm looking for at this stage."  `,
-        children: [],
-      },
-      {
-        q: `--- Tell me about a mistake you made and how you handled it.<span style="color:green;"><b>Q25</b></span>`,
-        a: `
-        Early in the project, while developing a Silver layer transformation, I used a hardcoded date filter for testing and accidentally forgot to remove it.
-        <br> During integration testing, a teammate noticed the record count was lower than expected. I identified the issue, removed the filter, reran the pipeline, and validated the output <br>
-        Although it only delayed testing by a few hours, it taught me to always perform a final code review. Since then, I follow a checklist before every PR to remove test code, verify filters, and validate record counts.
-
-        `,
-        children: [],
-      },
-      {
-        q: `--- How do you prioritize your work? <span style="color:green;"><b>Q25</b></span>`,
-        a: `
-        I prioritize my work based on business impact, production urgency, and sprint commitments. Production issues or any task impacting downstream processes always come first, followed by sprint stories, and then enhancement or low-priority tasks.
-<br>
-At the start of the day, I review my assigned tasks and any dependencies, such as pending code reviews, business clarifications, or upstream data availability. If I identify a blocker or multiple urgent tasks, I discuss them with my lead during the daily stand-up to align on priorities. I also try to complete complex tasks earlier in the day when my focus is highest.
-        `,
-        children: [],
-
-      },
-      {
-        q: `Do you prefer individual work or team work? <span style="color:green;"><b>Q25</b></span>`,
-        a: ` 
-        I'm comfortable working both independently and as part of a team <br>
-        Individual work helps me focus on development tasks,debugging, while teamwork is valuable for design discussions, code reviews, knowledge sharing, and resolving issues faster as different perspectives catch gaps you'd miss alone.
-        <br> In my current project, most development happens collaboratively, so I enjoy working with  team while also taking ownership of my assigned tasks`,
-        children: [],
-      },
-      {
-        q: `how do you handle stress / presurre <span style="color:green;"><b>Q25</b></span>`,
-        a: ` "I handle stress by staying organized and breaking the work into smaller, manageable tasks rather than looking at it as one large problem.  That helps me identify the actual blocker instead of feeling overwhelmed. <br> I focus on one task at a time rather than multitasking under pressure. If I see a risk of missing a deadline, I communicate it early with my lead so we can reprioritize or get support if needed. And if I'm stuck on a problem, I take a short break and come back with a fresh perspective, which often helps me solve it faster. 
-        `,
-        children: [],
-
-      },
-      {
- q:`If I call your previous manager, what would they say about you? <span style="color:green;"><b>Q25</b></span>`,
-        a:` I believe my manager would describe me as dependable, collaborative, and someone who takes ownership of assigned work. They'd say I'm reliable — I deliver what I commit to and flag early when something is at risk.`,
-        children:[],
-      },
-      {
-        q: ` How long would you take to develop a pipeline?`,
-        a: ` It depends on the complexity, business rules, source systems and testing effort. <br> A straightforward ingestion pipeline with basic transformations — I can turn that around in 2 to 3 days. <br> For more complex pipelines, like the ones I worked on in our healthcare project involving the Medallion architecture, SCD Type 2 , development typically took a few weeks including testing and UAT. <br> . I always break it into phases — design, development, testing, and deployment — and give estimates per phase so stakeholders have visibility throughout."`,
-        children: [],
-      },
-      {
-        q: `how many members in your team`,
-        a: ` Our core development team consisted of 6 members—4 Data Engineers, including me, 1 Technical Lead, and 1 Scrum Master. We worked collaboratively during each sprint. The Technical Lead provided technical guidance and reviewed our code, while the Scrum Master facilitated sprint planning, daily stand-ups <br> 💠 <b>DOn't mention but remember:</b> Business Analyst were part of the larger project team`,
-        children: [
-
-          {
-            q: ` What was your role among the 4 developers? `,
-            a: ` I was one of the Data Engineers responsible for developing and maintaining data pipelines, implementing business transformations in PySpark, optimizing Spark jobs, fixing production defects, participating in code reviews, and performing testing before deployment`,
-            children: [],
-          },
-          {
-            q: `Do you have a separate QA team?`,
-            a: ` No. We don't have a dedicated QA within our development team. We follow peer or cross-testing, where another developer validates the changes before deployment. This helps us catch issues early and ensures the pipeline works as expected before it's released.`,
-            children: [],
-          },
-          {
-            q: `How exactly do you test?`,
-            a: ` After completing my development, another developer performs cross-testing by validating the business logic, record counts, and expected outputs. Similarly, I test other developers' changes. This peer validation, along with unit testing and code reviews, helps us maintain quality before deployment. `,
-            children: [],
-          },
-        ],
-      },
-      {
-        q: `--- Walk me through how a requirement gets delivered / end-end flow of your project (business perspective)`,
-        a: `<ul><li>The flow starts with the client sharing business requirements with the Business Analyst. The BA documents the requirements and prepares user stories, which are discussed during backlog refinement and sprint planning. Based on priority, the Scrum Master and Technical Lead assign tasks to the developers.</li><li> Before starting development, we review the requirements, clarify any doubts with the BA or Technical Lead, and then begin implementation. After development, we perform unit testing and peer or cross-testing, where another developer validates the changes.</li> <li> We then raise a Pull Request in Azure DevOps for code review by the Technical Lead. Once approved, the changes are deployed through the Azure DevOps CI/CD pipeline. If any change requests come after deployment, they follow the same process </li> </ul> `,
-        children: [
-          {
-            q: `Who tells you the requirements`,
-            a: ` The Business Analyst explains the business requirements. If we need any technical clarification, we discuss it with the BA or our Technical Lead before starting development `,
-            children: [],
-          },
-        ],
-      },
-      {
-        q: `--- How does the task get assigned to you?`,
-        a: ` During sprint planning, user stories are discussed and estimated by the team. Based on sprint priorities, workload, and ownership, the Scrum Master or Technical Lead assigns tasks to developers. Once assigned, I analyze the requirements, estimate the effort, and begin development`,
-        children: [],
-      },
-      {
-        q: `--- Since how long have you been working on this project?`,
-        a: ` I've been working on this healthcare project for around 1.5 years, where I've been involved in developing and enhancing multiple production data pipelines."`,
-        children: [],
-      },
-      {
-        q: `--- Is there any daily Scrum call? Who leads that?`,
-        a: `Yes. We have a daily Scrum meeting every working day, usually for about 15 minutes. It is led by the Scrum Master. During the meeting, each team member shares what they completed yesterday, what they're working on today, and whether they have any blockers`,
-        children: [],
-      },
-      {
-        q: ` Strengths & WEakness <span style="color:green;"><b>Q25</b></span>`,
-        a: ` 
-        One of my strengths is problem-solving — I prefer to analyze the root cause rather than applying a quick fix. when our Spark jobs started degrading as data volumes grew, I used Spark UI to identify inefficient joins and full table scans , and resolved it through broadcast join tuning, Z-ORDER, optimize on Delta tables — which brought runtime down by 40-45%. I also take full ownership of my work and ensure everything is thoroughly tested before deployment. <br>
-        On the weakness side — I used to spend too much time perfecting an implementation before calling it done. Over time, I've learned to prioritize business value first, deliver within timelines, and then continuously improve the solution based on feedback. That approach has made me more efficient without compromising quality.
-        `,
-        children: [],
-      }
-    ],
-
-  },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
-  {
-    cat: `Stakeholder Management`,
-    q: `Have you ever had direct interaction with the client?`,
-    answer: `<ul><li>I haven't been the primary point of contact for the client. Most communication happens through our Business Analyst and onshore lead. </li>
-    <li>That said, I've been part of requirement clarification sessions where technical inputs were needed, so I've had exposure to those conversations.</li>
-    <li> My core responsibility has been on the implementation side — building the pipeline, optimizing performance,</li>
-    <li>I'm comfortable engaging with clients on technical topics and I'm actively looking to take on more client-facing responsibilities as I grow in my career.</li></ul>`,
-    children: [{
-      q: `Have you ever attended a client interview?`,
-      a: `Yes. I attended a client interview during the project onboarding process. <br> The discussion was mainly around my technical skills, project experience, communication, and understanding of the technologies required for the project. After clearing the interview, I was onboarded to the project.`,
-      children: [
-        {
-          q: `who conducted`,
-          a: `It was conducted by the client-side technical lead and project manager as part of the project onboarding process.`,
-          children: [],
-        },
-      ],
-    },
-    {
-      q: ``,
-      a: ``,
-      children: [],
-    },
-    {
-      q: ``,
-      a: ``,
-      children: [],
-    },
-    {
-      q: ``,
-      a: ``,
-      children: [],
-    },],
-
-  },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
-  {
-    cat: `Ownership & Decision Making`,
-    q: `What factors do you consider while developing a data pipeline?`,
-    answer: ` 
     <p>
 There are a few key factors I consider while designing a data pipeline.
 </p>
@@ -642,9 +428,11 @@ There are a few key factors I consider while designing a data pipeline.
     </li>
 </ul>
     `,
-    children: [{
-      q: ` What do you know about good data engineering design principles?`,
-      a: ` 
+        children: [],
+      },
+      {
+        q: `What do you know about good data engineering design principles?`,
+        a: ` 
       <div style="padding: 1rem 0; display: flex; flex-direction: column; gap: 14px;">
 
   <div>
@@ -684,25 +472,235 @@ There are a few key factors I consider while designing a data pipeline.
 
 </div>
       `,
-      children: [],
-    },
-    {
-      q: ``,
-      a: ``,
-      children: [],
-    },
-    {
-      q: ``,
-      a: ``,
-      children: [],
-    },
-    {
-      q: ``,
-      a: ``,
-      children: [],
-    },],
+        children: [],
+      },
+    ],
 
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
+  {
+    cat: `Behavioral`,
+    q: `Behavioral`,
+    answer: ``,
+    children: [
+      {
+        q: `<span style="color:green;"> <b>STress / Presure / deadline / Tight deadline / missed deadline</b></span>  `,
+        a: ``,
+        children: [
+          {
+            q: `how do you handle stress / presure / handle tight deadline <span style="color:green;"><b>Q25</b></span>`,
+            a: ` "I handle stress / handle tight deadline by staying organized and breaking the work into smaller, manageable tasks rather than looking at it as one large problem.  That helps me identify the actual blocker instead of feeling overwhelmed. <br> I focus on one task at a time rather than multitasking under presure. If I see a risk of missing a deadline, I communicate it early with my lead so we can reprioritize or get support if needed. And if I'm stuck on a problem, I take a short break and come back with a fresh perspective, which often helps me solve it faster. 
+        `,
+            children: [],
+          },
+          {
+            q: `Tell me about a time you missed a deadline.`,
+            a: `Fortunately, I haven't missed any major project deadlines. However, there was one instance where I had to delay my originally assigned development task because the source team introduced changes to one of our incoming reference files just before a planned release.<br> Since the new requirement was business-critical, I discussed the priorities with my lead, temporarily paused my current task, updated the ingestion and transformation logic and got it reviewed and deployed before the release and delivered the urgent change on time.
+        <br> Once it was completed, I resumed my original task. By planning and prioritizing my work, and communicating proactively with my lead, we delivered the change on time without affecting the overall sprint. <br> The experience taught me the importance of communicating  early and reprioritizing work when business needs change
+        `, children: [],
+          },
+          {
+            q: `Tell me about a tight deadline you worked`,
+            a: ` 
+        One tight deadline I handled was when the source team introduced changes to one of our incoming reference files just before a planned release. <br> The changes would affect our ingestion and downstream transformations. At the same time, I was already working on another development task.
+        <br> I discussed the priorities with my lead, temporarily deprioritized my current task, updated the ingestion and transformation logic, completed  data validation, and got it reviewed and deployed before the release. <br> Once it was completed, I resumed my original task. By planning and prioritizing my work, and communicating proactively with my lead, we delivered the change on time without affecting the overall sprint. <br> The experience taught me the importance of communicating  early and reprioritizing work when business needs change
+        `,
+            children: [
+              {
+                q: `What changes were made to the file?"`,
+                a: ` The source team added a few new fields and updated some existing column names. I updated the mapping and downstream transformation logic to ensure the new schema was processed correctly without affecting existing business rules `,
+                children: [],
+              }
+            ],
+          },
+        ],
+      },
+      {
+        q: `<span style="color:green;"> <b>challenges,mistakes , learning,ownership,improvements</b></span>  `,
+        a: ``,
+        children: [
+          {
+            q: `Tell me about a time you learned something quickly`,
+            a: `"Early in the project, I was asked to ingest data from an Excel file into the pipeline. My first instinct was to use Spark's native reader — I wrote the code, ran it, and it failed. <br> That's when I realized Spark doesn't natively support Excel in older Databricks runtimes — native Excel reading was only introduced in DBR 16.2. We were on 14.3 LTS at the time. <br> researched the error, found that we needed the com.crealytics spark-excel library, figured out how to add it as a Maven dependency in the Databricks cluster, and got the ingestion working. <br> Small thing, but it taught me to always check runtime compatibility and library support before assuming something works natively."
+        `,
+            children: [],
+          },
+          {
+            q: `Tell me about a mistake you made and how you handled it.<span style="color:green;"><b>Q25</b></span>`,
+            a: `
+        Early in the project, while developing a Silver layer transformation, I used a hardcoded date filter for testing and accidentally forgot to remove it.
+        <br> During integration testing, a teammate noticed the record count was lower than expected. I identified the issue, removed the filter, reran the pipeline, and validated the output <br>
+        Although it only delayed testing by a few hours, it taught me to always perform a final code review. Since then, I follow a checklist before every PR to remove test code, verify filters, and validate record counts.
+        `,
+            children: [],
+          },
+          {
+            q: `what is biggest challenging part of your projct? <span style="color:green;"><b>Q25</b></span>`,
+            a: `The most challenging part is ensuring reliable incremental processing while maintaining data quality --  processing only new or changed records without duplicates or missing data, while handling schema changes, late-arriving files, and production failures, all with downstream reporting depending on it<br>
+        To handle this we use Delta Lake's MERGE for upserts, watermark-based incremental loads to track what's been processed, and data quality checks at the Silver layer before anything reaches Gold. For schema changes ,We follow a fixed schema contract — if an unexpected schema change comes in, the pipeline fails fast. Any intentional change goes through a CR process and is updated before deployment.  <br>
+        And another major challenge was Gold layer performance as the volume grows .....(project prep content )
+        `,
+            children: [],
+          },
+          {
+            q: `Tell me about a challenging situation you handled. <span style="color:green;"><b>Q25</b></span>`,
+            a: ` One challenging situation was when one of our daily Databricks pipelines started taking much longer to complete as data volume increased. <br>
+        Since it was impacting the downstream reporting schedule, I investigated the issue using the Spark UI and execution plan. I found 3 things: (45 % optimization)`,
+            children: [],
+          },
+          {
+            q: ` Tell me about a time you improved performance.`,
+            a: ` The major performance improvement done by me is Reducing the long running Gold layer pipeline runtime by 40–45% through Spark and Delta Lake optimizations — broadcast hints for small reference tables, OPTIMIZE for file compaction, and Z-ORDER to improve MERGE performance `,
+            children: [],
+          },
+          {
+            q: `How do you keep yourself updated with new technologies? <span style="color:green;"><b>Q25</b></span> `,
+            a: ` Since data engineering technologies evolve quickly:
+        <br> I stay updated through Databricks release notes, official docs, and blogs. One thing I track closely is runtime versions — currently DBR 17.3 LTS is the stable production runtime based on Spark 4.0, DBR 18 runs on Spark 4.1, and DBR 19 Beta is on Spark 4.2. In production, most teams stick with LTS for stability and evaluate newer runtimes in lower environments first. <br>
+       <br> Completing the Databricks Data Engineer Associate and Professional certifications also helped me strengthen my understanding of Spark and Delta Lake beyond my day-to-day project work.
+                `,
+            children: [
+              {
+                q: `whats new features/ news`,
+                a: ` One feature I found interesting in Spark 4.0 is the VARIANT data type — it simplifies working with semi-structured JSON. Earlier we had to use from_json() with a predefined schema, but now nested fields can be accessed directly without explicit parsing. 
+        <br>DBR 18 also introduced Real-Time Mode for Structured Streaming, enabling millisecond-latency workloads.
+      <pre><code class="language-python">df = df.withColumn("patient", from_json("json_col", schema))
+                      df.select(col("patient.name"), col("patient.age")).show()
+                      ##new
+                      df.select(col("patient")["name"], col("patient")["age"]).show()
+              </code></pre>`
+                ,
+                children: [],
+              },
+              {
+                q: `whats dbr`,
+                a: ` Databricks Runtime (DBR) is the optimized execution environment provided by Databricks. It includes Apache Spark plus Databricks-specific enhancements like Delta Lake, Photon, Unity Catalog integration, security patches, and performance optimizations.`,
+                children: [],
+              },
+              {
+                q: `Difference between Databricks Runtime (DBR) versions`,
+                a: `Each new DBR version bundles a newer Spark version along with improvements in performance, security, bug fixes, Delta Lake, ML libraries, and new Databricks features. Upgrading gives access to new capabilities while maintaining compatibility. `,
+                children: [],
+              }
+            ],
+          },
+          
+
+        ],
+
+      },
+
+      {
+        q: `Suppose another team is blocking your work. How do you handle it? conflicts <span style="color:green;"><b>Q25</b></span>`,
+        a: `I first try to understand the reason for the dependency by discussing it directly with the concerned team. <br> If the blocker can't be removed immediately, I continue with independent work like developing transformations, testing with sample data, or preparing the remaining pipeline so my work doesn't stop. <br>  If it's impacting timelines and can't be resolved between teams, I escalate to my lead with clear context — what's blocked, the impact, and what I've already tried. I always come with a suggestion, not just the problem.`,
+        children: [
+          {
+            q: `common blockers`,
+            a: ` Waiting for business clarification from the BA. <br>
+Waiting for PR/code review approval. <br>
+Waiting for an upstream pipeline or source data. <br>
+Waiting for UAT/business validation.`,
+            children: [],
+          },
+        ],
+      },
+
+      {
+        q: `Where do you see yourself in the next 3 years and 5 years? <span style="color:green;"><b>Q25</b></span>`,
+        a: ` 
+        In the next three years, I want to become a strong senior data engineer,  designing scalable data platforms, taking more technical ownership, and mentoring junior engineers. I also want to build expertise in AI-ready data platforms and modern cloud technologies.
+<br>
+In the next five years, I see myself leading data engineering initiatives, contributing to architecture decisions, and helping build scalable, AI-enabled data solutions while staying hands-on with technology.
+        `,
+        children: [],
+      },
+      {
+        q: ` Are you okay working in different time zones? <span style="color:green;"><b>Q25</b></span>`,
+        a: ` Absolutely — I already work with a US-based healthcare client, so overlap hours are part of my routine. I'm comfortable adjusting my schedule based on project needs.`,
+        children: [],
+      },
+      {
+        q: `Have you read the Job Description? <span style="color:green;"><b>Q25</b></span>`,
+        a: ` Yes, I went through it carefully. The role aligns well with my stack — Azure Databricks, PySpark, Delta Lake — and what excites me is the opportunity to work on more complex, large-scale engagements with greater architectural ownership, which is exactly what I'm looking for at this stage."  `,
+        children: [],
+      },
+      {
+        q: `--- How do you prioritize your work? <span style="color:green;"><b>Q25</b></span>`,
+        a: `
+        I prioritize my work based on business impact, production urgency, and sprint commitments. Production issues or any task impacting downstream processes always come first, followed by sprint stories, and then enhancement or low-priority tasks.
+<br>
+At the start of the day, I review my assigned tasks and any dependencies, such as pending code reviews, business clarifications, or upstream data availability. If I identify a blocker or multiple urgent tasks, I discuss them with my lead during the daily stand-up to align on priorities. I also try to complete complex tasks earlier in the day when my focus is highest.
+        `,
+        children: [],
+
+      },
+      {
+        q: `If I call your previous manager, what would they say about you? <span style="color:green;"><b>Q25</b></span>`,
+        a: ` I believe my manager would describe me as dependable, collaborative, and someone who takes ownership of assigned work. They'd say I'm reliable — I deliver what I commit to and flag early when something is at risk.`,
+        children: [],
+      },
+      {
+        q: ` How long would you take to develop a pipeline?`,
+        a: ` It depends on the complexity, business rules, source systems and testing effort. <br> A straightforward ingestion pipeline with basic transformations — I can turn that around in 2 to 3 days. <br> For more complex pipelines, like the ones I worked on in our healthcare project involving the Medallion architecture, SCD Type 2 , development typically took a few weeks including testing and UAT. <br> . I always break it into phases — design, development, testing, and deployment — and give estimates per phase so stakeholders have visibility throughout."`,
+        children: [],
+      },
+      {
+        q: `--- Since how long have you been working on this project?`,
+        a: ` I've been working on this healthcare project for around 1.5 years, where I've been involved in developing and enhancing multiple production data pipelines."`,
+        children: [],
+      },
+      {
+        q: ` Strengths & WEakness <span style="color:green;"><b>Q25</b></span>`,
+        a: ` 
+        One of my strengths is problem-solving — I prefer to analyze the root cause rather than applying a quick fix. when our Spark jobs started degrading as data volumes grew, I used Spark UI to identify inefficient joins and full table scans , and resolved it through broadcast join tuning, Z-ORDER, optimize on Delta tables — which brought runtime down by 40-45%. I also take full ownership of my work and ensure everything is thoroughly tested before deployment. <br>
+        On the weakness side — I used to spend too much time perfecting an implementation before calling it done. Over time, I've learned to prioritize business value first, deliver within timelines, and then continuously improve the solution based on feedback. That approach has made me more efficient without compromising quality.
+        `,
+        children: [],
+      },
+
+    ],
+
+  },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
+  {
+    cat: `Stakeholder Management`,
+    q: `Stakeholder Management`,
+    answer: ``,
+    children: [
+      {
+        q: `Have you ever had direct interaction with the client?`,
+        a: `<ul><li>I haven't been the primary point of contact for the client. Most communication happens through our Business Analyst and onshore lead. </li>
+    <li>That said, I've been part of requirement clarification sessions where technical inputs were needed, so I've had exposure to those conversations.</li>
+    <li> My core responsibility has been on the implementation side — building the pipeline, optimizing performance,</li>
+    <li>I'm comfortable engaging with clients on technical topics and I'm actively looking to take on more client-facing responsibilities as I grow in my career.</li></ul>`,
+        children: [{
+          q: `Have you ever attended a client interview?`,
+          a: `Yes. I attended a client interview during the project onboarding process. <br> The discussion was mainly around my technical skills, project experience, communication, and understanding of the technologies required for the project. After clearing the interview, I was onboarded to the project.`,
+          children: [],
+        },
+        {
+          q: `who conducted client interview`,
+          a: `It was conducted by the client-side technical lead and project manager as part of the project onboarding process.`,
+          children: [],
+        },
+        ],
+      },
+      {
+        q: ``,
+        a: ``,
+        children: [],
+      },
+      {
+        q: ``,
+        a: ``,
+        children: [],
+      },
+      {
+        q: ``,
+        a: ``,
+        children: [],
+      },],
+
+  },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
   {
     cat: `Collaboration & Teamwork`,
     q: `Collaboration & Teamwork`,
@@ -716,49 +714,61 @@ There are a few key factors I consider while designing a data pipeline.
         children: [],
       },
       {
-        q: ` where do you maintain version history`,
-        a: `
+        q: `How do you deal with ambiguity? `,
+        a: ` When requirements are unclear, I avoid making assumptions. I first review the available documentation, discuss the requirement with the business analyst or lead, and clarify any missing details before starting development. <br>
+        If there are multiple implementation options, I evaluate them based on business requirements, performance, and maintainability, and confirm the approach with the team before proceeding.
+<br>
+This helps avoid rework and ensures everyone has the same understanding.`,
+        children: [],
+      },
+      {
+        q: `SDLC & Devops`,
+        a: ``,
+        children: [
+          {
+            q: ` where do you maintain version history`,
+            a: `
     We use Azure DevOps Repos with Git for version control. We create feature branches for our work, commit changes regularly, and raise Pull Requests for code review.<br> After the review and approval, the code is merged into the target branch, which gives us complete version history and traceability of every change.
     `,
-        children: [],
-      },
-      {
-        q: `What is Azure DevOps used for?`,
-        a: ` Azure DevOps is an ALM (Application Lifecycle Management.) platform that helps manage the complete software development lifecycle.<br> In our project we use : <br><li> Azure Boards to manage user stories, tasks, and bugs</li><li> Azure Repos provides Git-based version control, and Azure Pipelines handles our CI/CD deployments.</li> In my role, I primarily work with Azure Repos by creating feature branches, committing code, and raising Pull Requests for review before merging into the target branch`,
-        children: [],
-      },
-      {
-        q: `Have you deployed your pipelines?`,
-        a: ` Yes. We use Azure DevOps-based CI/CD pipelines for deployments. My responsibility is to raise pull requests, complete code reviews, resolve comments and support deployment activities while the release process is handled through the pipeline.`,
-        children: [],
-      },
-      {
-        q: `What is SLC`,
-        a: ` SDLC stands for Software Development Life Cycle.it is the structured process used to develop software. It consists of Planning, Analysis, Design, Development, Testing, Acceptance, and Maintenance to ensure software is delivered with quality and meets business requirements.`,
-        children: [],
-      },
-      {
-        q: `What are different software development methodologies?`,
-        a: ` The common approaches are Waterfall and Agile. In modern projects, Agile is often combined with DevOps practices, where Agile manages the development process and DevOps automates building, testing, deployment, and operations through CI/CD`,
-        children: [],
-      },
-      {
-        q: `Difference between Waterfall, Agile, and DevOps?`,
-        a: ` Waterfall follows a sequential approach with fixed requirements. Agile develops software in short iterations with continuous customer feedback, while DevOps extends Agile by automating build, testing, deployment, and monitoring to enable faster and more frequent releases.`,
-        children: [],
-      },
-      {
-        q: `which development methodology isused in your project`,
-        a: ` We followed Agile using the Scrum framework with two-week sprints. <br>Sprint planning is done at the beginning of every sprint, where user stories are estimated and assigned. <br> Every day we attend a stand-up meeting to discuss what we completed yesterday, what we're working on today, and any blockers. At the end of the sprint, we participate in sprint review and retrospective meetings to demonstrate completed work, collect feedback, and identify process improvements. `,
-        children: [{
-          q: `why not waterfall`,
-          a: `Our requirements evolved based on business needs and data changes, so Agile allowed us to deliver pipeline enhancements incrementally and incorporate stakeholder feedback quickly. Waterfall is more suitable when requirements are fixed and changes are minimal.`,
-          children: [],
-        }],
-      },
-      {
-        q: ` HOw do you track tasks <span style="color:green;"><b>Q25</b></span>`,
-        a: `
+            children: [],
+          },
+          {
+            q: `What is Azure DevOps used for?`,
+            a: ` Azure DevOps is an ALM (Application Lifecycle Management.) platform that helps manage the complete software development lifecycle.<br> In our project we use : <br><li> Azure Boards to manage user stories, tasks, and bugs</li><li> Azure Repos provides Git-based version control, and Azure Pipelines handles our CI/CD deployments.</li> In my role, I primarily work with Azure Repos by creating feature branches, committing code, and raising Pull Requests for review before merging into the target branch`,
+            children: [],
+          },
+          {
+            q: `Have you deployed your pipelines?`,
+            a: ` Yes. We use Azure DevOps-based CI/CD pipelines for deployments. My responsibility is to raise pull requests, complete code reviews, resolve comments and support deployment activities while the release process is handled through the pipeline.`,
+            children: [],
+          },
+          {
+            q: `What is SDLC`,
+            a: ` SDLC stands for Software Development Life Cycle.it is the structured process used to develop software. It consists of Planning, Analysis, Design, Development, Testing, Acceptance, and Maintenance to ensure software is delivered with quality and meets business requirements.`,
+            children: [],
+          },
+          {
+            q: `What are different software development methodologies?`,
+            a: ` The common approaches are Waterfall and Agile. In modern projects, Agile is often combined with DevOps practices, where Agile manages the development process and DevOps automates building, testing, deployment, and operations through CI/CD`,
+            children: [],
+          },
+          {
+            q: `Difference between Waterfall, Agile, and DevOps?`,
+            a: ` Waterfall follows a sequential approach with fixed requirements. Agile develops software in short iterations with continuous customer feedback, while DevOps extends Agile by automating build, testing, deployment, and monitoring to enable faster and more frequent releases.`,
+            children: [],
+          },
+          {
+            q: `which development methodology isused in your project`,
+            a: ` We followed Agile using the Scrum framework with two-week sprints. <br>Sprint planning is done at the beginning of every sprint, where user stories are estimated and assigned. <br> Every day we attend a stand-up meeting to discuss what we completed yesterday, what we're working on today, and any blockers. At the end of the sprint, we participate in sprint review and retrospective meetings to demonstrate completed work, collect feedback, and identify process improvements. `,
+            children: [{
+              q: `why not waterfall`,
+              a: `Our requirements evolved based on business needs and data changes, so Agile allowed us to deliver pipeline enhancements incrementally and incorporate stakeholder feedback quickly. Waterfall is more suitable when requirements are fixed and changes are minimal.`,
+              children: [],
+            }],
+          },
+          {
+            q: ` HOw do you track tasks <span style="color:green;"><b>Q25</b></span>`,
+            a: `
         We follow Agile methodology with two-week sprints, and Azure DevOps Boards is our primary tool for tracking work.
 
 <br>Every task starts as a User Story, Bug, or Task, where the business requirements, acceptance criteria, and priority are defined. During sprint planning, work items are estimated and assigned to team members.
@@ -767,10 +777,77 @@ In our daily stand-up, we discuss completed work, today's plan, and any blockers
 <br>
 Along with Azure DevOps, I maintain a personal task list to prioritize development, testing, code reviews, and deployment activities based on sprint priorities.
         `,
+            children: [],
+          },
+        ],
+
+      },
+      {
+        q: `--- Walk me through how a requirement gets delivered / end-end flow of your project (business perspective)`,
+        a: `<ul><li>The flow starts with the client sharing business requirements with the Business Analyst. The BA documents the requirements and prepares user stories, which are discussed during backlog refinement and sprint planning. Based on priority, the Scrum Master and Technical Lead assign tasks to the developers.</li><li> Before starting development, we review the requirements, clarify any doubts with the BA or Technical Lead, and then begin implementation. After development, we perform unit testing and peer or cross-testing, where another developer validates the changes.</li> <li> We then raise a Pull Request in Azure DevOps for code review by the Technical Lead. Once approved, the changes are deployed through the Azure DevOps CI/CD pipeline. If any change requests come after deployment, they follow the same process </li> </ul> `,
+        children: [
+          {
+            q: `Who tells you the requirements`,
+            a: ` The Business Analyst explains the business requirements. If we need any technical clarification, we discuss it with the BA or our Technical Lead before starting development `,
+            children: [],
+          },
+        ],
+      },
+      {
+        q: `how many members in your team`,
+        a: ` Our core development team consisted of 6 members—4 Data Engineers, including me, 1 Technical Lead, and 1 Scrum Master. We worked collaboratively during each sprint. The Technical Lead provided technical guidance and reviewed our code, while the Scrum Master facilitated sprint planning, daily stand-ups <br> 💠 <b>DOn't mention but remember:</b> Business Analyst were part of the larger project team`,
+        children: [
+
+          {
+            q: ` What was your role among the 4 developers? `,
+            a: ` I was one of the Data Engineers responsible for developing and maintaining data pipelines, implementing business transformations in PySpark, optimizing Spark jobs, fixing production defects, participating in code reviews, and performing testing before deployment`,
+            children: [],
+          },
+          {
+            q: `Do you have a separate QA team?`,
+            a: ` No. We don't have a dedicated QA within our development team. We follow peer or cross-testing, where another developer validates the changes before deployment. This helps us catch issues early and ensures the pipeline works as expected before it's released.`,
+            children: [],
+          },
+          {
+            q: `How exactly do you test?`,
+            a: ` After completing my development, another developer performs cross-testing by validating the business logic, record counts, and expected outputs. Similarly, I test other developers' changes. This peer validation, along with unit testing and code reviews, helps us maintain quality before deployment. `,
+            children: [],
+          },
+        ],
+      },
+      {
+        q: `--- How does the task get assigned to you?`,
+        a: ` During sprint planning, user stories are discussed and estimated by the team. Based on sprint priorities, workload, and ownership, the Scrum Master or Technical Lead assigns tasks to developers. Once assigned, I analyze the requirements, estimate the effort, and begin development`,
         children: [],
       },
+      {
+        q: `--- Is there any daily Scrum call? Who leads that?`,
+        a: `Yes. We have a daily Scrum meeting every working day, usually for about 15 minutes. It is led by the Scrum Master. During the meeting, each team member shares what they completed yesterday, what they're working on today, and whether they have any blockers`,
+        children: [],
+      },
+      {
+        q: `Do you prefer individual work or team work? <span style="color:green;"><b>Q25</b></span>`,
+        a: ` 
+        I'm comfortable working both independently and as part of a team <br>
+        Individual work helps me focus on development tasks,debugging, while teamwork is valuable for design discussions, code reviews, knowledge sharing, and resolving issues faster as different perspectives catch gaps you'd miss alone.
+        <br> In my current project, most development happens collaboratively, so I enjoy working with  team while also taking ownership of my assigned tasks`,
+        children: [],
+      },
+      {
+        q: `  How do you handle conflicts within the team? <span style="color:green;"><b>Q25</b></span>`,
+        a: `
+        I try to resolve technical disagreements at the team level first by understanding the other person's perspective and the reasoning behind their approach. Then we evaluate both options based on factors like performance, maintainability, and business requirements.
+        <br> If needed, I'll support the discussion with data,or a small proof of concept rather than debating opinions. If we're still unable to reach a decision, we involve our lead or architect to make the final call.
+        My focus is always on finding the best solution for the project, not proving that my approach is right.`,
+        children: [
+          {
+            q: `Example`,
+            a: ` We had a discussion on whether to repartition the data before writing to Delta. One approach was to keep the existing partitions to avoid an extra shuffle, while the other was to repartition for more balanced output files. We tested both approaches and compared execution time and file sizes. Based on the results, we chose repartitioning because it produced more balanced files and improved downstream performance.`,
+            children: [],
+          },
+        ],
+      },
     ],
-
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
   {
     cat: `Company-Specific Questions`,
