@@ -1,4 +1,4 @@
-const cats = ["Self Introduction", "Project Ownership", "Production Support & Incident Handling", "Design Decisions", "Collaboration & Teamwork", "Behavioral", "Stakeholder Management", "Company-Specific Questions"];
+const cats = ["Self Introduction", "Project Ownership", "Production Support & Incident Handling", "Design Decisions", "Collaboration & Teamwork", "Behavioral", "Stakeholder Management", "HR, Career & Company Fit"];
 const qs = [
   {
     cat: `Self Introduction`,
@@ -9,7 +9,6 @@ const qs = [
 <p>
 My name is <strong>Prathap Gorantla</strong>, and I have around <strong>3 years of experience</strong> as a Data Engineer at <strong>Tata Consultancy Services</strong>.
 </p>
-
 <p>
 Currently, I'm working on a <strong>US healthcare project</strong> where we built a centralized data platform on <strong>Azure Databricks</strong> using the <strong>Medallion architecture</strong>. My primary responsibility is developing and maintaining batch ETL pipelines using <strong>PySpark</strong> and <strong>SQL</strong>. I work on ingesting data from PostgreSQL databases and file-based sources, transforming it across the <strong>Bronze, Silver, and Gold</strong> layers, and delivering curated datasets for downstream analytics.
 </p>
@@ -106,23 +105,16 @@ print("updated count:" ,updated)
         children: [],
       },
       {
-        q: `why leave your current role?`,
-        a: `I've had a good learning experience in my current role, where I've worked on building and maintaining production ETL pipelines using Azure Databricks, PySpark, and SQL<br> I'm now looking for an opportunity to work on more challenging projects, gain exposure to different business domains and broaden my technical exposure. This role aligns well with those goals, which is why I'm interested in making a change.`,
-        children: [
-          {
-            q: `why now / specific reason for leaving?`,
-            a: `My current project is coming to an end, so I saw this as the right time to make a planned career move. I'm now looking for new challenges, broader project exposure, and continued professional growth.`,
-            children: [],
-          },
-
-
-        ],
+        q: `What motivates you?`,
+        a: ` "I enjoy solving technical problems, optimizing data pipelines, and learning new technologies. Seeing a solution successfully deployed and used by downstream teams is very motivating." `,
+        children: [],
       },
       {
-        q: `Why should we hire you? / what makes you a good fit for this role?`,
-        a: ` <ul><li>Based on the JD, I believe my technical skills and production experience align well with your requirements</li>
-        <li>I have hands-on experience with Azure Databricks, PySpark, SQL, Delta Lake,  building end-to-end ETL pipelines.</li>
-        <li>I am a quick learner, and take ownership of my work. so I'm confident I can start contributing from day one while learning your domain and business processes.</li></ul> `,
+        q: `hobbies`,
+        a: `
+        My hobbies include playing badminton , table tennis with friends.From last few months i started going to the gym regularly. It helps me stay disciplined and maintain a healthy routine.<br>
+
+        `,
         children: [],
       },
       {
@@ -157,29 +149,63 @@ print("updated count:" ,updated)
         },],
       },
       {
-        q: `Describe a time you took ownership.`,
-        a: ` One example was when one of our daily pipeline executions started taking significantly longer than usual as data volume increased. <br>
-        Although it wasn't assigned specifically to me, I investigated the issue using the Spark UI and execution plan. I identified inefficient joins and full table scans during merge operations. So (.... 40-45 %optimization )`,
-        children: [],
-      },
-
-      {
-        q: `How do you handle criticism`,
-        a: ` "I see constructive criticism as an opportunity to improve. Whenever I receive feedback, I first try to understand the reason behind it instead of becoming defensive. <br> 
-        For example, during a code review, I received feedback that one of my deduplication logic could be simplified and made more readable. I discussed the suggestions with the reviewer, updated the implementation, and adopted those coding practices in my future developments.
-<br>
-I believe good feedback improves both code quality and professional growth."
+        q: `What does ownership mean to you?`,
+        a: ` 
+        To me, ownership means taking responsibility for a task from start to finish. It includes understanding the requirement, delivering a well-tested solution, communicating risks early, and staying accountable until the issue is fully resolved. I ensure the outcome is reliable and meets the expected quality."
         `,
         children: [],
       },
       {
-        q: `---Tell me about a feature you built independently.`,
-        a: ``,
+        q: `How do you balance speed and quality?`,
+        a: ` "I balance speed and quality by focusing on the core requirement first, then validating it properly before moving on.<br>
+         I avoid over-engineering early, but I never skip  data validation to save time <br> 
+        The one place I don't compromise is validation — skipping data checks to save time always costs more time later when bad data reaches downstream.
+        `,
         children: [],
       },
       {
+        q: `Describe a time you took ownership./ Tell me about a decision you made independently.`,
+        a: ` One example was when one of our daily pipeline executions started taking significantly longer than usual as data volume increased. <br>
+        Although it wasn't assigned specifically to me, I investigated the issue using the Spark UI and execution plan. I identified inefficient joins and full table scans during merge operations. So (.... 40-45 %optimization )`,
+        children: [],
+      },
+            {
+ q:`If you become a Lead in the future, what would your priorities be?`,
+        a:` "If I become a Lead, my priorities would be to ensure the team delivers quality work on time, remove blockers quickly, and create an environment where everyone can perform effectively.<br> I'd focus on clear communication with stakeholders, maintaining high coding and data quality standards, and helping team members grow by sharing knowledge and providing guidance `,
+        children:[],
+      },
+      {
+        q: `How do you make technical decisions?`,
+        a: ` I first understand the business requirement, then evaluate different approaches based on correctness, performance, maintainability, and project standards. If the impact is significant, I discuss the options with my lead before implementation.`,
+        children: [],
+      },
+      {
+        q: `How do you ensure quality before deployment?`,
+        a: ` "Before deployment, I ensure the code meets both functional and quality standards. I perform unit testing, validate source-to-target data counts, null handling, duplicates, and business rules. <br>I also test edge cases, verify pipeline execution, and ensure existing functionality isn't impacted. <br> Finally, I raise a pull request, address code review comments, and once the changes are cross-tested and approved, they are deployed through our CI/CD pipeline.`,
+        children: [],
+      },
+      {
+        q: `How do you handle ownership?`,
+        a: ` I take ownership by understanding the requirement, delivering a well-tested solution, and following it through until completion. If I encounter any issues or risks, I communicate them early, work on the root cause, and ensure they're resolved."`,
+        children: [],
+      },
+      {
+        q: ` What if your lead is unavailable?`,
+        a: ` 
+        "If my lead is unavailable, I first try to resolve the issue independently by checking the logs, reviewing the code, and identifying the root cause.If it's within my scope, I implement the fix and document my actions<br>
+For high-impact decisions, such as a rollback or schema change, I involve the next available senior team member or Scrum Master rather than making the decision alone. I keep my lead informed as soon as they're available.
+        `,
+        children: [],
+      },
+
+      {
         q: ` What is the most difficult business logic you've written?`,
         a: `The most complex logic I've written was SCD Type 2 MERGE for the dimension table — handling new records, updates, and expirations in a single MERGE while maintaining history. The tricky part was getting the MERGE conditions right so updates correctly expired the old version, set the end date, flipped the current flag, and inserted the new version — all atomically without gaps or overlaps in the history.`,
+        children: [],
+      },
+      {
+        q: `--- Describe a difficult bug.`,
+        a: ``,
         children: [],
       },
       {
@@ -583,10 +609,50 @@ There are a few key factors I consider while designing a data pipeline.
               }
             ],
           },
-          
+          {
+            q: `handle multiple tasks / prioritize multiple tasks`,
+            a: `
+        I first identify production issues, since they have the highest business impact. Next, I work on committed development tasks and then lower-priority enhancements. If priorities change, I confirm them with my lead before adjusting my plan.
+        `,
+            children: [],
+          },
+
+
 
         ],
 
+      },
+      {
+        q: `What would you do if you didn't know how to solve a problem?`,
+        a: ` "I first try to understand the problem by reviewing the code, and documentation. If I can't resolve it within a reasonable time, I discuss it with my Team Lead or an experienced teammate, implement the solution, and make sure I understand the root cause so I can handle similar issues independently in the future.`,
+        children: [],
+      },
+      {
+        q: `<span style="color:green;"> <b>critisism , failure, feedback</b></span>  `,
+        a: ``,
+        children: [
+          {
+            q: `How do you handle criticism`,
+            a: ` "I see constructive criticism as an opportunity to improve. Whenever I receive feedback, I first try to understand the reason behind it instead of becoming defensive. <br> 
+        For example, during a code review, I received feedback that one of my join logic could be simplified(joined all at once) and made more readable. I discussed the suggestions with the reviewer, updated the implementation, and adopted those coding practices in my future developments.
+<br>
+I believe good feedback improves both code quality and professional growth."
+        `,
+            children: [],
+          },
+          {
+            q: `difficult feedback`,
+            a: ` During a code review, I received feedback that my join implementation could be simplified and made more maintainable. I discussed the suggestions with the reviewer, updated the code, and adopted those practices in later tasks." `,
+            children: [],
+          },
+          {
+            q: `10. Tell me about a failure.`,
+            a: `Early in the project, I developed a transformation that worked correctly but took much longer than expected with production-sized data. 
+        <br> I analyzed the Spark UI and found that the same DataFrame was being reused across multiple transformations, causing it to be recomputed repeatedly.
+        <br> cached that DataFrame, which significantly reduced the runtime. That experience taught me that validating functionality alone isn't enough—I also need to evaluate performance and scalability before considering a task complete.`,
+            children: [],
+          },
+        ],
       },
 
       {
@@ -641,6 +707,18 @@ At the start of the day, I review my assigned tasks and any dependencies, such a
       {
         q: ` How long would you take to develop a pipeline?`,
         a: ` It depends on the complexity, business rules, source systems and testing effort. <br> A straightforward ingestion pipeline with basic transformations — I can turn that around in 2 to 3 days. <br> For more complex pipelines, like the ones I worked on in our healthcare project involving the Medallion architecture, SCD Type 2 , development typically took a few weeks including testing and UAT. <br> . I always break it into phases — design, development, testing, and deployment — and give estimates per phase so stakeholders have visibility throughout."`,
+        children: [],
+      },
+      {
+        q: `How do you estimate your work?`,
+        a: ` I estimate my work by first understanding the requirement, identifying the development tasks, testing effort, and any dependencies. <br>
+        I also consider code review and validation before giving an estimate. If I discover additional complexity during implementation, I communicate it early to my Scrum Master and Team Lead so expectations can be adjusted
+        `,
+        children: [],
+      },
+      {
+        q: `What if you realize you'll miss a deadline?`,
+        a: ` I communicate the risk as early as possible, explain the reason, provide a revised estimate, and discuss options such as reducing scope or getting additional support. Early communication helps the team plan effectively `,
         children: [],
       },
       {
@@ -722,6 +800,11 @@ This helps avoid rework and ensures everyone has the same understanding.`,
         children: [],
       },
       {
+        q: `Have you ever helped a teammate?`,
+        a: ` Yes. Whenever teammates faced issues with SQL queries, Spark transformations, or understanding an existing pipeline, I shared my approach and helped them troubleshoot. We regularly collaborated through code reviews and technical discussions.`,
+        children: [],
+      },
+      {
         q: `SDLC & Devops`,
         a: ``,
         children: [
@@ -758,14 +841,16 @@ This helps avoid rework and ensures everyone has the same understanding.`,
             children: [],
           },
           {
-            q: `which development methodology isused in your project`,
-            a: ` We followed Agile using the Scrum framework with two-week sprints. <br>Sprint planning is done at the beginning of every sprint, where user stories are estimated and assigned. <br> Every day we attend a stand-up meeting to discuss what we completed yesterday, what we're working on today, and any blockers. At the end of the sprint, we participate in sprint review and retrospective meetings to demonstrate completed work, collect feedback, and identify process improvements. `,
-            children: [{
-              q: `why not waterfall`,
-              a: `Our requirements evolved based on business needs and data changes, so Agile allowed us to deliver pipeline enhancements incrementally and incorporate stakeholder feedback quickly. Waterfall is more suitable when requirements are fixed and changes are minimal.`,
-              children: [],
-            }],
+            q: `which development methodology is used in your project`,
+            a: ` We followed Agile using the Scrum framework with two-week sprints. `,
+            children: [
+              {
+                q: `why not waterfall`,
+                a: `Our requirements evolved based on business needs and data changes, so Agile allowed us to deliver pipeline enhancements incrementally and incorporate stakeholder feedback quickly. Waterfall is more suitable when requirements are fixed and changes are minimal.`,
+                children: [],
+              }],
           },
+
           {
             q: ` HOw do you track tasks <span style="color:green;"><b>Q25</b></span>`,
             a: `
@@ -781,6 +866,29 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
           },
         ],
 
+      },
+      {
+        q: `How do you work with your team?`,
+        a: ` 
+      We followed Agile using the Scrum framework with two-week sprints, with daily stand-ups, sprint planning, reviews, and retrospectives. I discuss progress, raise blockers early, participate in code reviews, and collaborate with teammates to ensure timely delivery
+        `,
+        children: [],
+      },
+      {
+        q: `How do you coordinate with your Team Lead?`,
+        a: ` 
+        We follow an Agile Scrum process. I coordinate with the Scrum Master during sprint planning, daily stand-ups, and backlog discussions to provide updates on my tasks, dependencies, and any blockers. <br>
+        For technical decisions, requirement clarifications, and code reviews, I work closely with my Team Lead. I also communicate proactively if I foresee any risks or delays so we can address them early and keep the sprint on track.
+        `,
+        children: [],
+      },
+      {
+        q: ` How do you interact with QA?`,
+        a: `
+        We don't have a dedicated QA team. We follow cross-testing, where another developer tests the feature before it's moved further. Before handing over my changes, I perform unit testing and data validation. <br>
+        During cross-testing, if any issues are found, I analyze the root cause, fix them, and ask the team member to verify the changes. This helps us catch issues early and maintain code quality before deployment
+        `,
+        children: [],
       },
       {
         q: `--- Walk me through how a requirement gets delivered / end-end flow of your project (business perspective)`,
@@ -814,6 +922,14 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
             children: [],
           },
         ],
+      },
+            {
+ q:`How do you handle requirement changes?`,
+        a:`
+        I handle requirement changes by first understanding the impact on the current sprint, the upstream source, and the downstream transformations. If the change is small, I adjust the logic, retest, and move forward.<br>
+        If it impacts scope or timeline, I discuss it with my Scrum Master and Team Lead, confirm the priority, and then update the plan so the team stays aligned.
+        `,
+        children:[],
       },
       {
         q: `--- How does the task get assigned to you?`,
@@ -850,28 +966,89 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
     ],
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
   {
-    cat: `Company-Specific Questions`,
-    q: `Company-Specific Questions`,
+    cat: `HR, Career & Company Fit`,
+    q: `HR, Career & Company Fit`,
     answer: ``,
     children: [
       {
-        q: ` Why do you want to join Infosys? `,
-        a: ` The role directly matches my stack — Azure Databricks, PySpark, Delta Lake. Beyond the tech fit, Infosys Topaz is their AI-first platform focused on enterprise-scale data and AI transformation — making data AI-ready across engineering, governance, and GenAI. That's exactly the direction I want to grow in, and this role gives me that exposure across diverse domains and larger-scale engagements`,
+        q: `salary expectation`,
+        a: `
+        I'm looking for a compensation that's in line with my experience, skills, and market standards. I'm open to discussing the complete compensation package.
+        `,
         children: [],
+      },
+      {
+        q: `INFY`,
+        a: ``,
+        children: [
+          {
+            q: ` Why do you want to join Infosys? `,
+            a: ` The role directly matches my stack — Azure Databricks, PySpark, Delta Lake. <br>Beyond the tech fit, Infosys Topaz is their AI-first platform focused on enterprise-scale data and AI transformation — making data AI-ready across engineering, governance, and GenAI. <br> That's exactly the direction I want to grow in, and this role gives me that exposure across diverse domains and larger-scale engagements`,
+            children: [],
+          },
+          {
+            q: `but Both TCS and Infosys are service-based companies.`,
+            a: ` I agree, and my decision isn't based on the company type — it's about the opportunities available. Different organizations have different clients, projects, and technologies. <br> I feel this is the right time to broaden my experience in a new environment, take on more ownership, and work on diverse data engineering engagements.`,
+            children: [],
+          },
+        ],
+      },
+      {
+        q: `What type of work environment do you prefer?`,
+        a: `
+        I prefer a collaborative environment where team members openly share knowledge, discuss ideas, and focus on delivering high-quality solutions
+        `,
+        children: [],
+      },
+      {
+        q: `why leave your current role?`,
+        a: `I've had a good learning experience in my current role, where I've worked on building and maintaining production ETL pipelines using Azure Databricks, PySpark, and SQL<br> I'm now looking for an opportunity to work on more challenging projects, gain exposure to different business domains and broaden my technical exposure. This role aligns well with those goals, which is why I'm interested in making a change.`,
+        children: [
+          {
+            q: `why now / specific reason for leaving?`,
+            a: `My current project is coming to an end, so I saw this as the right time to make a planned career move. I'm now looking for new challenges, broader project exposure, and continued professional growth.`,
+            children: [],
+          },
+
+
+        ],
       },
       {
         q: `will you leave US ater somtime ? how long you stay`,
         a: ` My focus is to contribute and continue growing. As long as I'm working on challenging projects, learn new technologies, and add value, I'd be happy to build a long-term career with the organization.`,
         children: [],
       },
+
       {
-        q: `but Both TCS and Infosys are service-based companies.`,
-        a: ` I agree, and my decision isn't based on the company type — it's about the opportunities available. Different organizations have different clients, projects, and technologies. <br> I feel this is the right time to broaden my experience in a new environment, take on more ownership, and work on diverse data engineering engagements.`,
+        q: `Why should we hire you? / what makes you a good fit for this role?`,
+        a: ` <ul><li>Based on the JD, I believe my technical skills and production experience align well with your requirements</li>
+        <li>I have hands-on experience with Azure Databricks, PySpark, SQL, Delta Lake,  building end-to-end ETL pipelines.</li>
+        <li>I am a quick learner, and take ownership of my work. so I'm confident I can start contributing from day one while learning your domain and business processes.</li></ul> `,
         children: [],
       },
       {
-        q: ``,
-        a: ``,
+        q: `What distinguishes you from other candidates?`,
+        a: ` 
+        What sets me apart is that I combine hands-on Databricks development with a strong focus on reliability and performance.<br>
+        In my current healthcare project, I’ve worked on production-grade Azure Databricks pipelines handling 45–50 GB of data daily, with incremental ingestion, Delta MERGE, validation checks, and Spark optimization that reduced runtime by 40–45%. <br>
+I focus on delivering solutions that are accurate, reliable, and ready for production
+        `,
+        children: [],
+      },
+
+      {
+        q: ` Why should I trust you with production work?`,
+        a: ` I understand the importance of production stability, especially in healthcare , where data accuracy and reliability are critical <br>
+      I follow coding standards, perform thorough unit and data validation, participate in code reviews, and support production issues when required.<br>
+       I don't rush changes—I ensure they're properly tested and validated before deployment, and I communicate proactively with my team if I identify any risks.
+        `,
+        children: [],
+      },
+      {
+        q: `Why should I select you over someone with more experience?`,
+        a: ` 
+        Experience is important, but I believe the ability to learn quickly, adapt, and consistently deliver quality work is equally valuable.<br> Over the past three years, I've built production-grade Azure Databricks pipelines, optimized Spark jobs, supported production issues, and continuously expanded my technical skills. I'm confident I can contribute effectively while continuing to grow.
+        `,
         children: [],
       },
     ],
