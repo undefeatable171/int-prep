@@ -538,6 +538,16 @@ There are a few key factors I consider while designing a data pipeline.
               }
             ],
           },
+                {
+ q:`How do you communicate if you cannot meet an SLA?
+`,
+        a:` 
+        If I know we're at risk of missing an SLA, I communicate it as early as possible rather than waiting until the deadline. I explain the issue, its impact, what i am doing to resolve it, and provide an estimated timeline if it's available.
+        If I need help, I discuss it with my teammates, share the tasks. <br>
+        I never wait until the last minute hoping it resolves itself — early communication gives the team and stakeholders time to react and manage expectations on their side."`,
+        children:[],
+      },
+                
         ],
       },
       {
@@ -646,12 +656,22 @@ I believe good feedback improves both code quality and professional growth."
             children: [],
           },
           {
-            q: `10. Tell me about a failure.`,
+            q: ` Tell me about a failure.`,
             a: `Early in the project, I developed a transformation that worked correctly but took much longer than expected with production-sized data. 
         <br> I analyzed the Spark UI and found that the same DataFrame was being reused across multiple transformations, causing it to be recomputed repeatedly.
         <br> cached that DataFrame, which significantly reduced the runtime. That experience taught me that validating functionality alone isn't enough—I also need to evaluate performance and scalability before considering a task complete.`,
             children: [],
           },
+          {
+ q:`
+How do you recover from failure?`,
+        a:`
+        I recover from failure by first accepting it, understanding the root cause, and focusing on the solution rather than the mistake.<br>
+
+If I need help, I discuss it with my teammates, fix the issue, and validate the solution thoroughly and document any key learnings to avoid repeating the same mistake. <br> I see failures as opportunities to improve, and I make sure I come back with a better approach the next time.
+        `,
+        children:[],
+      },
         ],
       },
 
@@ -762,20 +782,86 @@ At the start of the day, I review my assigned tasks and any dependencies, such a
         ],
       },
       {
-        q: ``,
-        a: ``,
-        children: [],
+        q: ` BI team says a report shows incorrect data. What do you do? / reports less or more revenue / duplicates <span style="color:green;"><b>🚨</b></span>`,
+        a: `
+        "First, I'd ask the BI team to be specific—which report, metrics  are incorrect, and what they expected versus what they're seeing. <br>
+Since we own the data platform and they own the dashboards, I'd start by reproducing the issue using the same filters or date range the BI report uses, then query the Gold table directly and compare values <br>
+If Gold is matching with expected values, I'd share my findings so they can investigate their report logic. <br>
+If Gold is wrong, I'd trace backwards — Gold to Silver to Bronze — checking business transformations, joins, SCD Type 2 logic,<br>
+I'd also verify that the relevant pipeline completed successfully and check whether any recent code changes could have affected the dataset. <br>
+Once the root cause is identified, I'd implement or coordinate the fix, validate the corrected data, communicate the resolution to stakeholders, and document the RCA to prevent similar issues in the future
+        `,
+        children: [
+                      {
+ q:`What if the pipeline completed successfully but the data is still incorrect?`,
+        a:`
+        A successful run doesn't guarantee correct data — it just means the job didn't fail. <br>
+        I'd first validate the source data to see whether the incorrect values already existed there. Then I'd verify the transformation logic in Silver and Gold, including joins, filters, deduplication, MERGE logic, and any business rules. <br>
+        Once the root cause is identified, I'd implement or coordinate the fix, validate the corrected data, communicate the resolution to stakeholders, and document the RCA to prevent similar issues in the future
+
+        `,
+        children:[],
+      },
+            {
+ q:`What if the incorrect data has already been consumed by business users?`,
+        a:` 
+        First, I'd assess the impact by identifying which datasets, reports, and business users were affected and over what time period. <br>
+        I'd inform my lead and coordinate with the team so they're aware of the issue. After identifying the root cause, I'd fix the pipeline or data issue and regenerate the affected Gold data if required. <br>
+                Once the root cause is identified, I'd implement or coordinate the fix, validate the corrected data, communicate the resolution to stakeholders, and document the RCA to prevent similar issues in the future
+
+        `,
+        children:[],
+      },
+            {
+ q:`can you give an example of a data quality issue you investigated?"`,
+        a:`
+        I haven't personally handled a major production data quality incident yet. Most of our pipelines were stable, and our Ops team usually monitored production. <br>
+        However, we did implement data quality checks like schema validation, null handling, datatype validation, and deduplication in the Silver layer. <br>
+        If a data issue was escalated to our team, my approach would be to trace the data from Gold to Silver to Bronze, identify the root cause, fix it, validate the data, and document the RCA."
+        `,
+        children:[],
+      },
+        ],
       },
       {
-        q: ``,
-        a: ``,
+        q: `A stakeholder says yesterday's numbers don't match today's report. / KPI suddenly drops by X % today. How do you investigate?`,
+        a: `
+        My first step would be to understand exactly what changed. I'd ask the stakeholder which report they're referring to, which metric doesn't match, and whether they're comparing the same reporting period and filters <br>
+        Then I'd check if yesterday's pipeline ran successfully and completed within SLA. If there was a failed or delayed run, that's likely the cause. <br>
+        If the pipeline ran fine, I'd query the Gold table directly for yesterday's date and compare the values. I'd also use Delta time travel to check if the Gold table data changed between yesterday and today<br>
+        If the data itself hasn't changed, the issue is likely in the report filter or calculation logic on the BI side
+        `,
         children: [],
       },
+            {
+ q:`The dashboard is showing blank values for one region. What steps would you take?`,
+        a:` I'd first determine whether the issue is limited to the dashboard or whether the missing values are already present in the Gold tables <br>
+        If the Gold data contains the values, I'd inform the BI team to review their report filters or logic <br>
+        If the values are missing from Gold, I'd trace the data through Silver and Bronze to identify whether the records were filtered out, failed validation, or never arrived from the source.<br>
+        I'd also check the pipeline execution status and input data for that region before fixing the issue and validating the results. `,
+        children:[],
+      },
       {
-        q: ``,
-        a: ``,
+        q: `Some records are missing from the report. How would you troubleshoot?`,
+        a: `
+        I'd identify a few missing records and trace them through each layer.<br>
+        First, I'd check whether they exist in the Gold table. If not, I'd verify whether they were present in Silver and Bronze.<br>
+        If they're missing from Bronze, I'd investigate whether the source data was received correctly or whether the ingestion job failed. <br>
+        If they're present in Bronze but not in later layers, I'd review the transformation logic, joins, filters, or validation rules that may have excluded them. After fixing the issue, I'd validate the complete data flow and rerun the affected pipeline if necessary
+        `,
         children: [],
-      },],
+      },
+          {
+ q:`How do you explain a production issue to a non-technical stakeholder?
+`,
+        a:`I keep it simple and focus on the business impact and resolution rather than the technical details <br>
+        example, instead of saying, 'the Spark job failed due to executor OOM caused by partition skew,' I'd say, 'our data processing pipeline encountered an issue, which delayed yesterday's report. We've identified the root cause, we're implementing the fix, and the corrected data will be available by 2 PM <br>
+        I explain what happened, how it impacts the business, what we're doing to resolve it, and when they can expect the next update. I avoid technical jargon unless they're interested in the technical details."
+        `,
+        children:[],
+      },
+    
+    ],
 
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
@@ -948,6 +1034,57 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
         Individual work helps me focus on development tasks,debugging, while teamwork is valuable for design discussions, code reviews, knowledge sharing, and resolving issues faster as different perspectives catch gaps you'd miss alone.
         <br> In my current project, most development happens collaboratively, so I enjoy working with  team while also taking ownership of my assigned tasks`,
         children: [],
+      },
+            {
+ q:`How do you perform code reviews?`,
+        a:`
+        When reviewing someone's code, I look at a few things — first, correctness: does the logic actually solve the requirement, are edge cases handled, are there any null or duplicate risks. <br>
+        Then performance: are there unnecessary shuffles, is the partitioning strategy sensible, any broadcast join opportunities being missed <br>
+        I also check for hardcoded values, proper use of Delta Lake operations like MERGE versus overwrite, and whether the transformation is idempotent.<br>
+        Finally readability — is the code clean, well-commented, and easy for someone else to maintain. I try to give specific, actionable comments rather than just flagging something as wrong — I explain why and suggest an alternative
+        `,
+        children:[],
+      },
+            {
+ q:`How do you receive code review comments?`,
+        a:` 
+        I take them as an opportunity to improve. My first instinct is to understand the reasoning behind the comment rather than defending my approach. <br>
+       If I have a different approach, I explain my reasoning and we agree on the best solution.<br>        
+        The goal is to improve the quality of the code and learn from the review process`,
+        children:[],
+      },
+            {
+ q:`How do you ensure good communication?`,
+        a:`
+        "I ensure good communication by keeping stakeholders informed about my progress, raising blockers early, and asking for clarification whenever requirements are unclear instead of making assumptions. <br>
+        I also provide timely updates during stand-ups and collaborate closely with my Team Lead and teammates so everyone stays aligned and there are no surprises."
+        `,
+        children:[],
+      },
+            {
+ q:`Suppose a teammate is delayed. What would you do?`,
+        a:` If a teammate is delayed, I first understand the reason and whether they're blocked or simply need more time.<br>
+        If I can help by taking a small task, reviewing code, or assisting with an issue, I do that based on my bandwidth.<br>
+        . If the delay could affect the sprint or delivery, I communicate it early to the Team Lead or Scrum Master so the team can replan if needed <br>
+        The priority is to keep the project on track while supporting the teammate."
+        `,
+        children:[],
+      },
+            {
+ q:`What if the business changes the requirement after development?`,
+        a:` Requirement changes are common in Agile projects.  . First I'd assess the impact — how much of what's already built needs to change, does it affect other layers or downstream consumers, and what's the timeline. <br>
+        Then I discuss the updated requirement with the Business Analyst, Team Lead, or Scrum Master to ensure everyone has the same understanding before making any changes.<br>
+        If the change significantly affects the sprint scope, I communicate it early so the work can be reprioritized. <br>
+        Once aligned, I implement the changes, perform thorough testing and data validation, and ensure the updated solution meets the new business requirement without affecting existing functionality."`,
+        children:[],
+      },
+            {
+ q:` How do you ensure knowledge sharing?`,
+        a:` I believe knowledge sharing should be part of regular work. Whenever I work on a new feature or resolve a complex issue, I document the solution and share it with the team. <br>
+        I also participate in code reviews, explain my approach when needed, and help teammates if they have questions <br>
+        This reduces dependency on individuals and helps the whole team work more effectively.
+        `,
+        children:[],
       },
       {
         q: `  How do you handle conflicts within the team? <span style="color:green;"><b>Q25</b></span>`,

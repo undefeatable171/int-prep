@@ -298,7 +298,6 @@ df = spark.read.format("parquet").load("abfss://container@storage.dfs.core.windo
 
 **Internal structure:** `File → Footer → Row Groups → Column Chunks → Pages`
 
-
 - **Footer** — schema, row group locations, column statistics (min/max, null count), encoding, compression. Spark reads footer first to plan execution.
 - **Row Group** — horizontal partition inside the file. Each independent → Spark reads multiple Row Groups in parallel (splittable).
 - **Column Chunk** — each column stored separately within a Row Group → column pruning reads only needed columns.

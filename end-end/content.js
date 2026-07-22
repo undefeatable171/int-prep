@@ -338,7 +338,7 @@ In our project, we used <code>repartition()</code> only when we needed explicit 
   children:[]
 },
 {
-  cat:`Optimization`,
+  cat:`Optimizations`,
   q:`Skew & Salting`,
   a:``,
   children:[
@@ -490,4 +490,10 @@ children:[],
   ],
 
 },
+      {
+        cat:`Optimizations`,
+ q:`--- How would you optimize a slow-running query? `,
+        a:`  `,
+        children:[],
+      },
 ]
