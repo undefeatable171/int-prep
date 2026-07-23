@@ -33,13 +33,14 @@ I also collaborate closely with <strong>BI, analytics teams</strong> to ensure r
       },
       {
         q: `what is your current role and responsibilities? <span style="color:green;"><b>Q25</b></span>`,
-        a: `I am currently working as a Data Engineer in a US healthcare project. <br> In my current project, I'm responsible for developing and maintaining batch ETL pipelines on Azure Databricks. <br> I work across the full Medallion architecture — ingesting data from on-premises PostgreSQL and file-based sources like eligibility and claims files, applying transformations through Bronze, Silver, and Gold layers. I implement incremental ingestion using watermark-based logic, Delta Lake MERGE operations, SCD Type 2 for dimension tables, and data quality validations at each layer. <br> I collaborate with BI, analytics teams to understand downstream data requirements and ensure that our pipelines deliver reliable datasets`,
+        a: `I am currently working as a Data Engineer in a US healthcare project. <br> In my current project, I'm responsible for developing and maintaining batch ETL pipelines on Azure Databricks. <br> I work across the full Medallion architecture — ingesting data from on-premises PostgreSQL and file-based sources like eligibility and claims files, applying transformations through Bronze, Silver, and Gold layers.implementing water mark based incremental ingetion , applying data transformations and data quality validations, optimizing Spark workloads. <br> I collaborate with BI, analytics teams to understand downstream data requirements and ensure that our pipelines deliver reliable datasets `,
         children: [],
       },
       {
         q: `how do you ensure reliability and quality of data in your pipelines?`,
         a: `We ensure reliability by using incremental processing to avoid reprocessing data, Delta Lake transactions for consistent writes, and Databricks Workflows to monitor pipeline execution and retry failed jobs where applicable. 
-      <br>For data quality, in the Silver layer we perform null checks, data type standardization, deduplication using window functions,  business rule validations before the data is made available for downstream consumption.`,
+      <br>For data quality, in the Silver layer we perform null schema validations ,null checks, data type standardization, deduplication using window functions.  <br>In the Gold layer, we perform business validations rather than technical validations. For example, we ensure every claim has valid patient and provider records, verify ICD/CPT codes against reference data, check patient eligibility on the service date, and validate that claim amounts paid  does not exceed the allowed amount as per the fee schedule brfore reporting reporting. (SEE Domain Gold data quality validations) <br>
+before the data is made available for downstream consumption.`,
         children: [
           {
             q: `does reconciliation  done in your pipelines?`,
@@ -48,8 +49,9 @@ I also collaborate closely with <strong>BI, analytics teams</strong> to ensure r
           },
           {
             q: `when reconciliation is typically used and how`,
-            a: `Reconciliation is commonly used in critical domains like finance, banking  where it's essential to prove that all source records have been loaded correctly. <br> It typically involves comparing source and target record counts, aggregates, or business metrics to ensure data completeness and accuracy.
+            a: `Reconciliation is commonly used in critical domains like finance, banking  where it's essential to prove that all source records have been loaded correctly. <br> It typically involves comparing source and target record counts, business metrics to ensure data completeness and accuracy.
       <br> we perform source-to-target reconciliation by comparing the number of records extracted from the source with the records successfully loaded, accounting for any rejected or duplicate records. This validation is done before marking the pipeline as successful.
+<br> we can use DL Operation metrics for calculating the no.of records processed .Delta Lake records operation metrics in the transaction log. We can view them using <code>DESCRIBE HISTORY ustechcentral.datahub.hrmm</code>, which provides metrics like numTargetRowsInserted, numTargetRowsUpdated, and numTargetRowsDeleted. These metrics help us verify that the expected records were processed,
 
       <pre><code class="language-python">latest = spark.sql("describe history workspace.silver.orders limit 1")
 latest = latest.withColumn("Inserted", col("operationMetrics.numTargetRowsInserted"))
@@ -63,11 +65,7 @@ print("updated count:" ,updated)
 </code></pre>
       `,
             children: [
-              {
-                q: ` How does merge metrics works`,
-                a: `Delta Lake records operation metrics in the transaction log. We can view them using <code>DESCRIBE HISTORY ustechcentral.datahub.hrmm</code>, which provides metrics like numTargetRowsInserted, numTargetRowsUpdated, and numTargetRowsDeleted. These metrics help us verify that the expected records were processed.`,
-                children: [],
-              },
+
             ],
           },
 
@@ -79,7 +77,7 @@ print("updated count:" ,updated)
       {
         q: `What are your day-to-day responsibilities? <span style="color:green;"><b>Q25</b></span>`,
         a: `<ul><li>My day starts with a standup — each team member shares what they completed yesterday, what they're working on today, and any blockers..</li>
-        <li>Most of my time goes into developing or enhancing ETL pipelines in PySpark and SQL — transformations, incremental ingestion, data quality checks, or Spark optimization depending on the sprint.</li>
+        <li>Most of my time goes into developing or enhancing ETL pipelines in PySpark and SQL —  implementing water mark based incremental ingetion , applying data transformations and data quality validations, optimizing Spark workloads. I collaborate with BI, analytics teams to understand downstream data requirements and ensure that our pipelines deliver reliable datasets</li>
         <li>I also work with BI and business teams to clarify requirements, and support code reviews and deployments as part of our sprint activities.</li>`,
         children: [
           {
@@ -141,7 +139,7 @@ print("updated count:" ,updated)
       },
       {
         q: `which part of project do you own`,
-        a: ` Most of my work is in the Silver and Gold layers, where I implement business transformations, data quality validations, and performance optimizations.<br> The work in our project is divided functionally, and I primarily work on the claims area. <br>I take end-to-end ownership of the claims-related processing—from implementing transformation logic and testing to deployment and troubleshooting. while collaborating with the rest of the team on the overall platform. `,
+        a: ` The work in our project is divided functionally, and I primarily work on the claims area. <br>I take end-to-end ownership of the claims-related processing—from implementing transformation logic and testing to deployment and troubleshooting. while collaborating with the rest of the team on the overall platform. `,
         children: [{
           q: `DO you own any pipeline`,
           a: `Our project has pipelines across Bronze, Silver, and Gold. Work is divided functionally rather than by individual pipelines — I own the claims domain within Silver and Gold. So rather than counting pipelines, I'd say I manage the end-to-end data flow for the claims domain.`,
@@ -169,10 +167,10 @@ print("updated count:" ,updated)
         Although it wasn't assigned specifically to me, I investigated the issue using the Spark UI and execution plan. I identified inefficient joins and full table scans during merge operations. So (.... 40-45 %optimization )`,
         children: [],
       },
-            {
- q:`If you become a Lead in the future, what would your priorities be?`,
-        a:` "If I become a Lead, my priorities would be to ensure the team delivers quality work on time, remove blockers quickly, and create an environment where everyone can perform effectively.<br> I'd focus on clear communication with stakeholders, maintaining high coding and data quality standards, and helping team members grow by sharing knowledge and providing guidance `,
-        children:[],
+      {
+        q: `If you become a Lead in the future, what would your priorities be?`,
+        a: ` "If I become a Lead, my priorities would be to ensure the team delivers quality work on time, remove blockers quickly, and create an environment where everyone can perform effectively.<br> I'd focus on clear communication with stakeholders, maintaining high coding and data quality standards, and helping team members grow by sharing knowledge and providing guidance `,
+        children: [],
       },
       {
         q: `How do you make technical decisions?`,
@@ -330,14 +328,9 @@ The BI team builds dashboards and KPIs on top of the Gold tables, while our resp
     answer: ``,
     children: [
       {
-        q: ` Your role in production issues / Do you have production support responsibilities? / What happens if prod job failed`,
+        q: ` Your role in production issues / Do you have production support responsibilities? / What happens if prod job failed / First thing you do if a job fails? / howdo you investigate`,
         a: `our project has a dedicated Operations team that performs first-level monitoring of production jobs.<br>
         When a pipeline fails, the Operations team receives the failure alert and performs the initial investigation to determine whether it's an infrastructure, scheduling, or application issue.<br>If they identify a pipeline failure caused by application logic or data issues, they raise a ticket to our development team.<br> Then i will review the failed task logs in Databricks Workflow, understand the exception, and classify it — whether it's a source issue, Spark exception, schema change, or data quality problem. Then I fix the root cause and validate it in the appropriate environment, and support the deployment. After deployment, the Ops team reruns the pipeline and confirms successful execution.`,
-        children: [],
-      },
-      {
-        q: `First thing you do if a job fails? / howdo you investigate`,
-        a: `When a pipeline fails, the Operations team receives the failure alert and performs the initial investigation to determine whether it's an infrastructure, scheduling, or application issue.<br>If they identify a pipeline failure caused by application logic or data issues, they raise a ticket to our development team.<br> Then i will review the failed task logs in Databricks Workflow, understand the exception, and classify it — whether it's a source issue, Spark exception, schema change, or data quality problem. <br>Then I fix the root cause and validate it in the appropriate environment, and support the deployment. After deployment, the Ops team reruns the pipeline and confirms successful execution.`,
         children: [],
       },
       {
@@ -349,8 +342,8 @@ I would review the job logs, Spark logs, and error messages to identify the root
         `,
         children: [
           {
-            q: `--- How roll back is done`,
-            a: ``,
+            q: `How roll back is done`,
+            a: ` Our CI/CD pipeline stores build artifacts. If a release fails or causes production issues, the release team can redeploy the previous successful artifact instead of the latest one. <br> This quickly restores the application to a stable state while we investigate the issue. <br> The Ops team handled the production deployment and rollback activities. My responsibility was to analyze the issue, identify the root cause, prepare the fix, test it in the lower environments, and hand it over for the next deployment."`,
             children: [],
           }
         ],
@@ -391,115 +384,60 @@ I would review the job logs, Spark logs, and error messages to identify the root
         ],
       },
       {
-        q: `What factors do you consider while developing a data pipeline?`,
+        q: `What factors do you consider while developing a data pipeline? / What do you know about good data engineering design principles?`,
         a: ` 
     <p>
 There are a few key factors I consider while designing a data pipeline.
 </p>
 
 <ul>
+    <li><b>Business Requirement</b><br>
+    I first understand the business objective, expected outputs, refresh frequency, and SLA so the pipeline is designed to meet business needs.</li>
+
     <li>
-        <b style="color:#D32F2F;">Data Volume & Frequency</b>
-        <ul>
-            <li>Understand how much data is being ingested and how often.</li>
-            <li>Helps decide partitioning strategy, cluster sizing, and whether we need batch or near-real-time processing..</li>
-        </ul>
+        <b style="color:#D32F2F;">Data Volume & Frequency</b> First I understand how much data is coming in and how often. This will help deciding cluster sizing, and decision to go with batch processing or streaming
+        
     </li>
 
     <li>
-        <b style="color:#D32F2F;">Source System Characteristics</b>
-        <ul>
-            <li>I identify whether the source is a database or files, whether we should use full or incremental loads, and how to handle schema changes</li>
-            <li>In my project, PostgreSQL uses <b>watermark-based incremental loading</b>, while reference data is ingested from ADLS files.</li>
-        </ul>
+        <b style="color:#D32F2F;">Source System Characteristics</b> I identify the source type — whether it's a database, files, or an API — whether we need full or incremental loads, and how schema changes will be handled.
+       
     </li>
 
     <li>
         <b style="color:#D32F2F;"> Data Quality</b>
         <ul>
-            <li> building in checks at each layer so bad data doesn't propagate downstream.</li>
-            <li>n my pipeline, we handle nulls, duplicates, and schema mismatches in the Silver layer before anything hits Gold..</li>
+            <li> building DQ checks at each layer so bad data doesn't propagate downstream.</li>
+            <li>in my pipeline, we handle nulls, duplicates, and schema mismatches in the Silver layer before anything hits Gold..</li>
         </ul>
     </li>
 
     <li>
         <b style="color:#D32F2F;">Performance & Scalability</b>
-        <ul>
-            <li>I focus on partitioning, minimizing shuffles, selecting appropriate join strategies, and optimizing Delta tables</li>
-            <li>We  used broadcast joins for ref tables joining, OPTIMIZE and Z-ORDER, which improved some pipeline runtimes by around 40–45%.</li>
-        </ul>
+    For small reference datasets like provider roster and fee schedule, I used broadcast joins to avoid large shuffle operations . I also scheduled <b>OPTIMIZE</b> with <b>Z-ORDER</b> on frequently queried Delta tables to reduce small files and improve data skipping.
     </li>
 
     <li>
         <b style="color:#D32F2F;">Reliability</b>
-        <ul>
-            <li>I build pipelines to be idempotent, include proper logging and exception handling, and ensure rerunning a failed job doesn't create duplicate data.</li>
-        </ul>
+        I build pipelines to be idempotent, include proper logging and exception handling, and ensure rerunning a failed job doesn't create duplicate data.
+        
+    </li>
+     <li>
+        <b style="color:#D32F2F;" >Maintainability</b>We follow a modular approach — each transformation is a separate function, making it easy to unit test and reuse across layer          
+        
     </li>
 
     <li>
         <b style="color:#D32F2F;">Security & Governance</b>
-        <ul>
-            <li>Protect sensitive healthcare data using role-based access and column-level security.</li>
-            <li>Use <b>Unity Catalog</b> for governance.</li>
-        </ul>
+            In healthcare, PHI protection is critical — we use Unity Catalog with column masking on sensitive fields like SSN, address, and enforce RBAC at the catalog level            
     </li>
 
-    <li>
-        <b style="color:#D32F2F;" >Maintainability</b>
-        <ul>
-            <li>Write modular, reusable code with meaningful logging and documentation.</li>
-            <li>This makes the pipeline easier to debug, enhance, and support.</li>
-        </ul>
-    </li>
+   
 </ul>
     `,
         children: [],
       },
-      {
-        q: `What do you know about good data engineering design principles?`,
-        a: ` 
-      <div style="padding: 1rem 0; display: flex; flex-direction: column; gap: 14px;">
-
-  <div>
-    <h2 style="font-size:15px; font-weight:500; color:#7F77DD; margin:0 0 4px;">Idempotency</h2>
-    <p style="font-size:14px; color:#888; margin:0;">Reruns should produce the same result without duplicates or data loss. Critical for reliable batch pipelines.</p>
-  </div>
-
-  <div>
-    <h2 style="font-size:15px; font-weight:500; color:#1D9E75; margin:0 0 4px;">Modularity</h2>
-    <p style="font-size:14px; color:#888; margin:0;">Break pipelines into reusable, independently testable components rather than one monolithic job.</p>
-  </div>
-
-  <div>
-    <h2 style="font-size:15px; font-weight:500; color:#378ADD; margin:0 0 4px;">Scalability</h2>
-    <p style="font-size:14px; color:#888; margin:0;">Design for data growth from day one — right partitioning, file formats, and cluster sizing so it doesn't break at 10x volume.</p>
-  </div>
-
-  <div>
-    <h2 style="font-size:15px; font-weight:500; color:#D85A30; margin:0 0 4px;">Data quality at the source</h2>
-    <p style="font-size:14px; color:#888; margin:0;">Validate and cleanse early, ideally at the Bronze/Silver boundary, so bad data never reaches downstream consumers.</p>
-  </div>
-
-  <div>
-    <h2 style="font-size:15px; font-weight:500; color:#D4537E; margin:0 0 4px;">Separation of concerns</h2>
-    <p style="font-size:14px; color:#888; margin:0;">Keep ingestion, transformation, and serving layers distinct — medallion architecture enforces this naturally.</p>
-  </div>
-
-  <div>
-    <h2 style="font-size:15px; font-weight:500; color:#BA7517; margin:0 0 4px;">Observability</h2>
-    <p style="font-size:14px; color:#888; margin:0;">Proper logging, monitoring, and alerting so you know when something breaks, why it broke, and where.</p>
-  </div>
-
-  <div>
-    <h2 style="font-size:15px; font-weight:500; color:#639922; margin:0 0 4px;">Security by design</h2>
-    <p style="font-size:14px; color:#888; margin:0;">Access controls, PII masking, and audit trails built in from the start — not bolted on after the fact.</p>
-  </div>
-
-</div>
-      `,
-        children: [],
-      },
+     
     ],
 
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
@@ -538,16 +476,16 @@ There are a few key factors I consider while designing a data pipeline.
               }
             ],
           },
-                {
- q:`How do you communicate if you cannot meet an SLA?
+          {
+            q: `How do you communicate if you cannot meet an SLA?
 `,
-        a:` 
+            a: ` 
         If I know we're at risk of missing an SLA, I communicate it as early as possible rather than waiting until the deadline. I explain the issue, its impact, what i am doing to resolve it, and provide an estimated timeline if it's available.
         If I need help, I discuss it with my teammates, share the tasks. <br>
         I never wait until the last minute hoping it resolves itself — early communication gives the team and stakeholders time to react and manage expectations on their side."`,
-        children:[],
-      },
-                
+            children: [],
+          },
+
         ],
       },
       {
@@ -663,15 +601,15 @@ I believe good feedback improves both code quality and professional growth."
             children: [],
           },
           {
- q:`
+            q: `
 How do you recover from failure?`,
-        a:`
+            a: `
         I recover from failure by first accepting it, understanding the root cause, and focusing on the solution rather than the mistake.<br>
 
 If I need help, I discuss it with my teammates, fix the issue, and validate the solution thoroughly and document any key learnings to avoid repeating the same mistake. <br> I see failures as opportunities to improve, and I make sure I come back with a better approach the next time.
         `,
-        children:[],
-      },
+            children: [],
+          },
         ],
       },
 
@@ -693,10 +631,8 @@ Waiting for UAT/business validation.`,
       {
         q: `Where do you see yourself in the next 3 years and 5 years? <span style="color:green;"><b>Q25</b></span>`,
         a: ` 
-        In the next three years, I want to become a strong senior data engineer,  designing scalable data platforms, taking more technical ownership, and mentoring junior engineers. I also want to build expertise in AI-ready data platforms and modern cloud technologies.
-<br>
-In the next five years, I see myself leading data engineering initiatives, contributing to architecture decisions, and helping build scalable, AI-enabled data solutions while staying hands-on with technology.
-        `,
+In three years I see myself in a senior data engineer  — owning end-to-end architecture decisions, mentoring junior engineers, and working on larger-scale engagements<br>
+"In five years I'd like to move into a solution architect — driving data strategy for clients, evaluating and recommending the right technologies, and contributing beyond just implementation        `,
         children: [],
       },
       {
@@ -792,35 +728,35 @@ I'd also verify that the relevant pipeline completed successfully and check whet
 Once the root cause is identified, I'd implement or coordinate the fix, validate the corrected data, communicate the resolution to stakeholders, and document the RCA to prevent similar issues in the future
         `,
         children: [
-                      {
- q:`What if the pipeline completed successfully but the data is still incorrect?`,
-        a:`
+          {
+            q: `What if the pipeline completed successfully but the data is still incorrect?`,
+            a: `
         A successful run doesn't guarantee correct data — it just means the job didn't fail. <br>
         I'd first validate the source data to see whether the incorrect values already existed there. Then I'd verify the transformation logic in Silver and Gold, including joins, filters, deduplication, MERGE logic, and any business rules. <br>
         Once the root cause is identified, I'd implement or coordinate the fix, validate the corrected data, communicate the resolution to stakeholders, and document the RCA to prevent similar issues in the future
 
         `,
-        children:[],
-      },
-            {
- q:`What if the incorrect data has already been consumed by business users?`,
-        a:` 
+            children: [],
+          },
+          {
+            q: `What if the incorrect data has already been consumed by business users?`,
+            a: ` 
         First, I'd assess the impact by identifying which datasets, reports, and business users were affected and over what time period. <br>
         I'd inform my lead and coordinate with the team so they're aware of the issue. After identifying the root cause, I'd fix the pipeline or data issue and regenerate the affected Gold data if required. <br>
                 Once the root cause is identified, I'd implement or coordinate the fix, validate the corrected data, communicate the resolution to stakeholders, and document the RCA to prevent similar issues in the future
 
         `,
-        children:[],
-      },
-            {
- q:`can you give an example of a data quality issue you investigated?"`,
-        a:`
+            children: [],
+          },
+          {
+            q: `can you give an example of a data quality issue you investigated?"`,
+            a: `
         I haven't personally handled a major production data quality incident yet. Most of our pipelines were stable, and our Ops team usually monitored production. <br>
         However, we did implement data quality checks like schema validation, null handling, datatype validation, and deduplication in the Silver layer. <br>
         If a data issue was escalated to our team, my approach would be to trace the data from Gold to Silver to Bronze, identify the root cause, fix it, validate the data, and document the RCA."
         `,
-        children:[],
-      },
+            children: [],
+          },
         ],
       },
       {
@@ -833,13 +769,13 @@ Once the root cause is identified, I'd implement or coordinate the fix, validate
         `,
         children: [],
       },
-            {
- q:`The dashboard is showing blank values for one region. What steps would you take?`,
-        a:` I'd first determine whether the issue is limited to the dashboard or whether the missing values are already present in the Gold tables <br>
+      {
+        q: `The dashboard is showing blank values for one region. What steps would you take?`,
+        a: ` I'd first determine whether the issue is limited to the dashboard or whether the missing values are already present in the Gold tables <br>
         If the Gold data contains the values, I'd inform the BI team to review their report filters or logic <br>
         If the values are missing from Gold, I'd trace the data through Silver and Bronze to identify whether the records were filtered out, failed validation, or never arrived from the source.<br>
         I'd also check the pipeline execution status and input data for that region before fixing the issue and validating the results. `,
-        children:[],
+        children: [],
       },
       {
         q: `Some records are missing from the report. How would you troubleshoot?`,
@@ -851,16 +787,16 @@ Once the root cause is identified, I'd implement or coordinate the fix, validate
         `,
         children: [],
       },
-          {
- q:`How do you explain a production issue to a non-technical stakeholder?
+      {
+        q: `How do you explain a production issue to a non-technical stakeholder?
 `,
-        a:`I keep it simple and focus on the business impact and resolution rather than the technical details <br>
+        a: `I keep it simple and focus on the business impact and resolution rather than the technical details <br>
         example, instead of saying, 'the Spark job failed due to executor OOM caused by partition skew,' I'd say, 'our data processing pipeline encountered an issue, which delayed yesterday's report. We've identified the root cause, we're implementing the fix, and the corrected data will be available by 2 PM <br>
         I explain what happened, how it impacts the business, what we're doing to resolve it, and when they can expect the next update. I avoid technical jargon unless they're interested in the technical details."
         `,
-        children:[],
+        children: [],
       },
-    
+
     ],
 
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
@@ -1009,13 +945,13 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
           },
         ],
       },
-            {
- q:`How do you handle requirement changes?`,
-        a:`
+      {
+        q: `How do you handle requirement changes?`,
+        a: `
         I handle requirement changes by first understanding the impact on the current sprint, the upstream source, and the downstream transformations. If the change is small, I adjust the logic, retest, and move forward.<br>
         If it impacts scope or timeline, I discuss it with my Scrum Master and Team Lead, confirm the priority, and then update the plan so the team stays aligned.
         `,
-        children:[],
+        children: [],
       },
       {
         q: `--- How does the task get assigned to you?`,
@@ -1035,56 +971,56 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
         <br> In my current project, most development happens collaboratively, so I enjoy working with  team while also taking ownership of my assigned tasks`,
         children: [],
       },
-            {
- q:`How do you perform code reviews?`,
-        a:`
+      {
+        q: `How do you perform code reviews?`,
+        a: `
         When reviewing someone's code, I look at a few things — first, correctness: does the logic actually solve the requirement, are edge cases handled, are there any null or duplicate risks. <br>
         Then performance: are there unnecessary shuffles, is the partitioning strategy sensible, any broadcast join opportunities being missed <br>
         I also check for hardcoded values, proper use of Delta Lake operations like MERGE versus overwrite, and whether the transformation is idempotent.<br>
         Finally readability — is the code clean, well-commented, and easy for someone else to maintain. I try to give specific, actionable comments rather than just flagging something as wrong — I explain why and suggest an alternative
         `,
-        children:[],
+        children: [],
       },
-            {
- q:`How do you receive code review comments?`,
-        a:` 
+      {
+        q: `How do you receive code review comments?`,
+        a: ` 
         I take them as an opportunity to improve. My first instinct is to understand the reasoning behind the comment rather than defending my approach. <br>
        If I have a different approach, I explain my reasoning and we agree on the best solution.<br>        
         The goal is to improve the quality of the code and learn from the review process`,
-        children:[],
+        children: [],
       },
-            {
- q:`How do you ensure good communication?`,
-        a:`
+      {
+        q: `How do you ensure good communication?`,
+        a: `
         "I ensure good communication by keeping stakeholders informed about my progress, raising blockers early, and asking for clarification whenever requirements are unclear instead of making assumptions. <br>
         I also provide timely updates during stand-ups and collaborate closely with my Team Lead and teammates so everyone stays aligned and there are no surprises."
         `,
-        children:[],
+        children: [],
       },
-            {
- q:`Suppose a teammate is delayed. What would you do?`,
-        a:` If a teammate is delayed, I first understand the reason and whether they're blocked or simply need more time.<br>
+      {
+        q: `Suppose a teammate is delayed. What would you do?`,
+        a: ` If a teammate is delayed, I first understand the reason and whether they're blocked or simply need more time.<br>
         If I can help by taking a small task, reviewing code, or assisting with an issue, I do that based on my bandwidth.<br>
         . If the delay could affect the sprint or delivery, I communicate it early to the Team Lead or Scrum Master so the team can replan if needed <br>
         The priority is to keep the project on track while supporting the teammate."
         `,
-        children:[],
+        children: [],
       },
-            {
- q:`What if the business changes the requirement after development?`,
-        a:` Requirement changes are common in Agile projects.  . First I'd assess the impact — how much of what's already built needs to change, does it affect other layers or downstream consumers, and what's the timeline. <br>
+      {
+        q: `What if the business changes the requirement after development?`,
+        a: ` Requirement changes are common in Agile projects.  . First I'd assess the impact — how much of what's already built needs to change, does it affect other layers or downstream consumers, and what's the timeline. <br>
         Then I discuss the updated requirement with the Business Analyst, Team Lead, or Scrum Master to ensure everyone has the same understanding before making any changes.<br>
         If the change significantly affects the sprint scope, I communicate it early so the work can be reprioritized. <br>
         Once aligned, I implement the changes, perform thorough testing and data validation, and ensure the updated solution meets the new business requirement without affecting existing functionality."`,
-        children:[],
+        children: [],
       },
-            {
- q:` How do you ensure knowledge sharing?`,
-        a:` I believe knowledge sharing should be part of regular work. Whenever I work on a new feature or resolve a complex issue, I document the solution and share it with the team. <br>
+      {
+        q: ` How do you ensure knowledge sharing?`,
+        a: ` I believe knowledge sharing should be part of regular work. Whenever I work on a new feature or resolve a complex issue, I document the solution and share it with the team. <br>
         I also participate in code reviews, explain my approach when needed, and help teammates if they have questions <br>
         This reduces dependency on individuals and helps the whole team work more effectively.
         `,
-        children:[],
+        children: [],
       },
       {
         q: `  How do you handle conflicts within the team? <span style="color:green;"><b>Q25</b></span>`,
@@ -1123,6 +1059,12 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
             a: ` The role directly matches my stack — Azure Databricks, PySpark, Delta Lake. <br>Beyond the tech fit, Infosys Topaz is their AI-first platform focused on enterprise-scale data and AI transformation — making data AI-ready across engineering, governance, and GenAI. <br> That's exactly the direction I want to grow in, and this role gives me that exposure across diverse domains and larger-scale engagements`,
             children: [],
           },
+                {
+ q:`What do you know about INfosys`,
+        a:` Infosys is a global IT services and consulting company headquartered in Bengaluru, India, founded in 1981 by N. R. Narayana Murthy and six other co-founders.
+<br>It provides services in digital transformation, cloud, AI, data analytics, cybersecurity, enterprise applications, and software development to clients across industries such as healthcare, banking, retail, manufacturing, and telecom.`,
+        children:[],
+      },    
           {
             q: `but Both TCS and Infosys are service-based companies.`,
             a: ` I agree, and my decision isn't based on the company type — it's about the opportunities available. Different organizations have different clients, projects, and technologies. <br> I feel this is the right time to broaden my experience in a new environment, take on more ownership, and work on diverse data engineering engagements.`,

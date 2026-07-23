@@ -182,7 +182,10 @@ Data Skipping → Skip the entire file.</code>`,
     },
     {
       q:`Z-Order`,
-      a:` Z-ORDER physically co-locates (clusters) similar values of frequently queried columns into the same Parquet files. This creates tighter file-level statistics, making Delta's data skipping more effective by eliminating more files before reading them<br>
+      a:` Z-ORDER physically co-locates (clusters) related data in the same files so Delta's data skipping can skip more files during the scan. 
+      <br> When you Z-ORDER on a column, Delta stores min/max statistics for that column per file in transaction log<br>
+When a query filters on that column, Delta checks the stats and skips files where the value can't exist — even without partitioning. <br>
+So instead of reading 1000 files, Delta might only read 50 — still a scan, but a much smaller one.
       We typically run OPTIMIZE along with ZORDER BY as a scheduled maintenance job on large Delta tables. OPTIMIZE compacts small files, while Z-ORDER clusters frequently queried columns, improving data skipping and overall query performance
                <pre><code class='language-sql'> OPTIMIZE claims ZORDER BY (patient_id, provider_id) 
                -- There is no standalone zorder by. Must use along with Optimize</pre></code>

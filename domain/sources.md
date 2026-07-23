@@ -15,14 +15,15 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 
 **Ingestion:** Incremental via `updated_at` watermark | **Destination:** Bronze (Parquet) → Silver (Delta) → Gold (Delta)
 
-| Table                       | Key Columns                                                                  | What It Means                                                             | Fact/Dim     | Frequency |
-| --------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------ | --------- |
+
+| Table                   | Key Columns                                                                  | What It Means                                                             | Fact/Dim     | Frequency |
+| ------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------- | -------------- | ----------- |
 | `patients` / `members`  | patient_id, member_id, dob, insurance_plan_id, enrollment_start/end          | Master patient registry — demographics, insurance plan, enrollment dates | Dim (SCD2)   | On change |
 | `encounters` / `visits` | encounter_id, patient_id, encounter_type, admission_date, drg_code, los_days | Every clinical visit — inpatient, outpatient, ER, telehealth             | Fact         | Daily     |
-| `claims`                  | claim_id, encounter_id,patient_id, billed_amount, paid_amount, provider_npi  | Billing records the client submits to the payer (insurance company)       | Fact         | Daily     |
-| `diagnoses`               | diagnosis_id, encounter_id, icd10_code, diagnosis_type                       | ICD-10 codes attached to each encounter                                   | Fact (child) | Daily     |
-| `procedures`              | procedure_id, encounter_id, cpt_code, procedure_date                         | CPT codes — what procedures were done per visit                          | Fact (child) | Daily     |
-| `providers`               | provider_id, npi, specialty_code, in_network_flag, contract_start/end        | Provider master — NPI, specialty, in-network status, contract dates      | Dim (SCD2)   | On change |
+| `claims`                | claim_id, encounter_id,patient_id, billed_amount, paid_amount, provider_npi  | Billing records the client submits to the payer (insurance company)       | Fact         | Daily     |
+| `diagnoses`             | diagnosis_id, encounter_id, icd10_code, diagnosis_type                       | ICD-10 codes attached to each encounter                                   | Fact (child) | Daily     |
+| `procedures`            | procedure_id, encounter_id, cpt_code, procedure_date                         | CPT codes — what procedures were done per visit                          | Fact (child) | Daily     |
+| `providers`             | provider_id, npi, specialty_code, in_network_flag, contract_start/end        | Provider master — NPI, specialty, in-network status, contract dates      | Dim (SCD2)   | On change |
 
 ---
 
@@ -30,8 +31,9 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 
 **Who sends them:** External parties — payers, clearinghouses | **Ingestion:** Filename date or ingest_date partition (no watermark)
 
-| File                                 | Who Sends It                    | Key Columns                                                                        | What It Means                                                                                             | Fact/Dim  | Frequency            |
-| ------------------------------------ | ------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------- | -------------------- |
+
+| File                               | Who Sends It                    | Key Columns                                                                        | What It Means                                                                                             | Fact/Dim  | Frequency            |
+| ------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- | ----------- | ---------------------- |
 | `payer_auth_response_YYYYMMDD.csv` | Payer/clearingHouse             | auth_id,auth_status,payer_id,claim_id,auth_start_date,auth_end_date, denial_reason | Payer's decision on prior authorization requests — approved or denied, units authorized, validity window | Fact      | Daily                |
 | `claims_adjudication_YYYYMMDD.csv` | Clearinghouse / Payer           | claim_id, paid_amount, denial_code, claim_status, payment_date                     | Adjudication result — approved/denied, paid amount, denial codes. Updates Gold claims via MERGE          | Fact      | Daily                |
 | `icd10_reference.csv`              | CMS (we download, drop to ADLS) | icd10_code, description                                                            | Code to description mapping for ICD-10 — 70K+ codes                                                      | Reference | Annual (full reload) |
@@ -43,8 +45,9 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 
 **Who sends them:** Internal business teams | **Ingestion:** Ad-hoc / scheduled uploads — not real-time
 
+
 | File                          | Who Sends It       | Key Columns                                                    | What It Means                                                                                                                         | Fact/Dim  | Frequency |
-| ----------------------------- | ------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --------- | --------- |
+| ------------------------------- | -------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ----------- |
 | fee_schedule_YYYY.xlsx        | Finance team       | cpt_code, payer, allowed_amount, effective_date                | What each payer has contractually agreed to reimburse for each CPT code — used to compute expected vs actual reimbursement           | Reference | Annual    |
 | provider_roster_MMM_YYYY.xlsx | Credentialing team | npi, specialty, contract_tier, in_network_flag, effective_date | Manual credentialing updates — contract tier and in-network status per provider, used to determine network status at time of service | Reference | Monthly   |
 
@@ -61,8 +64,9 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 
 ## Cadence Rationale — Defensible
 
+
 | Source              | Cadence                         | Why                                                                                                                                                                            |
-| ------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| --------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | PostgreSQL          | Every 4 hours                   | Clinical/claims data changes intraday. Finance/ops need same-day visibility into submissions, not just next-day. Not real-time — batch is appropriate, but daily is too slow. |
 | CSV transactional   | Daily, fixed cutoff (e.g. 7 AM) | Payer/clearinghouse sends one batch file per day. Checking more often wastes compute — there's nothing to pull. CSV is exactly as fresh as the vendor allows.                 |
 | CSV/Excel reference | Monthly or annual               | Matches business cycle — CMS publishes ICD-10 annually, finance renegotiates fee schedules annually, credentialing reviews rosters monthly.                                   |
@@ -86,23 +90,25 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 
 ## Transactional Tables (MERGE Pattern)
 
-| Table                   | Merge Key    | Critical Null Drop                 |
-| ----------------------- | ------------ | ---------------------------------- |
-| patients                | patient_id   | patient_id                         |
-| providers               | npi          | npi                                |
-| encounters              | encounter_id | encounter_id, patient_id           |
-| claims                  | claim_id     | claim_id, patient_id, encounter_id |
-| diagnoses               | diagnosis_id | diagnosis_id, icd10_code           |
-| procedures              | procedure_id | procedure_id, cpt_code             |
-| claims_adjudication     | claim_id     | claim_id                           |
-| payer_auth_response     | auth_id      | auth_id, patient_id                |
+
+| Table               | Merge Key    | Critical Null Drop                 |
+| --------------------- | -------------- | ------------------------------------ |
+| patients            | patient_id   | patient_id                         |
+| providers           | npi          | npi                                |
+| encounters          | encounter_id | encounter_id, patient_id           |
+| claims              | claim_id     | claim_id, patient_id, encounter_id |
+| diagnoses           | diagnosis_id | diagnosis_id, icd10_code           |
+| procedures          | procedure_id | procedure_id, cpt_code             |
+| claims_adjudication | claim_id     | claim_id                           |
+| payer_auth_response | auth_id      | auth_id, patient_id                |
 
 ---
 
 ## Reference Tables (Full Truncate-Reload Pattern — No Merge Key) Till silver Only
 
+
 | Table           | Source         | Reload Trigger   | Notes                                      |
-| --------------- | -------------- | ---------------- | ------------------------------------------ |
+| ----------------- | ---------------- | ------------------ | -------------------------------------------- |
 | icd10_reference | CSV, annual    | New file arrival | Controlled vocabulary, no null-drop needed |
 | cpt_reference   | CSV, annual    | New file arrival | Controlled vocabulary, no null-drop needed |
 | fee_schedule    | Excel, annual  | New file arrival | allowed_amount cast to Decimal(10,2)       |
@@ -125,8 +131,9 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 
 ## Dimension Tables — SCD Type 2 (Close-and-Insert MERGE)
 
+
 | Table         | Pulled From      | Merge Key  | What Triggers New Version                         | Versioning Columns              |
-| ------------- | ---------------- | ---------- | ------------------------------------------------- | ------------------------------- |
+| --------------- | ------------------ | ------------ | --------------------------------------------------- | --------------------------------- |
 | dim_patients  | silver.patients  | patient_id | Change in insurance_plan_id, enrollment_start/end | start_date, end_date, is_active |
 | dim_providers | silver.providers | npi        | Change in specialty_code, contract_start/end      | start_date, end_date, is_active |
 
@@ -136,8 +143,9 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 
 ## Fact Tables — Upsert MERGE (Latest State, Not Versioned)
 
+
 | Table                    | Pulled From                | Joined To                                                                                                                                  | Merge Key    | Derived Columns                                                                                                            |
-| ------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| -------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | fact_encounters          | silver.encounters          | dim_patients (patient_id), dim_providers (provider_npi)                                                                                    | encounter_id | None significant — pass-through with dimension context attached                                                           |
 | fact_claims              | silver.claims              | dim_patients, dim_providers, ref_fee_schedule (cpt_code+payer_id), fact_claims_adjudication (claim_id), ref_provider_roster (provider_npi) | claim_id     | days_in_ar, ar_bucket, expected_reimbursement, actual_reimbursement, reimbursement_gap, underpayment_flag, in_network_flag |
 | fact_diagnoses           | silver.diagnoses           | ref_icd10 (icd10_code<br />)                                                                                                               | diagnosis_id | diagnosis_description                                                                                                      |
@@ -159,22 +167,28 @@ Gold Layer - Derived Business Columns
 - **service_before_auth_flag:** `1` if the service occurred before the authorization start date.
 
 ---
-### Gold DQ validations
-| Validation                  | How it's implemented                                                                                                                                               |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Patient Validation**      | Join Claims with `dim_patient`; if no match, write to exception table.                                                                                             |
-| **Provider Validation**     | Join Claims with `dim_provider`; unmatched records go to exception table.                                                                                          |
-| **ICD Validation**          | Join diagnosis code with `dim_icd`; invalid codes are flagged.                                                                                                     |
-| **CPT Validation**          | Join procedure code with `dim_cpt`; invalid or unmapped procedures are flagged.                                                                                    |
-| **Eligibility Validation**  | Join Claims with the Eligibility dataset and check `service_date` falls between `effective_date` and `termination_date`.                                           |
 
-- Records that fail critical validations, such as missing patient or provider references or invalid medical codes, are written to an exception table along with the validation reason. 
+### Gold Data quality validations
+
+
+| Validation                 | How it's implemented                                                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **Patient Validation**     | Join Claims with`dim_patient`; if no match, write to exception table.                                                   |
+| **Provider Validation**    | Join Claims with`dim_provider`; unmatched records go to exception table.                                                |
+| **ICD Validation**         | Join diagnosis code with`dim_icd`; invalid codes are flagged.                                                           |
+| **CPT Validation**         | Join procedure code with`dim_cpt`; invalid or unmapped procedures are flagged.                                          |
+| **Eligibility Validation** | Join Claims with the Eligibility dataset and check`service_date` falls between `effective_date` and `termination_date`. |
+
+- Records that fail critical validations, such as missing patient or provider references or invalid medical codes, are written to an exception table along with the validation reason.
 - The team then investigates whether the issue is due to incorrect source data or an ETL logic issue. Source data issues are communicated to the upstream data owners, while ETL issues are fixed and the affected records are reprocessed.
+
 ---
+
 ## Reference Tables — Standalone (Full Reload, Joined Where Needed, No MERGE)
 
+
 | Table               | Pulled From            | Used By (Joined Into)                                        |
-| ------------------- | ---------------------- | ------------------------------------------------------------ |
+| --------------------- | ------------------------ | -------------------------------------------------------------- |
 | ref_icd10           | silver.icd10_reference | fact_diagnoses (code description)                            |
 | ref_cpt             | silver.cpt_reference   | fact_procedures, fact_claims (code description, CPT context) |
 | ref_fee_schedule    | silver.fee_schedule    | fact_claims (expected_reimbursement calc)                    |
@@ -186,12 +200,13 @@ Gold Layer - Derived Business Columns
 
 ## Quick Reference — Gold Layer Treatment
 
-| Category                 | Tables                                                        |
-| ------------------------ | ------------------------------------------------------------- |
-| SCD Type 2 (MERGE)       | patients, providers                |
-| Upsert via MERGE         | encounters, claims, claims_adjudication                       |
-| Full reload (reference)  | icd10_reference, cpt_reference, fee_schedule, provider_roster |
-| PII / HIPAA sensitive    | patients (ssn_hash), Address, Phonenumber                     |
+
+| Category                | Tables                                                        |
+| ------------------------- | --------------------------------------------------------------- |
+| SCD Type 2 (MERGE)      | patients, providers                                           |
+| Upsert via MERGE        | encounters, claims, claims_adjudication                       |
+| Full reload (reference) | icd10_reference, cpt_reference, fee_schedule, provider_roster |
+| PII / HIPAA sensitive   | patients (ssn_hash), Address, Phonenumber                     |
 
 ---
 
@@ -221,21 +236,26 @@ Gold Layer - Derived Business Columns
   - 8 transactional Silver tasks
   - CSV-backed tasks check folder and if no files — skip → no-op, carry forward
   - Dedup → null handling → MERGE
+
 ### Job 4 - Gold dims
+
 - **Stage 1 — Gold Dims (after Silver):**
   - 2 tasks: dim_patients, dim_providers
   - SCD2 MERGE — no-op if nothing changed
+
 ### Job 5 - Gold facts
+
 - **Stage 1 — Gold Facts (incremental):**
- - Incremental :- read last processed watermark of target gold fact table and read only new records from silver tables
-  - 6 tasks — join to dims + reference tables, derive business columns, upsert MERGE
-  - if any respective silver has no data, fact tasks complete as no-op 
+- Incremental :- read last processed watermark of target gold fact table and read only new records from silver tables
+- 6 tasks — join to dims + reference tables, derive business columns, upsert MERGE
+- if any respective silver has no data, fact tasks complete as no-op
 - **No aggregation stage** — BI builds on top of enriched facts via views
 
 ### Jobs 6–9 — Reference Source Pipelines (Self-Contained E2E)
 
+
 | Job                      | Schedule | Source | Pattern                                                        |
-| ------------------------ | -------- | ------ | -------------------------------------------------------------- |
+| -------------------------- | ---------- | -------- | ---------------------------------------------------------------- |
 | Job 6 — icd10           | Annual   | CSV    | Bronze → Silver (reload) → Gold (reload ref_icd10)           |
 | Job 7 — cpt             | Annual   | CSV    | Bronze → Silver (reload) → Gold (reload ref_cpt)             |
 | Job 8 — fee_schedule    | Annual   | Excel  | Bronze → Silver (reload) → Gold (reload ref_fee_schedule)    |
@@ -359,4 +379,3 @@ Used to compare actual vs expected results.
 - Clarify ambiguities
 - Implement transformations
 - Validate output
-
