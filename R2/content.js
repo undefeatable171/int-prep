@@ -1056,13 +1056,14 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
         children: [
           {
             q: ` Why do you want to join Infosys? `,
-            a: ` The role directly matches my stack — Azure Databricks, PySpark, Delta Lake. <br>Beyond the tech fit, Infosys Topaz is their AI-first platform focused on enterprise-scale data and AI transformation — making data AI-ready across engineering, governance, and GenAI. <br> That's exactly the direction I want to grow in, and this role gives me that exposure across diverse domains and larger-scale engagements`,
+            a: ` Based on the JD, I believe my technical skills and production experience align well with your requirements<br>Beyond the tech fit, Infosys Topaz is their AI-first platform focused on enterprise-scale data and AI transformation — making data AI-ready across engineering, governance, and GenAI. <br> That's exactly the direction I want to grow in, and this role gives me that exposure across diverse domains and larger-scale engagements`,
             children: [],
           },
                 {
  q:`What do you know about INfosys`,
         a:` Infosys is a global IT services and consulting company headquartered in Bengaluru, India, founded in 1981 by N. R. Narayana Murthy and six other co-founders.
-<br>It provides services in digital transformation, cloud, AI, data analytics, cybersecurity, enterprise applications, and software development to clients across industries such as healthcare, banking, retail, manufacturing, and telecom.`,
+<br>It provides services in digital transformation, cloud, AI, data analytics, cybersecurity, enterprise applications, and software development to clients across industries such as healthcare, banking, retail, manufacturing, and telecom.
+<br>CEO:salil parekh`,
         children:[],
       },    
           {
@@ -1106,27 +1107,21 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
         children: [],
       },
       {
-        q: `What distinguishes you from other candidates?`,
+        q: `What distinguishes you from other candidates?/ Why should I trust you with production work?`,
         a: ` 
-        What sets me apart is that I combine hands-on Databricks development with a strong focus on reliability and performance.<br>
+        What sets me apart is that / I combine hands-on Databricks development with a strong focus on reliability and performance.<br>
         In my current healthcare project, I’ve worked on production-grade Azure Databricks pipelines handling 45–50 GB of data daily, with incremental ingestion, Delta MERGE, validation checks, and Spark optimization that reduced runtime by 40–45%. <br>
 I focus on delivering solutions that are accurate, reliable, and ready for production
         `,
         children: [],
       },
 
-      {
-        q: ` Why should I trust you with production work?`,
-        a: ` I understand the importance of production stability, especially in healthcare , where data accuracy and reliability are critical <br>
-      I follow coding standards, perform thorough unit and data validation, participate in code reviews, and support production issues when required.<br>
-       I don't rush changes—I ensure they're properly tested and validated before deployment, and I communicate proactively with my team if I identify any risks.
-        `,
-        children: [],
-      },
+      
       {
         q: `Why should I select you over someone with more experience?`,
         a: ` 
-        Experience is important, but I believe the ability to learn quickly, adapt, and consistently deliver quality work is equally valuable.<br> Over the past three years, I've built production-grade Azure Databricks pipelines, optimized Spark jobs, supported production issues, and continuously expanded my technical skills. I'm confident I can contribute effectively while continuing to grow.
+        Experience is important, but I believe the ability to learn quickly, adapt, and consistently deliver quality work is equally valuable.<br> In my current healthcare project, I’ve worked on production-grade Azure Databricks pipelines handling 45–50 GB of data daily, with incremental ingestion, Delta MERGE, validation checks, and Spark optimization that reduced runtime by 40–45%.
+I focus on delivering solutions that are accurate, reliable, and ready for production. So I'm confident I can contribute effectively while continuing to grow.
         `,
         children: [],
       },
