@@ -27,6 +27,8 @@ Rename all columns to uppercase.
 Add a prefix (emp_) to every column.
 <br>
 Add a suffix (_new) to every column.
+<br>
+
 
  `,
             a: `
@@ -71,6 +73,7 @@ df.toDF(*[ c.upper() for c in df.columns ])
  Keep unique combinations of multiple columns <br>
  Remove duplicate rows (all columns) <br>
 Remove duplicates based on specific columns
+<br>limit 10 records only
  </p>
  `,
             a: `
@@ -106,10 +109,15 @@ df.dropDuplicates()
 # (Keeps one row for each unique dept-gender combination)
 df.dropDuplicates(["dept", "gender"])
 
+#9) limit
+df.limit(10).filter(...)
+
 </code> </pre>`,
             tip: `show(n) → Displays rows in the console (used for debugging).<br>
 take(n) / head(n) → Returns rows to the driver as a Python list.<br>
-first() → Returns only the first row. There is no first(n) method.
+first() → Returns only the first row. There is no first(n) method.<br>
+collect/first/last/take/head returns single / list of rows to driver
+<b>limit just returns said rows , not to driver but stays in memory only. Its a transformation</b>
 
 <table>
   <thead>
@@ -532,7 +540,8 @@ emp.withColumn("ex", regexp_replace(lit("+91 98765-43210"), r'^\+\d+\s|-', '')).
           (col("joining_date") <= lit(date(prev_year + 1, 3, 31)))
       ).show()
   </code></pre>`,
-            tip: `we can't use current_date() inside if condiation so use python python inbuilt date`,
+            tip: `we can't use current_date() inside if condiation so use python python inbuilt date
+            <br> withColumns can be used instead of chaining single ones `,
             children: [],
           },
           {
@@ -827,20 +836,43 @@ emp.alias("e").join(emp.alias("m"),col("e.manager_id") == col("m.emp_id"))\
     q: `Intermediate Windows`,
     answer: ``,
     children: [
+      //Running / Cumulative Calculations
       {
-        q: `<p style="color:violet">Running salary total order by emp_id.
+        q: `<p style="color:violet">Running salary total order by emp_id.<br>
+        Find the highest sales amount seen so far.<br>
+        Calculate cumulative sales as a percentage of total sales.
        </p>`,
         a: `<pre><code class="language-python">
 window= Window.orderBy(col("emp_id").desc()).rowsBetween(Window.unboundedPreceding, Window.currentRow)
 df.withColumn("running",sum("salary").over(window)).display()
+
+#highest sales so far
+window= Window.orderBy(col("ord_date")).rowsBetween(Window.unboundedPreceding, Window.currentRow)
+df.withColumn("running",max("rev").over(window)).display()
+
+#Calculate cumulative sales as a percentage of total sales.
+
+# running window
+running_w = Window.orderBy("ord_date").rowsBetween(Window.unboundedPreceding, Window.currentRow)
+
+# total window
+total_w = Window.rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
+
+df.withColumn("running_sal", sum("rev").over(running_w)) \
+  .withColumn("total_sal", sum("rev").over(total_w)) \
+  .withColumn("pct", round(col("running_sal") / col("total_sal") * 100, 2)) \
+  .show()
+
        </code></pre>`,
         tip: `
 In interviews — Ask for clarifications / always state your assumption if not told: "I'll assume running total across the full table ordered by emp_id"
 <br>Running total / cumm total means we need to use rowsbetween explicitly else same date/ids may merge`,
         children: [],
       },
+      //N highest
       {
-        q: `	<p style="color:violet">Top N / Highest / Lowest per dept</p>`,
+        q: `	<p style="color:violet">Top N / Highest / Lowest per dept<br>
+        Find the top 3 customers by revenue in each region (it has multiple sales per customer) </p>`,
         a: `
         
 <pre><code class="language-python">
@@ -850,6 +882,16 @@ df.withColumn("rank",dense_rank().over(window))
             .select("emp_id", "name", "department", "salary", "rank")
                 .orderBy("department", "rank")
                   .show()
+
+#if multiple transactions for cust
+agg_rev = customers.join(orders, "cust_id") 
+              .groupBy("region", "cust_id") 
+              .agg(sum("amount").alias("revenue"))
+
+agg_rev.withColumn("rnk", dense_rank().over(Window.partitionBy("region").orderBy(col("revenue").desc()))) 
+  .filter(col("rnk") <= 2) 
+  .select("region", "cust_id", "revenue", "rnk") 
+  .show()
                 
 </code></pre>
 
@@ -898,27 +940,101 @@ df.withColumn("rak",percent_rank().over(window))
           },
         ],
       },
+      //Rolling / Moving Windows
       {
         q: `<p style="color:violet">
-  Running / moving sum/avg
+  Running / moving sum/avg/highest 7 transactions/ rows<br>
+  Running calculations 7 days with gaps in table / without gaps in table anything related to dates<br>
+  3-day rolling avg but null if less than 3 rows available<br>
+  Rolling avg centered around current row
   </p>`,
         a: `<pre><code class="language-python">
+w = Window.orderBy("cust_id").rowsBetween(-6, 0)
+df.withColumn("rolling_avg", avg("rev").over(w))
+  
+#relaeted to dates
+w = Window.orderBy(unix_timestamp("ord_date")) 
+          .rangeBetween(-6 * 86400, 0)
+df.withColumn("7d_sum", sum("rev").over(w))
+
+# 3-day rolling avg but null if less than 3 rows available
+
+w = Window.orderBy("ord_date").rowsBetween(-2, 0)
+
+df.withColumn("rolling_avg", avg("rev").over(w)) \
+  .withColumn("cnt", count("rev").over(w)) \
+  .withColumn("rolling_avg",
+      when(col("cnt") < 3, None).otherwise(col("rolling_avg"))
+  )
+
+#Rolling avg centered around current row
+# 1 row before + current + 1 row after = 3 row window
+w = Window.orderBy("ord_date").rowsBetween(-1, 1)
+df.withColumn("centered_avg", avg("rev").over(w))
   </code></pre>`,
+
+  tip:`Always rolling N means <b>rowsbetween(-N+1,0)</b><br>
+
+In Rolling <code>rangeBetween + unix_timestamp</code> is always safe when anything date-related is mentioned.
+Only switch to rowsBetween when they explicitly say rows/transactions/records.
+  
+  `,
         children: [],
       },
+      //compare with prev/next month
       {
         q: `<p style="color:violet">
-        Find employees whose salary increased compared to the previous month.
+        Find employees whose salary increased compared to the previous month.<br>
+        Calculate days between a customer's all the current and previous orders.<br>
+        same as above but if asked only for current and prev only<br>
+        Calculate month-over-month revenue growth with multiple trans in a month <br>
+        Identify every point where a customer's status changed.<br>
+        same as above but howmany and filter with more than N
+
+Give a sample df for practice. no ans
         </p>`,
         a: `<pre><code class="language-python">
-
         w = Window.partitionBy("emp_id").orderBy("month")
 emp.withColumn("prev_sal", lag("salary", 1).over(w)) \
    .filter(col("salary") > col("prev_sal")) \
    .select("emp_id", "month", "salary", "prev_sal").show()
+
+#Calculate days between a customer's all the current and previous orders.
+w = Window.partitionBy("cust_id").orderBy(col("order_date").desc())
+df.withColumn("prev_ord", lead(col("order_date")).over(w)) \
+  .withColumn("diff", datediff(col("order_date"), col("prev_ord"))) \
+  .select("cust_id", "order_date", "prev_ord", "diff") \
+  .show()
+
+#only for current,prev
+#Just add row_number over same window and filter with 1.
+
+#Calculate  month-over-month revenue growth.
+
+revs = df.withColumn("order_date", date_trunc("month", col("order_date"))) 
+         .groupBy("order_date") 
+         .agg(sum("rev").alias("rev"))
+
+w = Window.orderBy("order_date")
+
+revs.withColumn("prev", lag("rev").over(w)) 
+    .withColumn("growth%", round((col("rev") - col("prev")) / col("prev") * 100, 2)) 
+    .show()
+
+#Identify every point where a customer's status changed.
+c=df.withColumn("change",when(col("status") != lag("status").over(Window.partitionBy("customer").orderBy("id")),1).otherwise(0))
+
+c.filter(col("change")==1).show()
+
+#if asked how many instead of filter use below.
+c.groupBy("customer").agg(sum("change")).show()
+
+#filter if > 3 => above with filter
   </code></pre>`,
+   tip:`Always percentage change means: ((present-old)/old) *100`,
         children: [],
       },
+      //first and last tranaction of each cust
       {
         q: `<p style="color:violet"> Find the first and last order date for each customer. </p>`,
         a: `<pre><code class="language-python">
@@ -938,33 +1054,30 @@ df.groupBy("customer", "name")
   </code></pre>`,
         children: [],
       },
+      //consecutive transactions
       {
-        q: `<p style="color:violet">who bought in 2 consecutive months</p>`,
-        a: `<pre><code class="language-sql">
-with nex as (select customer , date_trunc("month",trn_date) as trn_month , 
-    date_trunc("month",lead(trn_date) over(partition by customer order by trn_date ))
-    as next_month from df)
+        q: `<p style="color:violet">who bought in 2 consecutive months<br>
+        how many consecutive months/days</p>`,
+        a: `<pre><code class="language-python">
+w = Window.partitionBy("customer").orderBy("trn_date")
+nex = df.withColumn("trn_month", date_trunc("month", col("trn_date"))) \
+        .withColumn("next_month", date_trunc("month", lead("trn_date").over(w)))
 
-select customer  from nex group by customer 
-having sum(case when trn_month= add_months(next_month,-1) then 1 else 0 end  ) >0
+nex.withColumn("is_consecutive", 
+        when(col("trn_month") == add_months(col("next_month"), -1), 1).otherwise(0)
+    ) \
+   .groupBy("customer") \
+   .agg(sum("is_consecutive").alias("cnt")) \
+   .filter(col("cnt") > 0) \
+   .select("customer") \
+   .show()
+#how many days
+Same as above but remove filter and add cnt in select.
+
   </code></pre>`,
+  tip:`When asked for `,
         children: [],
       },
-      {
-        q: `<p style="color:violet"> Find the top 3 customers by revenue in each region (it has multiple sales per customer)</p>`,
-        a: `<pre><code class="language-python">
-
-        df = customers.join(orders, "cust_id") 
-              .groupBy("region", "cust_id") 
-              .agg(sum("amount").alias("revenue"))
-
-df.withColumn("rnk", dense_rank().over(Window.partitionBy("region").orderBy(col("revenue").desc()))) 
-  .filter(col("rnk") <= 2) 
-  .select("region", "cust_id", "revenue", "rnk") 
-  .show()
-  </code></pre>`,
-  children:[],
-      }
     ],
 
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
