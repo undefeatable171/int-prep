@@ -1089,13 +1089,90 @@ Same as above but remove filter and add cnt in select.
     answer: ``,
     children: [
       {
-        q: `<p style="color:violet"> stack & unstack </p>`,
+        q: `<p style="color:violet"> stack & unstack <br>
+percentiles and median        
+        </p>`,
         a: `<pre><code class="language-python">
 pivoted_df = df.groupBy("product").pivot("month").sum("amount").orderBy("product")
 
-  </code></pre>`,
+# median and percentile
+# CONT equivalent: percentile_approx (interpolates)
+df.groupBy("department")
+  .agg(
+      percentile_approx("salary", 0.25).alias("p25"),
+      percentile_approx("salary", 0.50).alias("median"),
+      percentile_approx("salary", 0.75).alias("p75")
+  ).orderBy("department").show()
+
+# DISC equivalent: expr("percentile") — exact, picks actual value
+df.groupBy("department")
+  .agg(
+      expr("percentile(salary, 0.25)").alias("p25"),
+      expr("percentile(salary, 0.50)").alias("median"),
+      expr("percentile(salary, 0.75)").alias("p75")
+  ).orderBy("department").show()
+
+  </code></pre>
+<pre><code class="language-SQL">
+-- DISC: picks nearest actual value from data
+SELECT
+    department,
+    PERCENTILE_DISC(0.25) WITHIN GROUP (ORDER BY salary) AS p25,
+    PERCENTILE_DISC(0.50) WITHIN GROUP (ORDER BY salary) AS median,
+    PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY salary) AS p75
+FROM employees
+GROUP BY department
+ORDER BY department;
+
+-- CONT: interpolates (may return value not in data)
+SELECT
+    department,
+    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY salary) AS p25,
+    PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY salary) AS median,
+    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY salary) AS p75
+FROM employees
+GROUP BY department
+ORDER BY department;
+</code></pre>
+  `,
+  tip:`
+  <table>
+  <thead>
+    <tr>
+      <th>Variant</th>
+      <th>SQL</th>
+      <th>PySpark</th>
+      <th>Interpolates?</th>
+      <th>Returns actual value?</th>
+      <th>Use when</th>
+      <th>Interview pick?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Continuous</strong></td>
+      <td><code>PERCENTILE_CONT</code></td>
+      <td><code>percentile_approx</code></td>
+      <td><span class="badge yes">Yes</span></td>
+      <td><span class="badge no">May not</span></td>
+      <td>Statistically correct median, even-count groups</td>
+      <td><span class="badge rec">✅ Primary</span></td>
+    </tr>
+    <tr>
+      <td><strong>Discrete</strong></td>
+      <td><code>PERCENTILE_DISC</code></td>
+      <td><code>expr("percentile(...)")</code></td>
+      <td><span class="badge no">No</span></td>
+      <td><span class="badge yes">Always</span></td>
+      <td>Must return a real salary/value from dataset</td>
+      <td><span class="badge sec">Secondary</span></td>
+    </tr>
+  </tbody>
+</table>
+  `,
         children: [],
-      }
+      },
+
     ],
 
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
@@ -1165,6 +1242,39 @@ select * from emp join av using(dept_id) where  avg_sal > (select avg(salary) fr
 PySpark — over() method requires an explicit WindowSpec object, empty over() throws an error. It's a Python API limitation, not a Spark engine limitation.
 `,
         children: [],
+      },
+      {
+        q: `<p style="color:violet"> MErge / SCD2</p>`,
+        a: `<pre><code class="language-python">
+# merge => insert , delete , update
+  </code></pre>
+
+  <pre><code class="language-sql">
+-- merge => insert , delete , update
+merge into workspace.test.scd t
+using i
+on t.emp_id=i.emp_id
+when matched and (t.name<>i.name or t.department<>i.department or t.salary<>i.salary or t.updated_at<>i.updated_at)
+then update set t.name=i.name , t.department=i.department , t.salary=i.salary , t.updated_at=i.updated_at
+
+when not matched by Target then insert(emp_id,name,department,salary,updated_at) values (i.emp_id,i.name,i.department,i.salary,current_date()) 
+
+when not matched by source then delete
+
+
+  </code></pre>
+  `,
+  tip:`
+<li>
+If we are doing both deletes and inserts if not matched , then mentioning <br>
+<code>Not Matched By target</code> is mandatory for inserting<br>
+<code>Not Matched By source</code> is mandatory for deleting</li>
+<li>If only inserting <code> when not matched then update set ... </code> is sufficient </li>
+
+
+
+  `,
+  children:[],
       }
 
     ],

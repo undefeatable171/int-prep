@@ -192,7 +192,7 @@ Need to write to Delta?
 │  └─ Use: df.write.format("delta").saveAsTable("x") => .mode("overwrite") is opinional(but recommended) if table not exists or CREATE TABLE AS SELECT 
 │
 ├─ Adding new records only (no updates)?
-│  └─ Use: .mode("append") or INSERT INTO
+│  └─ Use: .mode("append") or nINSERT INTO
 │
 ├─ Full replacement of all data?
 │  ├─ Keep existing schema? → .mode("overwrite")
@@ -605,7 +605,7 @@ cdf_df.createOrReplaceTempView("cdc")
 
 -- Apply changes to Gold
 spark.sql("""
-MERGE INTO gold.claims t
+nMERGE INTO gold.claims t
 USING cdc s
 ON t.claim_id = s.claim_id
 
