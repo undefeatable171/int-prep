@@ -1246,6 +1246,24 @@ PySpark — over() method requires an explicit WindowSpec object, empty over() t
       {
         q: `<p style="color:violet"> MErge / SCD2</p>`,
         a: `<pre><code class="language-python">
+from delta.tables import DeltaTable
+target=DeltaTable.forName(spark,"workspace.test.scd")
+target.alias("t").merge(i.alias("i"),"t.emp_id=i.emp_id" )
+    .whenMatchedUpdate(condition="""t.name != i.name OR 
+        t.department != i.department OR 
+        t.salary != i.salary""",
+        set={"t.name": "i.name",
+        "t.department": "i.department",
+        "t.salary": "i.salary",
+        "t.updated_at": "current_date()"})
+    .whenNotMatchedInsert(values={
+        "emp_id": "i.emp_id",
+        "name": "i.name",
+        "department": "i.department",
+        "salary": "i.salary",
+        "updated_at": "current_date()"
+    })\
+    .whenNotMatchedBySourceDelete().execute()
 # merge => insert , delete , update
   </code></pre>
 
@@ -1257,7 +1275,8 @@ on t.emp_id=i.emp_id
 when matched and (t.name<>i.name or t.department<>i.department or t.salary<>i.salary or t.updated_at<>i.updated_at)
 then update set t.name=i.name , t.department=i.department , t.salary=i.salary , t.updated_at=i.updated_at
 
-when not matched by Target then insert(emp_id,name,department,salary,updated_at) values (i.emp_id,i.name,i.department,i.salary,current_date()) 
+when not matched by Target then insert(emp_id,name,department,salary,updated_at) values 
+(i.emp_id,i.name,i.department,i.salary,current_date()) 
 
 when not matched by source then delete
 
@@ -1265,11 +1284,17 @@ when not matched by source then delete
   </code></pre>
   `,
   tip:`
+<ul>
 <li>
 If we are doing both deletes and inserts if not matched , then mentioning <br>
 <code>Not Matched By target</code> is mandatory for inserting<br>
 <code>Not Matched By source</code> is mandatory for deleting</li>
-<li>If only inserting <code> when not matched then update set ... </code> is sufficient </li>
+<li>If only inserting <code> when not matched then update set ... </code> is sufficient </li></ul>
+
+<ul><li> IN pyspark there is no native merge command for df, so need to use Deltatable.forname(spark,"table") 
+<br> this will return delta table obj and we can execute merge. 
+</li>
+<li>From DBR 17(june2025) df directly supports merge into. But remember above oly</li></ul>
 
 
 
