@@ -142,15 +142,75 @@ Parquet, ORC, Delta store typed structured data → no malformed-row handling ne
 ## Write Modes
 
 
-| Mode            | Behavior  if path exists                      | Behaviour if  path empty    |
-| ----------------- | ----------------------------------------------- | ----------------------------- |
-| `append`        | Adds new data to existing                     | writes data to empty folder |
-| `overwrite`     | Replaces existing data                        | writes data to empty folder |
-| `ignore`        | No-op if data already exists                  | writes data to empty folder |
-| `errorIfExists` | Throws error if data already exists (default) | throws error even if empty  |
+| Mode                       | Table Exists?    | Path Empty?         | Behavior               | Use When                        |
+| ---------------------------- | ------------------ | --------------------- | ------------------------ | --------------------------------- |
+| **append**                 | ✅ Adds rows     | ✅ Creates & writes | Appends data           | Continuous data ingestion       |
+| **overwrite**              | ✅ Replaces data | ✅ Creates & writes | Atomic replacement     | Full refresh                    |
+| **ignore**                 | ✅ Does nothing  | ✅ Creates & writes | No-op if exists        | Idempotent writes               |
+| **errorIfExists**(default) | ❌ Throws error  | ❌ Throws error     | Fails always if exists | Safety check (must be explicit) |
 
-**Delta overwrite** is transactional — writes new files, commits via `_delta_log`, marks old files obsolete.
-**CSV/Parquet overwrite** physically deletes existing files and rewrites.
+> **Always specify `.mode()`** on existing tables. Omitting it defaults to `errorIfExists` → write fails.
+
+## 📊 Write Strategies Comparison
+
+
+| Strategy      | What It Does                                                                                                                        | Reads Existing Data?    | Files Written       | Schema Evolution                                                                                         | Best For                          |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| **Append**    | Adds new rows only,fast, writes new files only                                                                                      | ❌ No                   | Only new files      | ❌ Fails by default✅ Enable:`.option("mergeSchema", "true")`                                            | Raw/immutable data (Bronze layer) |
+| **Overwrite** | Replaces all data ; Transactional, replaces the entire table with new data; preserves table structure and handles deletions cleanly | ❌ No (drops old files) | All new files       | ❌**Preserves schema by default**✅ Replace: `.option("overwriteSchema", "true")`                        | Full reloads, dimension tables    |
+| **Merge**     | Upsert (INSERT/UPDATE/DELETE) by key                                                                                                | ✅ Yes                  | Only affected files | ❌ Fails by default✅ Enable:`spark.conf.set("spark.databricks.delta.schema.autoMerge.enabled", "true")` | Mutable data (Silver/Gold)        |
+
+> **Schema evolution limits (all modes)**: Can add new columns. Cannot drop existing columns or change types (except overwriteSchema which replaces everything).
+
+
+| Option                           | Adds Cols | Drops Cols | Changes Types | Destroys Data | History preserved |
+| ---------------------------------- | ----------- | ------------ | --------------- | --------------- | ------------------- |
+| mergeSchema=true (Append)        | ✅        | ❌         | ❌            | ❌            | ✅                |
+| overwriteSchema=true (Overwrite) | ✅        | ✅         | ✅            | ✅            | ✅                |
+| autoMerge=true (Merge)           | ✅        | ❌         | ❌            | ❌            | ✅                |
+
+---
+
+## SQL Write Operations
+
+
+| Statement                             | Schema Behavior                                                                | Equivalent PySpark                                    |
+| --------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `CREATE TABLE`                        | Defines schema explicitly                                                      | `.mode("errorIfExists")`                              |
+| `CREATE TABLE AS SELECT`              | Infers schema from query                                                       | `.mode("overwrite")` (first run)                      |
+| `CREATE OR REPLACE TABLE [AS SELECT]` | **Always replaces schema** — old table dropped, **History preserved in BOTH** | `.mode("overwrite").option("overwriteSchema","true")` |
+| `INSERT INTO`                         | Must match existing schema                                                     | `.mode("append")`                                     |
+| `ALTER TABLE ADD COLUMNS`             | Adds columns                                                                   | `mergeSchema` equivalent                              |
+| `ALTER TABLE DROP COLUMN`             | Removes column                                                                 | —                                                    |
+| `ALTER TABLE CHANGE COLUMN`           | Rename / reorder / comment                                                     | —                                                    |
+| `ALTER TABLE REPLACE COLUMNS`         | Full schema redesign                                                           | `overwriteSchema` equivalent                          |
+
+```
+Need to write to Delta?
+│
+├─ Table doesn't exist yet? 
+│  └─ Use: df.write.format("delta").saveAsTable("x") => .mode("overwrite") is opinional(but recommended) if table not exists or CREATE TABLE AS SELECT 
+│
+├─ Adding new records only (no updates)?
+│  └─ Use: .mode("append") or INSERT INTO
+│
+├─ Full replacement of all data?
+│  ├─ Keep existing schema? → .mode("overwrite")
+│  └─ Replace schema too? → .mode("overwrite").option("overwriteSchema", "true")
+│
+└─ Need row-level updates/deletes?
+   └─ Use: MERGE (or DeltaTable.merge())
+```
+
+## ⚠️ Gotchas
+
+
+| Pitfall                                   | Detail                                                                                                                                                                                   |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **History operation names mislead**       | `CREATE OR REPLACE TABLE AS SELECT` in history doesn't confirm schema was replaced — check `operationParameters` `canOverwriteSchema: "true"`                                           |
+| **Overwrite ≠ schema replace**           | `.mode("overwrite")` preserves schema by default; missing cols filled with NULL                                                                                                          |
+| **Delta vs CSV/Parquet overwrite**        | **Delta overwrite** is transactional — writes new files, commits via `_delta_log`, marks old files obsolete.  **CSV/Parquet overwrite** physically deletes existing files and rewrites. |
+| **Schema enforcement is format-specific** | Delta, Iceberg, Hudi enforce schema. CSV, JSON, Parquet do not.                                                                                                                          |
 
 ---
 
@@ -610,17 +670,7 @@ Auto Loader maintains a checkpoint with metadata of processed files. On each run
 
 **Rule of thumb:** use Auto Loader when files arrive continuously/frequently and you need scalable, incremental ingestion with schema evolution. Use COPY INTO for scheduled batch loads where you want simple, idempotent SQL-based ingestion straight into Delta.
 
-## 4. Write Strategies
-
-
-| Strategy      | Behavior                                                                                                        | Best for                                     | if Incoming DF schema changes(schema Enforcement) | Enable Evolution                                                                                        |
-| --------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Append**    | Only inserts new rows; fast, writes new files only                                                              | Immutable/raw data (typically Bronze)        | ❌ Fails if schema changes                        | mergeSchema=true                                                                                        |
-| **Overwrite** | Transactional, replaces the entire table with new data; preserves table structure and handles deletions cleanly | Full reloads of reference/dimension tables   | ❌ Fails if schema changes                        | OverwriteSchema=true                                                                                    |
-| **Merge**     | Upserts (INSERT + UPDATE + DELETE) based on a key; reads existing data and rewrites affected files              | Mutable/curated data (typically Silver/Gold) | ❌ Fails if schema changes                        | spark.databricks.delta.schema.autoMerge.enabled=true (or MERGE WITH SCHEMA EVOLUTION in Databricks SQL) |
-
-**schema enforcement** is supported only by Delta, Iceberg, and Hudi. Not supported by CSV, JSON, Parquet.
-----------------------------------------------------------------------------------------------------------
+---
 
 ## 5. Summary Matrix
 

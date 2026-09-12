@@ -1042,7 +1042,7 @@ w = Window.partitionBy("customer").orderBy("trn_date")
 df.select(
     col("name"),
     first("trn_date").over(w).alias("first_order"),
-    last("trn_date").over(w).alias("last_order")
+    last("trn_date").over(w.rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)).alias("last_order")
 ).distinct().show()
 
 #Alternate
@@ -1052,6 +1052,8 @@ df.groupBy("customer", "name")
       max("trn_date").alias("last_order")
   ).show()
   </code></pre>`,
+tip:`For first and last using windows, always use full window frame <b>for last</b> => rangebetwenn unbounded to unbounded, else it will put as current row.
+<br> for first not mandatory since default of preceding and current gives first always.`,
         children: [],
       },
       //consecutive transactions
@@ -1083,12 +1085,14 @@ Same as above but remove filter and add cnt in select.
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
   {
     cat: `intermediate`,
-    q: `intermediate-2`,
+    q: `intermediate-2 agg`,
     answer: ``,
     children: [
       {
-        q: `<p style="color:violet"></p>`,
+        q: `<p style="color:violet"> stack & unstack </p>`,
         a: `<pre><code class="language-python">
+pivoted_df = df.groupBy("product").pivot("month").sum("amount").orderBy("product")
+
   </code></pre>`,
         children: [],
       }
@@ -1137,7 +1141,8 @@ select e.* except(salary) , coalesce( e.salary,b.sal,0) as salary from e left jo
         children: [],
       },
       {
-        q: `<p style="color:violet"> Find employees whose department average salary exceeds the company average(same table).   </p>`,
+        q: `<p style="color:violet"> Find employees whose department average salary exceeds the company average(same table). 
+        <br> generate combinations on a same table without duplicates .Like diff combinations of teams / s  </p>`,
         a: `<pre><code class="language-python">
 Company_window=Window.rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
 dept_window=Window.partitionBy("dept_id")
@@ -1167,9 +1172,97 @@ PySpark — over() method requires an explicit WindowSpec object, empty over() t
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
   {
     cat: `Advanced`,
-    q: `Advanced-2`,
+    q: `Advanced-2 windows`,
     answer: ``,
-    children: [],
+    children: [
+      {
+        q: `<p style="color:violet">YTD/MTD sales</p>`,
+        a: `<pre><code class="language-python">
+ytd_window = 
+    Window.partitionBy("customer", date_trunc("year", col("txn_date")))
+          .orderBy("txn_date")
+          .rowsBetween(Window.unboundedPreceding, Window.currentRow)
+
+mtd_window = 
+    Window.partitionBy("customer", date_trunc("month", col("txn_date")))
+          .orderBy("txn_date")
+          .rowsBetween(Window.unboundedPreceding, Window.currentRow)
+
+df.withColumn("YTD", sum("amount").over(ytd_window))
+      .withColumn("MTD", sum("amount").over(mtd_window))
+      .select("txn_id", "customer", "txn_date", "amount", "MTD", "YTD")
+      .orderBy("customer", "txn_date")
+      .show()
+  </code></pre>`,
+  tips:`YTD means from the start of year to todate. same for MTD`,
+  children:[],
+      },
+      {
+        q: `<p style="color:violet"> Find all users who have logged in for at least 3 consecutive days. Return the user, streak start date, streak end date, and streak length. (Gaps and Islands)</p>`,
+        a: `<pre><code class="language-python">
+dedup=df.dropDuplicates(["user_id","login_date"])
+ 
+w=Window.partitionBy("user_id").orderBy("login_date")
+dedup.withColumn("rn",row_number().over(w))
+        .withColumn("gap",date_sub("login_date",col("rn")))
+        .groupBy("user_id","gap").agg(count("*").alias("counts"),
+        min("login_date").alias("start"),max("login_date").alias("end"))
+        .filter(col("counts")>=3)
+        .select("user_id","start","end","counts").show()
+# if asked current active streak coplete above + add below one filter
+.filter(col("end") == current_date())
+#If the last day of a streak is today → user logged in today → streak is still alive.
+#If streak_end is yesterday or earlier → gap already happened → streak is broken.
+
+#streak_end = CURRENT_DATE - 1
+#→ User logged in yesterday but not today yet
+#→ Technically streak may still be "alive" depending on business definition
+
+#streak_end = CURRENT_DATE
+#→ Safest definition of active — user definitely active today#If assuming today above is 
+
+#Always clarify with interviewer: "Does active mean logged in today, or within the last N hours?"
+  </code></pre>
+  <pre><code class="language-sql">
+with dedup as (select distinct user_id,login_date from df ),
+rn as (select * , row_number() over(partition by user_id order by login_date ) as r from dedup),
+grouped as ( select user_id , login_date,date_sub(login_date, r) g from rn )
+select user_id,min(login_date),max(login_date) ,count(*) from grouped group by user_id,g having count(*) >=3
+  </code></pre>
+  `,
+  tip:`
+  Minimum streak of N days → change HAVING COUNT(*) >= 3 to any N<br>
+Longest streak per user → wrap in another GROUP BY user_id + MAX(streak_length)<br>
+Current active streak → filter where streak_end = CURRENT_DATE<br>
+Streak with purchases → same pattern on order_date instead of login_date<br>
+Weekly streak → truncate dates to week before applying the trick → DATE_TRUNC('week', date) - rn weeks<br>
+
+Given a table of employee work logs, find all continuous periods (islands) where each employee worked without any gaps.
+ Return the employee, period start, period end, and number of days in each continuous period. 
+ <b>Just same but with no filte>=N</b>
+  `,
+  children:[],
+      },
+      {
+        q: `<p style="color:violet"> Sessionization: Given a table of user page view events, group events into sessions — a session ends when there is a gap of more than 30 minutes between consecutive events for the same user. Assign a session ID to each event and calculate session duration.</p>`,
+        a: `<pre><code class="language-python">
+w=Window.partitionBy("user_id").orderBy("event_time")
+df.withColumn("prev",lag("event_time").over(w))
+    .withColumn("diff", (unix_timestamp(col("event_time"))-unix_timestamp(col("prev")))/60)
+        .withColumn("change", when(col("prev").isNull(), 1).when(col("diff")<=30,0).otherwise(1))
+        .withColumn("s",sum(col("change")).over(w.rowsBetween(Window.unboundedPreceding, Window.currentRow)))
+            .withColumn("session_id",concat(col("user_id"),lit("_"),col("s")))
+                .select("event_id","user_id",date_format(col("event_time"),"HH:mm").alias("event"),"session_id").show()
+
+  </code></pre>`,
+  tip:`
+Step 1: LAG → get previous event time per user<br>
+Step 2: CASE → flag rows where gap > threshold (session boundary)<br>
+Step 3: Cumulative SUM of flags → session number within user<br>
+Step 4: GROUP BY user + session number → session summary`,
+  children:[],
+      }
+    ],
 
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
   {
