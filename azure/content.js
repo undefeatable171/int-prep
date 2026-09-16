@@ -348,101 +348,101 @@ HTTPS for data in transit.<br>
         `,
         children: [],
       },
-//       {
-//         q: `<p style="color:violet">ACtivities</p>`,
-//         a: `<table border="1" cellpadding="8" cellspacing="0">
-//   <tr>
-//     <th>Activity</th>
-//     <th>Interview Answer</th>
-//     <th>When to Use</th>
-//   </tr>
+      //       {
+      //         q: `<p style="color:violet">ACtivities</p>`,
+      //         a: `<table border="1" cellpadding="8" cellspacing="0">
+      //   <tr>
+      //     <th>Activity</th>
+      //     <th>Interview Answer</th>
+      //     <th>When to Use</th>
+      //   </tr>
 
-//   <tr>
-//     <td><b>Copy Data</b></td>
-//     <td>Copies data from a source to a destination.</td>
-//     <td>Use for ingesting or moving data between systems.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>Copy Data</b></td>
+      //     <td>Copies data from a source to a destination.</td>
+      //     <td>Use for ingesting or moving data between systems.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>Mapping Data Flow</b></td>
-//     <td>Visual, code-free transformation that runs on ADF-managed Spark compute.</td>
-//     <td>Use for joins, aggregations, filters, derived columns, and other transformations.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>Mapping Data Flow</b></td>
+      //     <td>Visual, code-free transformation that runs on ADF-managed Spark compute.</td>
+      //     <td>Use for joins, aggregations, filters, derived columns, and other transformations.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>Databricks Notebook</b></td>
-//     <td>Executes a Databricks notebook from an ADF pipeline.</td>
-//     <td>Use for complex PySpark/Spark transformations and heavy processing.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>Databricks Notebook</b></td>
+      //     <td>Executes a Databricks notebook from an ADF pipeline.</td>
+      //     <td>Use for complex PySpark/Spark transformations and heavy processing.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>Stored Procedure</b></td>
-//     <td>Executes a stored procedure in a supported database.</td>
-//     <td>Use when database-side logic or transformations already exist.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>Stored Procedure</b></td>
+      //     <td>Executes a stored procedure in a supported database.</td>
+      //     <td>Use when database-side logic or transformations already exist.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>Lookup</b></td>
-//     <td>Retrieves data or configuration values from a source.</td>
-//     <td>Use to read control/configuration values such as file names, paths, or parameters.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>Lookup</b></td>
+      //     <td>Retrieves data or configuration values from a source.</td>
+      //     <td>Use to read control/configuration values such as file names, paths, or parameters.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>Get Metadata</b></td>
-//     <td>Retrieves metadata about a file, folder, or dataset.</td>
-//     <td>Use to check file existence, size, last modified time, child items, etc.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>Get Metadata</b></td>
+      //     <td>Retrieves metadata about a file, folder, or dataset.</td>
+      //     <td>Use to check file existence, size, last modified time, child items, etc.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>ForEach</b></td>
-//     <td>Iterates over a collection and executes activities for each item.</td>
-//     <td>Use to process multiple files, tables, or records dynamically.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>ForEach</b></td>
+      //     <td>Iterates over a collection and executes activities for each item.</td>
+      //     <td>Use to process multiple files, tables, or records dynamically.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>If Condition</b></td>
-//     <td>Executes different activities based on a Boolean condition.</td>
-//     <td>Use for conditional branching, such as checking whether a file exists.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>If Condition</b></td>
+      //     <td>Executes different activities based on a Boolean condition.</td>
+      //     <td>Use for conditional branching, such as checking whether a file exists.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>Switch</b></td>
-//     <td>Routes pipeline execution to different branches based on an expression value.</td>
-//     <td>Use when there are multiple possible execution paths.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>Switch</b></td>
+      //     <td>Routes pipeline execution to different branches based on an expression value.</td>
+      //     <td>Use when there are multiple possible execution paths.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>Execute Pipeline</b></td>
-//     <td>Invokes another pipeline from the current pipeline.</td>
-//     <td>Use to create modular and reusable pipelines.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>Execute Pipeline</b></td>
+      //     <td>Invokes another pipeline from the current pipeline.</td>
+      //     <td>Use to create modular and reusable pipelines.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>Web Activity</b></td>
-//     <td>Calls a REST API or web endpoint from the pipeline.</td>
-//     <td>Use to trigger APIs or interact with external services.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>Web Activity</b></td>
+      //     <td>Calls a REST API or web endpoint from the pipeline.</td>
+      //     <td>Use to trigger APIs or interact with external services.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>Set Variable</b></td>
-//     <td>Assigns a value to a pipeline variable.</td>
-//     <td>Use to store temporary values during pipeline execution.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>Set Variable</b></td>
+      //     <td>Assigns a value to a pipeline variable.</td>
+      //     <td>Use to store temporary values during pipeline execution.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>Wait</b></td>
-//     <td>Pauses pipeline execution for a specified duration.</td>
-//     <td>Use when a delay is required between activities.</td>
-//   </tr>
+      //   <tr>
+      //     <td><b>Wait</b></td>
+      //     <td>Pauses pipeline execution for a specified duration.</td>
+      //     <td>Use when a delay is required between activities.</td>
+      //   </tr>
 
-//   <tr>
-//     <td><b>Until</b></td>
-//     <td>Repeatedly executes activities until a specified condition becomes true.</td>
-//     <td>Use for polling or waiting until a condition is met.</td>
-//   </tr>
-// </table>`,
-//         children: [],
-//       },
+      //   <tr>
+      //     <td><b>Until</b></td>
+      //     <td>Repeatedly executes activities until a specified condition becomes true.</td>
+      //     <td>Use for polling or waiting until a condition is met.</td>
+      //   </tr>
+      // </table>`,
+      //         children: [],
+      //       },
       {
         q: `Activities`,
         a: `
@@ -652,8 +652,8 @@ HTTPS for data in transit.<br>
         `,
       },
       {
-        q:`Activities part 2`,
-        a:`
+        q: `Activities part 2`,
+        a: `
         <h3 style="color:purple;">Databricks Notebook Activity</h3>
 
 <p>
@@ -784,8 +784,107 @@ HTTPS for data in transit.<br>
   procedures on supported SQL-based systems.
 </p>
         `,
-        children:[],
-      }
+        children: [],
+      },
+      {
+        q: `ADF process`,
+        answer: ``,
+        children: [
+          {
+            q: `How to connect with Azure sql database/ any sql`,
+            a: ` In ADF, we create a Linked Service with the SQL connector, provide server and database details, and authenticate using Managed Identity — which is preferred in prod as it requires no credentials. Then grant the ADF managed identity access on the SQL DB side via T-SQL. `,
+            children: []
+          },
+
+        ],
+      },
+      {
+        cat: `ADF`,
+        q: `ADF questions`,
+        a: ``,
+        children: [
+{
+  q:`How do you build a metadata-driven pipeline in ADF to process multiple vendor files from ADLS input folder to ADLS Bronze layer with Source file names dynamically changing with date?`,
+  a:`
+  <img style="width:50% ;height:60%" src="../support/docs/adf/copy_source.png" alt="Description">
+
+  <h3 style="color:purple;">Dataset Parameters</h3><code>container</code></li>
+    <code>folder</code>
+    <code>file_name</code>
+
+
+<p>Single ADLS CSV Dataset.</p>
+
+
+<h3 style="color:purple;">SQL Control Table</h3>
+
+<table border="1" cellpadding="6" cellspacing="0">
+    <thead>
+        <tr>
+            <th>table_name</th>
+            <th>src_folder</th>
+            <th>tgt_folder</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>encounters</td>
+            <td>vendor1</td>
+            <td>encounters</td>
+        </tr>
+        <tr>
+            <td>pharmacy</td>
+            <td>vendor2</td>
+            <td>pharmacy</td>
+        </tr>
+    </tbody>
+</table>
+
+
+<h3 style="color:purple;">Flow</h3>
+
+<p>
+    <strong>Lookup (SQL)</strong>
+    →
+    <strong>ForEach</strong>
+    (<code>@activity('Lookup1').output.value</code>)
+    →
+    <strong>Copy</strong>
+</p>
+
+
+<h3 style="color:purple;">Source</h3>
+
+<ul>
+    <li>Container: <code>raw</code> <strong>(hardcoded)</strong></li>
+    <li>File path type: <strong>Wildcard</strong></li>
+    <li>Folder: <code>@item().src_folder</code></li>
+    <li>
+        File:
+        <code>@concat(item().table_name,'_',formatDateTime(utcNow(),'ddMMyyyy'),'*.csv')</code>
+    </li>
+</ul>
+
+
+<h3 style="color:purple;">Sink</h3>
+
+<ul>
+    <li>Container: <code>bronze</code> <strong>(hardcoded)</strong></li>
+    <li>Folder: <code>@item().tgt_folder</code></li>
+    <li>
+        File:
+        <code>@concat(item().table_name,'_',formatDateTime(utcNow(),'ddMMyyyy'),'.csv')</code>
+    </li>
+</ul>
+  `,
+  tip:`when Wildcard file path is selected in source, it overrides the folder and filename dataset parameters for that source tab only. But container must still be passed via parameter even with wildcard. The same dataset parameters work normally for sink — exact container, folder, and filename as usual.
+<br>
+Same dataset, container always parameterized, wildcard overrides folder+file for source only. Clean approach.`,
+  children:[],
+},
+
+        ],
+      },
 
     ],
   },
