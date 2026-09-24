@@ -482,7 +482,7 @@ HTTPS for data in transit.<br>
 
 <hr>
 
-<h3 style="color:purple;">If Condition</h3>
+<h3 style="color:#368B79;">If Condition</h3>
 
 <p>
   Evaluates a <strong>true/false expression</strong> and routes execution
@@ -490,7 +490,7 @@ HTTPS for data in transit.<br>
 </p>
 
 <p>
-  <strong style="color:blue;">Configure:</strong>
+  <strong style="color:#4BE48B;">Configure:</strong>
 </p>
 <ul>
   <li>
@@ -520,7 +520,7 @@ HTTPS for data in transit.<br>
 
 <hr>
 
-<h3 style="color:purple;">Lookup</h3>
+<h3 style="color:#368B79;">Lookup</h3>
 
 <p>
   Runs a query against a source (SQL table, file, pipeline) <strong>once</strong>,
@@ -557,7 +557,7 @@ HTTPS for data in transit.<br>
 
 <hr>
 
-<h3 style="color:purple;">ForEach</h3>
+<h3 style="color:#738B36;">ForEach</h3>
 
 <p>
   Iterates over a collection and executes inner activities for each item,
@@ -628,7 +628,8 @@ HTTPS for data in transit.<br>
 <p>
   <strong style="color:red">Cannot: </strong> Wait for a file. If the file isn't there, it returns
   <code>exists: false</code>, and you handle the result using an
-  <code>If Condition</code>.
+  <code>If Condition</code>. <br>
+  <b>Can't put dynamic file names with * in file option like copy. need to explicitly handle after foreach with if condition</b>
 </p>
 <img style="height:50% ; width:75%" src='../support/docs/adf/Get_metadat.png'>
 
@@ -639,11 +640,9 @@ HTTPS for data in transit.<br>
 <h3 style="color:purple">Validation</h3>
 
 <p>
-  Polls a known file repeatedly until the file appears or the timeout is reached.
-  Returns nothing — it simply <strong>passes or fails</strong>.
-</p>
-<p><b>Output:</b> we can simply connect via success/ fal connectors. No special return types like exists</p>
 
+Polls a known file/path until the file arrives or the timeout is reached.it simply <strong>passes or fails</strong>. and returns no metadata.
+</p>
 <p><strong style="color:violet">Configure:</strong></p>
 <ul>
   <li><code>timeout</code> — maximum wait time</li>
@@ -652,14 +651,35 @@ HTTPS for data in transit.<br>
 </ul>
 
 <p><strong style="color:green">Use when:</strong>  Validation is used when the file arrival time is uncertain but the expected file name is known.<br>
-.It repeatedly checks for the file until the timeout is reached and can also verify that the file is non-empty using minimumSize
-</p> <p><strong style="color:red;">Cannot:</strong> It provides a simple pass/fail flow, but it cannot dynamically discover variable or unknown filenames</p>
- <p><b>For dynamic filenames, use Until + Get Metadata + Filter.</b></p>
+.It repeatedly checks for the file until the timeout is reached and can also verify that the file is non-empty using minimumSize <br>
+Filename has a predictable dynamic value, e.g.:
+<code>@concat('products_',formatDateTime(utcNow(),'ddMMyyyy'),'.csv')</code>
+</p> <p><strong style="color:red;">Cannot:</strong> It provides a simple pass/fail flow, but it cannot dynamically discover unknown filenames or with random timestamps send by vendor like <code>products_24092026122309</code></p>
+ <p><b> Important</b>: If the file doesn't arrive before timeout, <b>Validation fails and the pipeline fails</b>, even if you connect another activity using Upon Failure.<br><code>For dynamic filenames/ optional files, use Until + Get Metadata + Filter SO pipeline won't fail</code></p>
 `,
       },
       {
         q: `Activities part 2`,
         a: `
+<h3 style="color:#368B79;">Wait Activity</h3>
+<p>   Pauses the pipeline execution for a <strong>specified duration</strong> before continuing.
+</p>
+
+<p><strong>Configure:</strong></p>
+<ul>
+  <li><code>waitTimeInSeconds</code> — duration to pause execution</li>
+</ul>
+
+<p><strong>Use when:</strong></p>
+<ul>
+  <li>Need to wait before retrying/checking a condition</li>
+  <li>Commonly used inside <code>Until</code> for polling</li>
+</ul>
+
+<p>
+  <strong>Example:</strong> <code>Wait 20 seconds → Get Metadata → Filter → repeat</code>
+</p>
+<hr>
 <h3 style="color:purple;">Until Activity</h3>
 
 <p>
@@ -722,7 +742,7 @@ HTTPS for data in transit.<br>
 
 
 <hr>
-        <h3 style="color:purple;">Databricks Notebook Activity</h3>
+        <h3 style="color:#4BE48B;">Databricks Notebook Activity</h3>
 
 <p>
   Triggers a notebook in a Databricks workspace using the configured
@@ -756,7 +776,7 @@ HTTPS for data in transit.<br>
 
 <hr>
 
-<h3 style="color:purple;">Execute Pipeline Activity</h3>
+<h3 style="color:#368B79;">Execute Pipeline Activity</h3>
 
 <p>
   Calls another pipeline from within the current pipeline, following a
@@ -863,6 +883,53 @@ HTTPS for data in transit.<br>
             a: ` In ADF, we create a Linked Service with the SQL connector, provide server and database details, and authenticate using Managed Identity — which is preferred in prod as it requires no credentials. Then grant the ADF managed identity access on the SQL DB side via T-SQL. `,
             children: []
           },
+          {
+            q:`add dynamic date with seconds and convert to ist`,
+            a:`<h3 style="color:violet">Dynamic Date & Time → IST</h3>
+
+<p><strong>Current UTC date/time:</strong></p>
+<code>@utcNow()</code>
+
+<p><strong>Dynamic date with seconds:</strong></p>
+<code>@formatDateTime(utcNow(),'ddMMyyyy_HHmmss')</code>
+
+<p><strong>Convert UTC → IST:</strong></p>
+<code>@convertFromUtc(utcNow(),'India Standard Time')</code>
+
+<p><strong>IST with date and seconds:</strong></p>
+<code>@formatDateTime(convertFromUtc(utcNow(),'India Standard Time'),'ddMMyyyy_HHmmss')</code>
+
+<p><strong>Use <code>concat()</code> to create dynamic filenames:</strong></p>
+<code>@concat('products_', formatDateTime(convertFromUtc(utcNow(),'India Standard Time'),'ddMMyyyy_HHmmss'), '.csv')</code>
+
+<p><strong>Example:</strong></p>
+<code>products_24092026_194532.csv</code>
+
+<p><strong>Need to add / subdates</strong></p>
+<code>@formatDateTime(addDays(utcnow(),-1),'yyyy-MM-dd')</code>`,
+            chldren:[],
+          },
+          {
+            q:`how to create and use stored procedures`,
+            a:`
+            
+<pre><code class="language-sql">
+CREATE PROCEDURE usp_log_pipeline_error
+    @table_name NVARCHAR(100),
+    @error_message NVARCHAR(500),
+    @run_id NVARCHAR(100),
+    @pipeline_name NVARCHAR(100)
+AS
+BEGIN
+    INSERT INTO pipeline_error_log 
+    (table_name, error_message, run_id, pipeline_name, failed_at)
+    VALUES 
+    (@table_name, @error_message, @run_id, @pipeline_name, GETDATE())
+END
+</code></pre>
+            `,
+            children:[],
+          }
 
         ],
       },
@@ -960,19 +1027,14 @@ Same dataset, container always parameterized, wildcard overrides folder+file for
 Design the pipeline to perform the appropriate load and update last_watermark only after a successful copy.</span>`,
   a:`
   <h2 style="color:purple;">Linked Service</h2>
-
 <p>
     <strong>SQL DB Linked Service</strong> — parameter:
     <code>DBname</code>
 </p>
-
-
 <h2 style="color:purple;">Dataset</h2>
-
 <p>
     <strong>SQL DB Dataset</strong> — parameters:
 </p>
-
 <code>db</code>
    <code>schema</code>
     <code>table</code>
@@ -1027,42 +1089,56 @@ Design the pipeline to perform the appropriate load and update last_watermark on
 
 <h2 style="color:purple;">Pipeline Flow</h2>
 
-<p>
-    <strong>Lookup</strong>
-    →
-    <strong>ForEach</strong>
-    →
-    <strong>If Condition</strong>
-    →
-    <strong>Full / Incremental Copy</strong>
-    →
-    <strong>Lookup Max</strong>
-    →
-    <strong>SP Activity</strong>
-</p>
+<h3 style="color:violet">Control Table → Full / Incremental Load</h3>
 
+<pre>
+Lookup Control Table
+        ↓
+     ForEach
+        ↓
+   If: FULL / INCREMENTAL
+    ↙              ↘
+ Full Copy      Incremental Copy
+    ↘              ↙
+      Lookup MAX(updated_at)
+              ↓
+       Stored Procedure
+              ↓
+       Update Watermark
+</pre>
 
-<h3 style="color:purple;">1. Lookup</h3>
+<p><strong>Lookup Query:</strong></p>
+<code>SELECT * FROM control_table WHERE is_active = 1;</code>
 
-<pre><code>SELECT * FROM control_table WHERE is_active = 1;</code></pre>
+<p><strong>ForEach items:</strong></p>
+<code>@activity('Lookup1').output.value</code>
 
+<p><strong>If Condition:</strong></p>
+<code>@equals(item().load_type,'FULL')</code>
 
-<h3 style="color:purple;">2. ForEach</h3>
+<p><strong>Incremental</strong></p>
+Source Copy:
 
-<p>Items:</p>
+<ul>
+    <li>Dataset: Same SQL DB Dataset</li>
+    <li><code>db = @item().source_db</code></li>
+    <li>Source option: <strong>Query</strong></li>
+</ul>
 
-<pre><code>@activity('Lookup1').output.value</code></pre>
+<p><Dynamic Query:</p>
+<code>@concat('SELECT * FROM ',item().source_schema,'.',item().table_name,' WHERE updated_at > ''',string(item().last_watermark),'''')</code>
 
+SINK for both INCremental and full:
+<ul>
+    <li>Dataset: Same SQL DB Dataset</li>
+    <li><code>db = @item().sink_db</code></li>
+    <li><code>schema = @item().sink_schema</code></li>
+    <li><code>table = @item().table_name</code></li>
+    <li>Sink option: <strong>Table</strong></li>
+</ul>
 
-<h3 style="color:purple;">3. If Condition</h3>
-
-<pre><code>@equals(item().load_type,'FULL')</code></pre>
-
-
-<h3 style="color:purple;">TRUE → Full Load</h3>
-
-<p><strong>Source Copy:</strong></p>
-
+<p><strong>Full copy</strong></p>
+SOurce Copy
 <ul>
     <li>Dataset: Same SQL DB Dataset</li>
     <li><code>db = @item().source_db</code></li>
@@ -1071,67 +1147,15 @@ Design the pipeline to perform the appropriate load and update last_watermark on
     <li>Source option: <strong>Table</strong></li>
 </ul>
 
-<p><strong>Sink Copy:</strong></p>
-
-<ul>
-    <li>Dataset: Same SQL DB Dataset</li>
-    <li><code>db = @item().sink_db</code></li>
-    <li><code>schema = @item().sink_schema</code></li>
-    <li><code>table = @item().table_name</code></li>
-    <li>Sink option: <strong>Table</strong></li>
-</ul>
-
-
-<h3 style="color:purple;">FALSE → Incremental Load</h3>
-
-<p><strong>Source Copy:</strong></p>
-
-<ul>
-    <li>Dataset: Same SQL DB Dataset</li>
-    <li><code>db = @item().source_db</code></li>
-    <li>Source option: <strong>Query</strong></li>
-</ul>
-
-<p><strong>Dynamic Query:</strong></p>
-
-<pre><code>@concat(
-    'SELECT * FROM ',item().source_schema, '.', item().table_name,
-    ' WHERE updated_at &gt; ''',string(item().last_watermark),'''
-        )</code></pre>
-
-<p>This generates:</p>
-
-<pre><code>SELECT * FROM dbo.encounters WHERE updated_at > '2026-09-01'</code></pre>
-
-<p><strong>Sink Copy:</strong></p>
-
-<ul>
-    <li>Dataset: Same SQL DB Dataset</li>
-    <li><code>db = @item().sink_db</code></li>
-    <li><code>schema = @item().sink_schema</code></li>
-    <li><code>table = @item().table_name</code></li>
-    <li>Sink option: <strong>Table</strong></li>
-</ul>
-
-
-<h3 style="color:purple;">4. After Copy → Lookup Max</h3>
-
-<p>After the Copy succeeds, get the maximum processed timestamp:</p>
-
-<pre><code>@concat( 'SELECT MAX(updated_at) AS max_updated FROM ',item().sink_schema,'.',item().table_name)</code></pre>
-
-<p>Result:</p>
+<p><strong>Lookup MAX(updated_at):</strong></p>
+<code>@concat('SELECT MAX(updated_at) AS max_updated FROM ',item().sink_schema,'.',item().table_name)</code>
 
 <pre><code>max_updated
 -------------------
 2026-09-17 10:30:00</code></pre>
 
-
-<h3 style="color:purple;">5. Stored Procedure → Update Watermark</h3>
-
 <p><strong>Stored Procedure:</strong></p>
-
-<pre><code>usp_update_watermark</code></pre>
+<code>usp_update_watermark</code>
 
 <p><strong>Parameters:</strong></p>
 
@@ -1154,7 +1178,10 @@ Design the pipeline to perform the appropriate load and update last_watermark on
             <td><code>@activity('LookupMax').output.firstRow.max_updated</code></td>
         </tr>
     </tbody>
-</table>  `,
+</table>  
+<img style="height:50% ; width:75%" src='../support/docs/adf/sql_sql.png'>
+
+`,
 tip:`<ul>
     <li>
         <strong>Query overrides table selection:</strong>
@@ -1193,6 +1220,155 @@ tip:`<ul>
         are extracted.
     </li>
 </ul>`,
+  children:[],
+},
+{
+  q:`<span style="color:violet"> ADF File polling   </span>`,
+  a:`
+  When to Use What
+<table border="1" cellpadding="6" cellspacing="0">
+<thead>
+  <tr>
+    <th>Scenario</th>
+    <th>Activity</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+    <td>Fixed filename / predictable <code>name_date</code> (mandatory)</td>
+    <td><strong>Validation → Copy</strong></td>
+  </tr>
+  <tr>
+    <td>Dynamic filename / the file is
+  <strong>optional and the pipeline should not fail</strong</td>
+    <td><strong>Until → Get Metadata → Filter → Wait → If → Copy / Alert</strong></td>
+  </tr>
+  </tbody>
+</table>
+
+
+<h3 style="color:violet">Flow of  mandatory</h3>
+<pre>
+ ├── validation (3 hrs , sleep : 10 mins)
+ ├── copy
+</pre>
+if no file till timedout , failure. So no other activities req
+<br>
+<hr>
+<h3 style="color:violet">Flow of  Optional / Dynamic names</h3>
+<pre>
+Until
+ ├── Get Metadata
+ ├── Filter
+ └── Wait 20 seconds
+        ↓
+   File found / Timeout
+        ↓
+   If Condition
+   ├── True  → Copy
+   └── False → Email via Web Activity → Logic App
+</pre>
+
+<p><strong>Until condition:</strong></p>
+
+<code>@greater(length(activity('Filter1').output.value), 0)</code>
+
+<p><strong>Filter condition:</strong></p>
+
+<code>@and(startswith(item().name, concat('products_', formatDateTime(utcNow(),'ddMMyyyy'))), endswith(item().name, '.csv'))</code>
+
+<p><strong>If Condition:</strong></p>
+
+<code>@greater(length(activity('Filter1').output.value), 0)</code>
+
+<img style="height:50% ; width:75%" src='../support/docs/adf/polling.png'>
+
+  `,
+  children:[],
+},
+{
+  q:`<span style="color:#368B79">Folder contains CSV, TXT and folders; process only CSV`,
+  a:`
+<h3 style="color:violet">Folder → Multiple CSV Files</h3>
+
+<pre>
+Get Metadata
+    ↓
+ForEach
+    ↓
+If: File + .csv
+    ↓
+Copy
+</pre>
+
+<p><strong>ForEach items:</strong></p>
+<code>@activity('Get Metadata1').output.childItems</code>
+
+<p><strong>If Condition:</strong></p>
+<code>@and(equals(item().type,'File'), endswith(item().name,'.csv'))</code>
+
+<p><strong>Source filename:</strong></p>
+<code>@item().name</code>
+
+<span style="color:pink"> Second approach</span>
+<pre>
+Get Metadata
+    ↓
+Filter  File + .csv
+    ↓
+ForEach
+    ↓
+  Copy
+</pre>
+
+  `,
+  children:[],
+},
+{
+  q:`100 independent tables; some fail; others should continue and log`,
+  a:`
+ Same like multiple tables 2nd qustion , but add a sp after failure at each copy
+  <pre>
+ Copy data1
+    │
+    │ Upon Failure
+    ↓
+Stored procedure
+    │
+    ├── error_message → @activity('Copy_full').output.errors.message
+    ├── pipeline_name → pipeline().Pipeline
+    ├── run_id        → pipeline().RunId
+    └── table_name    → claims
+    </pre>
+  `,
+  tip:`
+ IN <b>ForEach isSequential = true</b> processes one by one, and if one iteration fails → ForEach stops, remaining tables skipped. <br>
+ So for 100 independent tables always use isSequential = false (parallel) + error logging on failure path — ensures all tables are attempted regardless of individual failures.
+  `,
+  children:[],
+},
+{
+  q:`10 expected files arrive at different times; wait until all arrive`,
+  a:``,
+  children:[],
+},
+{
+  q:`What if copy fails halfway`,
+  a:`
+  <strong> SQL_SQL / ANy source - sql</strong> 
+  <ul>
+<>Copy processes data in batches/parallel. If a SQL Copy fails halfway, some data may already be written to the target.</li>
+<li><strong>Watermark:</strong> Update it <strong>only after Copy succeeds</strong>.</li>
+<li> Retry does not guarantee resume from the failed point for SQL/tabular Copy; the resume feature is for supported binary file copies like large .zip / .mp4 files</li>
+<li>Therefore, a retry may reprocess the same incremental range.</li>  
+<li>WE need to Use an idempotent target strategy (MERGE/upsert) to prevent duplicates instead of blind inserts</li>
+</ul>
+  `,
+  children:[],
+},
+{
+  q:` SQL temporarily unavailable for 1–2 minutes`,
+  ans:` If the source SQL database is temporarily unavailable for 1–2 minutes, I configure retries on the Copy activity with an appropriate retry interval. ADF retries the connection automatically. If the database becomes available within the retry window, the Copy succeeds; otherwise, the activity fails and I handle the failure through the failure path/alerting.`,
   children:[],
 }
 
