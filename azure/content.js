@@ -283,7 +283,7 @@ HTTPS for data in transit.<br>
         `,
     children: [
       {
-        q: `<p style="color:orange"> Pipeline <br> Lisnked service <br> dataset <br> ACtivity <br> Integration Runtime <br> Trigger <br mapping DataFlow>       
+        q: `<p style="color:orange"> Pipeline ;  Linked service ; dataset ; ACtivity ; Integration Runtime ; Trigger ;  mapping DataFlow       
         </p>`,
         a: ` 
  <table border="1" cellpadding="8" cellspacing="0">
@@ -513,9 +513,11 @@ HTTPS for data in transit.<br>
 
 <p>
   <strong style="color:red;">Cannot:</strong>
-  Return a value or have more than two branches.
+  DOn't Return a value or have more than two branches.
   For multiple branches, use <code>Switch</code>.
 </p>
+<img style="height:50% ; width:75%" src='../support/docs/adf/if.png'>
+
 <hr>
 
 <h3 style="color:purple;">Lookup</h3>
@@ -539,13 +541,16 @@ HTTPS for data in transit.<br>
   <li>Fetch a list of tables/files to process</li>
   <li>Read a config/control table</li>
   <li>Get a watermark value for incremental load</li>
-  <li>Get a single config value using <code>firstRow</code></li>
+  <li>Get a single config value using <code>firstRow</code> when selected </li>
+  <li><b> If using qury option then it will override schema and table options and we can Put as NA(leaving empty will error)<br>
+  Inside query it will look and outside db option </b> </li>
 </ul>
 
 <p>
   <strong style="color:red;">Cannot:</strong>
   Loop through the results. Pair with <code>ForEach</code> to act on each row.
 </p>
+<img style="height:50% ; width:75%" src='../support/docs/adf/Lookup.png'>
 
 
 
@@ -576,7 +581,8 @@ HTTPS for data in transit.<br>
   <li>Run Copy or Notebook for each item</li>
   <li>Execute repeating logic over a list</li>
 </ul>
-
+<p>
+  <strong style="color:red;">Output: Just give item().column_name as input that column_name is whatever from table</strong></p>
 <p>
   <strong style="color:red;">Cannot:</strong>
   Work alone — it needs a collection to iterate.
@@ -594,13 +600,20 @@ HTTPS for data in transit.<br>
   <strong>Cannot wait.</strong>
 </p>
 
-<p><strong style="color:violet">Returns:</strong>
-  <code>exists</code> ·
-  <code>size</code> ·
-  <code>lastModified</code> ·
-  <code>childItems</code> ·
-  <code>itemName</code> ·
-  <code>itemType</code>
+<p><strong style="color:violet">Output By selection:</strong>
+  <strong>File:</strong>
+    <code>exists</code> ·
+    <code>size</code> ·
+    <code>lastModified</code> ·
+    <code>itemName</code> ·
+    <code>itemType</code> ·
+    <code>columnCount</code><br>
+    <strong>Folder:</strong>
+    <code>exists</code> ·
+    <code>childItems</code> ·
+    <code>itemName</code> ·
+    <code>itemType</code> ·
+    <code>lastModified</code>
 </p>
 
 <p><strong style="color:green">Use when:</strong></p>
@@ -608,7 +621,8 @@ HTTPS for data in transit.<br>
   <li>File should already be there</li>
   <li>Need to branch based on the result</li>
   <li>List files in a folder (<code>childItems</code> → <code>ForEach</code>)</li>
-  <li>Validate that a file isn't empty (<code>size &gt; 0</code>)</li>
+  <li>Validate that a file isn't empty (<code>size > 0</code>)</li>
+<li> if we want to check files in a folder , fill params for container, directory . But for file use <code>@trim('')</code> because wecan't leave and can't put ''.</li>
 </ul>
 
 <p>
@@ -616,6 +630,7 @@ HTTPS for data in transit.<br>
   <code>exists: false</code>, and you handle the result using an
   <code>If Condition</code>.
 </p>
+<img style="height:50% ; width:75%" src='../support/docs/adf/Get_metadat.png'>
 
 
 
@@ -624,9 +639,10 @@ HTTPS for data in transit.<br>
 <h3 style="color:purple">Validation</h3>
 
 <p>
-  Polls a path repeatedly until the file appears or the timeout is reached.
+  Polls a known file repeatedly until the file appears or the timeout is reached.
   Returns nothing — it simply <strong>passes or fails</strong>.
 </p>
+<p><b>Output:</b> we can simply connect via success/ fal connectors. No special return types like exists</p>
 
 <p><strong style="color:violet">Configure:</strong></p>
 <ul>
@@ -635,25 +651,77 @@ HTTPS for data in transit.<br>
   <li><code>minimumSize</code> — optional; detects empty files</li>
 </ul>
 
-<p><strong style="color:green">Use when:</strong></p>
-<ul>
-  <li>File arrival time is uncertain</li>
-  <li>Want the pipeline to wait automatically</li>
-  <li>Need to ensure the file is non-empty (<code>minimumSize</code>)</li>
-  <li>Want a simple linear flow without branching</li>
-</ul>
-
-<p>
-  <strong style="color:red">Cannot:</strong> Return file properties or branch based on the result.
-  It only passes or fails. On timeout, the activity automatically fails and the
-  pipeline errors out.
-</p>
-
-        `,
+<p><strong style="color:green">Use when:</strong>  Validation is used when the file arrival time is uncertain but the expected file name is known.<br>
+.It repeatedly checks for the file until the timeout is reached and can also verify that the file is non-empty using minimumSize
+</p> <p><strong style="color:red;">Cannot:</strong> It provides a simple pass/fail flow, but it cannot dynamically discover variable or unknown filenames</p>
+ <p><b>For dynamic filenames, use Until + Get Metadata + Filter.</b></p>
+`,
       },
       {
         q: `Activities part 2`,
         a: `
+<h3 style="color:purple;">Until Activity</h3>
+
+<p>
+  Repeats a set of activities <strong>until a condition becomes true</strong>
+  or the timeout is reached.
+</p>
+<p style="color:orange;"> Expects: <code>expression</code> for validation and <Timeout> after which it fails</p>
+<p><strong>Use when:</strong></p>
+
+<ul>
+  <li>Need to repeatedly check for a file or condition</li>
+  <li>File arrival time is uncertain</li>
+  <li>Filename is dynamic/unknown → <code>Get Metadata + Filter</code></li>
+  <li>Need custom logic or multiple activities in each iteration</li>
+  <li>EX: expression for evaluation: <code>@greater(length(activity('Filter1').output),0)</code></li>
+</ul>
+
+<p>
+  <strong>Typical pattern:</strong> for checking dynamic file arriving uncertainly and need to poll for 2 hours after trigger
+  <code>Until → Get Metadata → Filter → Wait → repeat</code>
+</p>
+
+<hr>
+
+<h3 style="color:orange;"> Filter Activity </h3>
+<p>
+  Filters an <strong>array of items</strong> based on a condition and returns only the matching items.
+</p>
+
+<p><strong>Input:</strong></p>
+<ul>
+  <li>Requires an <strong>items</strong> array as the input.
+  : <code> @activity('Get Metadata1').output.childItems  </code>
+  <code> @activity('Lookup').output.value  </code>
+  <ul><li>Common source: <code>Get Metadata → childItems / lookup-> value</code>.</li></ul>
+  </li>
+  
+  <li> condition: for filtering
+   <code> @and(startswith(item().name, concat('products_',formatDateTime(utcNow(),'ddMMyyyy') )), endswith(item().name,'.csv') )</code>.</li>
+</ul>
+
+<p><strong>Output:</strong></p>
+<ul>
+  <li><code>value</code> → array containing only the items that matched the condition. Firlds inside Value(name, Type)</li>
+  <li>Can return <strong>zero, one, or multiple</strong> items.</li>
+</ul>
+
+<p><strong>Use when:</strong></p>
+<ul>
+  <li>Need to select specific files from <code>childItems</code></li>
+  <li>Need to filter items based on a condition</li>
+  <li>Need to identify files with a dynamic naming pattern</li>
+</ul>
+
+<p>
+  <strong>Typical pattern:</strong>
+  <code>Get Metadata (childItems) → Filter → ForEach / Until</code>
+</p>
+<img style="height:50% ; width:75%" src='../support/docs/adf/Filter.png'>
+
+
+<hr>
         <h3 style="color:purple;">Databricks Notebook Activity</h3>
 
 <p>
@@ -798,7 +866,11 @@ HTTPS for data in transit.<br>
 
         ],
       },
-      {
+      ,
+
+    ],
+  },
+  {
         cat: `ADF`,
         q: `ADF questions`,
         a: ``,
@@ -882,10 +954,248 @@ HTTPS for data in transit.<br>
 Same dataset, container always parameterized, wildcard overrides folder+file for source only. Clean approach.`,
   children:[],
 },
+{
+  q:`<span style="color:green">You have multiple tables in a source Azure SQL database that need to be loaded into a target Azure SQL database using a single metadata-driven ADF pipeline.<br>
+  The control table contains the source/target database, schema, table name, active flag, load type (FULL/INCREMENTAL), and last_watermark.
+Design the pipeline to perform the appropriate load and update last_watermark only after a successful copy.</span>`,
+  a:`
+  <h2 style="color:purple;">Linked Service</h2>
+
+<p>
+    <strong>SQL DB Linked Service</strong> — parameter:
+    <code>DBname</code>
+</p>
+
+
+<h2 style="color:purple;">Dataset</h2>
+
+<p>
+    <strong>SQL DB Dataset</strong> — parameters:
+</p>
+
+<code>db</code>
+   <code>schema</code>
+    <code>table</code>
+
+<p>
+    Dataset parameter <code>db</code> is passed to Linked Service parameter
+    <code>DBname</code>.
+</p>
+
+
+<h2 style="color:purple;">SQL Control Table</h2>
+
+<table border="1" cellpadding="6" cellspacing="0">
+    <thead>
+        <tr>
+            <th>table_name</th>
+            <th>source_schema</th>
+            <th>sink_schema</th>
+            <th>source_db</th>
+            <th>sink_db</th>
+            <th>is_active</th>
+            <th>load_type</th>
+            <th>last_watermark</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr>
+            <td>encounters</td>
+            <td>dbo</td>
+            <td>dbo</td>
+            <td>srcdb</td>
+            <td>sinkdb</td>
+            <td>1</td>
+            <td>INCREMENTAL</td>
+            <td>2026-09-01</td>
+        </tr>
+
+        <tr>
+            <td>pharmacy</td>
+            <td>dbo</td>
+            <td>dbo</td>
+            <td>srcdb</td>
+            <td>sinkdb</td>
+            <td>1</td>
+            <td>FULL</td>
+            <td>NULL</td>
+        </tr>
+    </tbody>
+</table>
+
+
+<h2 style="color:purple;">Pipeline Flow</h2>
+
+<p>
+    <strong>Lookup</strong>
+    →
+    <strong>ForEach</strong>
+    →
+    <strong>If Condition</strong>
+    →
+    <strong>Full / Incremental Copy</strong>
+    →
+    <strong>Lookup Max</strong>
+    →
+    <strong>SP Activity</strong>
+</p>
+
+
+<h3 style="color:purple;">1. Lookup</h3>
+
+<pre><code>SELECT * FROM control_table WHERE is_active = 1;</code></pre>
+
+
+<h3 style="color:purple;">2. ForEach</h3>
+
+<p>Items:</p>
+
+<pre><code>@activity('Lookup1').output.value</code></pre>
+
+
+<h3 style="color:purple;">3. If Condition</h3>
+
+<pre><code>@equals(item().load_type,'FULL')</code></pre>
+
+
+<h3 style="color:purple;">TRUE → Full Load</h3>
+
+<p><strong>Source Copy:</strong></p>
+
+<ul>
+    <li>Dataset: Same SQL DB Dataset</li>
+    <li><code>db = @item().source_db</code></li>
+    <li><code>schema = @item().source_schema</code></li>
+    <li><code>table = @item().table_name</code></li>
+    <li>Source option: <strong>Table</strong></li>
+</ul>
+
+<p><strong>Sink Copy:</strong></p>
+
+<ul>
+    <li>Dataset: Same SQL DB Dataset</li>
+    <li><code>db = @item().sink_db</code></li>
+    <li><code>schema = @item().sink_schema</code></li>
+    <li><code>table = @item().table_name</code></li>
+    <li>Sink option: <strong>Table</strong></li>
+</ul>
+
+
+<h3 style="color:purple;">FALSE → Incremental Load</h3>
+
+<p><strong>Source Copy:</strong></p>
+
+<ul>
+    <li>Dataset: Same SQL DB Dataset</li>
+    <li><code>db = @item().source_db</code></li>
+    <li>Source option: <strong>Query</strong></li>
+</ul>
+
+<p><strong>Dynamic Query:</strong></p>
+
+<pre><code>@concat(
+    'SELECT * FROM ',item().source_schema, '.', item().table_name,
+    ' WHERE updated_at &gt; ''',string(item().last_watermark),'''
+        )</code></pre>
+
+<p>This generates:</p>
+
+<pre><code>SELECT * FROM dbo.encounters WHERE updated_at > '2026-09-01'</code></pre>
+
+<p><strong>Sink Copy:</strong></p>
+
+<ul>
+    <li>Dataset: Same SQL DB Dataset</li>
+    <li><code>db = @item().sink_db</code></li>
+    <li><code>schema = @item().sink_schema</code></li>
+    <li><code>table = @item().table_name</code></li>
+    <li>Sink option: <strong>Table</strong></li>
+</ul>
+
+
+<h3 style="color:purple;">4. After Copy → Lookup Max</h3>
+
+<p>After the Copy succeeds, get the maximum processed timestamp:</p>
+
+<pre><code>@concat( 'SELECT MAX(updated_at) AS max_updated FROM ',item().sink_schema,'.',item().table_name)</code></pre>
+
+<p>Result:</p>
+
+<pre><code>max_updated
+-------------------
+2026-09-17 10:30:00</code></pre>
+
+
+<h3 style="color:purple;">5. Stored Procedure → Update Watermark</h3>
+
+<p><strong>Stored Procedure:</strong></p>
+
+<pre><code>usp_update_watermark</code></pre>
+
+<p><strong>Parameters:</strong></p>
+
+<table border="1" cellpadding="6" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr>
+            <td><code>table_name</code></td>
+            <td><code>@item().table_name</code></td>
+        </tr>
+
+        <tr>
+            <td><code>new_watermark</code></td>
+            <td><code>@activity('LookupMax').output.firstRow.max_updated</code></td>
+        </tr>
+    </tbody>
+</table>  `,
+tip:`<ul>
+    <li>
+        <strong>Query overrides table selection:</strong>
+        When Query is selected in the Copy source, the query determines which
+        table/data is read. The dataset doesn't need a fixed table for that query.
+    </li>
+
+    <li>
+        <strong>Database parameterization:</strong>
+        <code>item().source_db</code> →
+        Dataset <code>db</code> →
+        Linked Service <code>DBname</code>.
+    </li>
+
+    <li>
+        <strong>Dynamic SQL quotes:</strong>
+        <code>''</code> inside the ADF string represents an escaped
+        single quote used to wrap the SQL datetime value.
+    </li>
+
+    <li>
+        <strong>Single reusable dataset:</strong>
+        The same SQL dataset is reused for all tables. Parameters determine
+        the database, schema, and table at runtime.
+    </li>
+
+    <li>
+        <strong>Watermark update:</strong>
+        The watermark is updated only after the Copy succeeds.
+    </li>
+
+    <li>
+        <strong>Incremental logic:</strong>
+        Only records satisfying
+        <code>updated_at &gt; last_watermark</code>
+        are extracted.
+    </li>
+</ul>`,
+  children:[],
+}
 
         ],
-      },
-
-    ],
-  },
+      }
 ]
