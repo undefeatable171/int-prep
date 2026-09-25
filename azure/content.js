@@ -983,6 +983,39 @@ END
         `,
         children:[],
       },
+      {
+        q:` <span style="color:#93DB0A">Triggers</span>`,
+        a:`
+
+<ul>
+  <li><strong style="color:#70C2E9" >Schedule Trigger:</strong> runs an ADF pipeline based on a predefined time schedule. it is used for regular time-based processing, such as running a pipeline every 15 minutes, hourly, or daily.</li>
+  <ul><li><strong>Stateless:</strong> It doesn't track individual scheduled windows or backfill missed occurrences.</li>
+  <li><strong>Multiple pipelines:</strong> One Schedule Trigger can trigger multiple pipelines.</li></ul>
+
+  <li><strong style="color:#70C2E9" >Tumbling Window Trigger:</strong> Runs a pipeline for fixed, non-overlapping time windows and is useful for <strong>historical backfilling</strong>.</li>
+  <ul><li><strong>Stateful:</strong> Tracks each window's execution status.</li>
+  <li><strong>Window time:</strong> Provides <code>windowStartTime</code> and <code>windowEndTime</code>, which can be passed to the pipeline for incremental/time-based processing.</li>
+  <li><strong>Max Concurrency:</strong> Controls how many windows can run in parallel. Default is <strong>1</strong>.</li>
+  <li><strong>Dependencies:</strong> A window can depend on a previous window or another tumbling-window trigger.</li>
+  <li><strong>One pipeline:</strong> A Tumbling Window Trigger is associated with <strong>one pipeline</strong>.</li>
+  <li><strong>Failure &amp; Recovery:</strong> Need to Fix the issue manually → rerun the failed window → once successful, pending windows can continue according to the configured concurrency/dependencies.</li></ul>
+
+<li><strong style="color:#70C2E9" >Event-Based Trigger:</strong> Fires when an event occurs in ADLS Gen2 or Blob Storage, such as a <strong>blob/file created or deleted</strong>.</li>
+  <ul><li>Uses <strong>Azure Event Grid</strong> to detect the event and trigger the ADF pipeline.</li>
+  <li><strong>Best suited:</strong> When file arrival time is <strong>unpredictable</strong>.</li>
+  <li><strong>Example:</strong> Whenever a vendor uploads a file to ADLS, the pipeline automatically starts processing it.</li></ul>
+</ul>
+
+<hr>
+<span style="color:#93DB0A">Tumbling Example: backfill and incremental loading everyday , sql db to files</span> 
+<ul> <li><strong>Pipeline parameters:</strong> <ul> <li><code>pstartts</code> → Start time of the window</li> <li><code>pendts</code> → End time of the window</li> </ul> </li> <li><strong>Copy Activity:</strong> Passes these parameters to the SQL stored procedure: <ul> <li><code>startts = @pipeline().parameters.pstartts</code></li> <li><code>endts = @pipeline().parameters.pendts</code></li> </ul> </li> <li><strong>Example:</strong> For a 1-day window, ADF passes <code>Mar 1 00:00</code> as <code>pstartts</code> and <code>Mar 2 00:00</code> as <code>pendts</code>.</li> <li>The stored procedure <code>usp_select</code> uses these values to fetch only the data between those timestamps.</li> <li><strong>Flow:</strong> Tumbling Window → Start/End Time → Pipeline Parameters → Stored Procedure → ADLS.</li> </ul>
+    <img style="width:100% ;height:80%" src="../support/docs/adf/Tumbling.png" alt="Description">
+      
+        `,
+        tip:`Schedule Trigger   = Stateless + Regular schedule + No backfill <br>
+Tumbling Window    = Stateful + Fixed windows + Backfill + Dependencies`,
+        children:[],
+      }
 
 
     ],
