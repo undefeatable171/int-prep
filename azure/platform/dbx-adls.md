@@ -88,7 +88,7 @@ Without volumes → you access `abfss://...` directly → bypasses UC permission
 ```
 Azure Portal
 ├── Resource Group
-│     ├── Databricks Workspace (DBX)
+│     ├── Databricks Workspace (utDBX)
 │     ├── ADLS Gen2
 │     └── Access Connector
 │           ├── IAM on Storage Account → Blob Contributor, Account Contributor, Queue Contributor

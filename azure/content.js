@@ -622,7 +622,7 @@ HTTPS for data in transit.<br>
   <li>Need to branch based on the result</li>
   <li>List files in a folder (<code>childItems</code> → <code>ForEach</code>)</li>
   <li>Validate that a file isn't empty (<code>size > 0</code>)</li>
-<li> if we want to check files in a folder , fill params for container, directory . But for file use <code>@trim('')</code> because wecan't leave and can't put ''.</li>
+<li> if we want to check files in a folder , fill params for container, directory . But for file use <code>@trim()</code> because wecan't leave and can't put .</li>
 </ul>
 
 <p>
@@ -659,7 +659,7 @@ Filename has a predictable dynamic value, e.g.:
 `,
       },
       {
-        q: `Activities part 2`,
+        q: `<span style="color:#A5BF5E">Activities part 2</span>`,
         a: `
 <h3 style="color:#368B79;">Wait Activity</h3>
 <p>   Pauses the pipeline execution for a <strong>specified duration</strong> before continuing.
@@ -875,7 +875,7 @@ Filename has a predictable dynamic value, e.g.:
         children: [],
       },
       {
-        q: `ADF process`,
+        q: `<span style="color:#93D40A">ADF PRocess</span>`,
         answer: ``,
         children: [
           {
@@ -884,8 +884,8 @@ Filename has a predictable dynamic value, e.g.:
             children: []
           },
           {
-            q:`add dynamic date with seconds and convert to ist`,
-            a:`<h3 style="color:violet">Dynamic Date & Time → IST</h3>
+            q: `add dynamic date with seconds and convert to ist`,
+            a: `<h3 style="color:violet">Dynamic Date & Time → IST</h3>
 
 <p><strong>Current UTC date/time:</strong></p>
 <code>@utcNow()</code>
@@ -907,11 +907,11 @@ Filename has a predictable dynamic value, e.g.:
 
 <p><strong>Need to add / subdates</strong></p>
 <code>@formatDateTime(addDays(utcnow(),-1),'yyyy-MM-dd')</code>`,
-            chldren:[],
+            chldren: [],
           },
           {
-            q:`how to create and use stored procedures`,
-            a:`
+            q: `how to create and use stored procedures`,
+            a: `
             
 <pre><code class="language-sql">
 CREATE PROCEDURE usp_log_pipeline_error
@@ -928,23 +928,73 @@ BEGIN
 END
 </code></pre>
             `,
-            children:[],
+            children: [],
           }
 
         ],
       },
-      ,
+      {
+        q: `<span style="color:#BFA85E">Learning points<span>`,
+        a: ` 
+<ul>
+  <li><strong style="color:#5CBAF9">Validation VS Untill </strong>
+    <ul>
+      <li>Both Validation and Until can poll/retry until a condition is met with a defined timeout; if they time out, the activity fails and eventually the pipeline fails. Upon Failure can be used for alerts, logging, or cleanup. </li>
+      <li>Until: An inner activity failure does not immediately fail Until; it continues iterating, and the final Until status depends on how the loop eventually ends—condition met → success, timeout → failure.</li>
+    </ul>
+  </li>
+
+</ul>
+<ul >
+  <li> <strong style="color:#F95C6B">ForEach </strong>
+        <ul>
+            <li> <b>Sequential ForEach:</b> runs iterations one by one, but an inner activity failure does not automatically stop the ForEach. It continues processing the remaining items and the ForEach ultimately fails because an iteration failed.</li>
+            <li> <b>Non Seq (parallel)</b> processes iterations concurrently(at max 50 parallel ), so other iterations continue as well; the ForEach ultimately fails if an iteration fails. </li>
+        </ul>
+  </li>
+
+</ul>
+
+</ul>
+<ul <strong style="color:#93DB0A"> </strong>>
+  <li>
+        <ul>
+            <li>
+            </li>
+        </ul>
+  </li>
+
+</ul>
+        
+        `,
+        children: [],
+
+      },{
+        q:`Connecting ADF and DBX`,
+        a:`
+<ul>
+  <li>Create an Azure Databricks Linked Service in ADF and authenticate using Managed Identity.</li>
+  <li>Create an ADF pipeline, add the Databricks Job activity, select the Linked Service and Job.</li>
+  <li>Pass the required parameters from ADF to the Databricks Job.</li>
+  <li>Ensure the ADF Managed Identity has <b>Can Run</b> permission on the Databricks Job.</li>
+</ul>
+
+  <p style="color:#93DB0A">For a Databricks Job with multiple tasks, ADF can pass job-level parameters, while task-specific parameters are generally configured at the Databricks task level.</p>
+        `,
+        children:[],
+      },
+
 
     ],
   },
   {
-        cat: `ADF`,
-        q: `ADF questions`,
-        a: ``,
-        children: [
-{
-  q:`How do you build a metadata-driven pipeline in ADF to process multiple vendor files from ADLS input folder to ADLS Bronze layer with Source file names dynamically changing with date?`,
-  a:`
+    cat: `ADF`,
+    q: `ADF questions`,
+    a: ``,
+    children: [
+      {
+        q: `How do you build a metadata-driven pipeline in ADF to process multiple vendor files from ADLS input folder to ADLS Bronze layer with Source file names dynamically changing with date?`,
+        a: `
   <img style="width:50% ;height:60%" src="../support/docs/adf/copy_source.png" alt="Description">
 
   <h3 style="color:purple;">Dataset Parameters</h3><code>container</code></li>
@@ -1016,16 +1066,16 @@ END
     </li>
 </ul>
   `,
-  tip:`when Wildcard file path is selected in source, it overrides the folder and filename dataset parameters for that source tab only. But container must still be passed via parameter even with wildcard. The same dataset parameters work normally for sink — exact container, folder, and filename as usual.
+        tip: `when Wildcard file path is selected in source, it overrides the folder and filename dataset parameters for that source tab only. But container must still be passed via parameter even with wildcard. The same dataset parameters work normally for sink — exact container, folder, and filename as usual.
 <br>
 Same dataset, container always parameterized, wildcard overrides folder+file for source only. Clean approach.`,
-  children:[],
-},
-{
-  q:`<span style="color:green">You have multiple tables in a source Azure SQL database that need to be loaded into a target Azure SQL database using a single metadata-driven ADF pipeline.<br>
+        children: [],
+      },
+      {
+        q: `<span style="color:green">You have multiple tables in a source Azure SQL database that need to be loaded into a target Azure SQL database using a single metadata-driven ADF pipeline.<br>
   The control table contains the source/target database, schema, table name, active flag, load type (FULL/INCREMENTAL), and last_watermark.
 Design the pipeline to perform the appropriate load and update last_watermark only after a successful copy.</span>`,
-  a:`
+        a: `
   <h2 style="color:purple;">Linked Service</h2>
 <p>
     <strong>SQL DB Linked Service</strong> — parameter:
@@ -1126,7 +1176,7 @@ Source Copy:
 </ul>
 
 <p><Dynamic Query:</p>
-<code>@concat('SELECT * FROM ',item().source_schema,'.',item().table_name,' WHERE updated_at > ''',string(item().last_watermark),'''')</code>
+<code>@concat('SELECT * FROM ',item().source_schema,'.',item().table_name,' WHERE updated_at > ',string(item().last_watermark),)</code>
 
 SINK for both INCremental and full:
 <ul>
@@ -1182,7 +1232,7 @@ SOurce Copy
 <img style="height:50% ; width:75%" src='../support/docs/adf/sql_sql.png'>
 
 `,
-tip:`<ul>
+        tip: `<ul>
     <li>
         <strong>Query overrides table selection:</strong>
         When Query is selected in the Copy source, the query determines which
@@ -1198,7 +1248,7 @@ tip:`<ul>
 
     <li>
         <strong>Dynamic SQL quotes:</strong>
-        <code>''</code> inside the ADF string represents an escaped
+        <code></code> inside the ADF string represents an escaped
         single quote used to wrap the SQL datetime value.
     </li>
 
@@ -1220,11 +1270,11 @@ tip:`<ul>
         are extracted.
     </li>
 </ul>`,
-  children:[],
-},
-{
-  q:`<span style="color:violet"> ADF File polling   </span>`,
-  a:`
+        children: [],
+      },
+      {
+        q: `<span style="color:violet"> ADF File polling   </span>`,
+        a: `
   When to Use What
 <table border="1" cellpadding="6" cellspacing="0">
 <thead>
@@ -1250,9 +1300,10 @@ tip:`<ul>
 <h3 style="color:violet">Flow of  mandatory</h3>
 <pre>
  ├── validation (3 hrs , sleep : 10 mins)
- ├── copy
+ ├── copy (on SUCCESS)
+ ├── lOGS (on FAILURE)(WEb ACTIVITY => AZURE LOGIC APPS / SP AND UPDATE CONTROL TABLE )
 </pre>
-if no file till timedout , failure. So no other activities req
+Pipeline would fail anyway if timedout even ading SP/WEb activity , these are just for logging /alert purpose
 <br>
 <hr>
 <h3 style="color:violet">Flow of  Optional / Dynamic names</h3>
@@ -1281,14 +1332,16 @@ Until
 
 <code>@greater(length(activity('Filter1').output.value), 0)</code>
 
+Pipeline would fail anyway if timedout even ading SP/WEb activity , these are just for logging /alert purpose
+
 <img style="height:50% ; width:75%" src='../support/docs/adf/polling.png'>
 
   `,
-  children:[],
-},
-{
-  q:`<span style="color:#368B79">Folder contains CSV, TXT and folders; process only CSV`,
-  a:`
+        children: [],
+      },
+      {
+        q: `<span style="color:#368B79">Folder contains CSV, TXT and folders; process only CSV`,
+        a: `
 <h3 style="color:violet">Folder → Multiple CSV Files</h3>
 
 <pre>
@@ -1322,11 +1375,11 @@ ForEach
 </pre>
 
   `,
-  children:[],
-},
-{
-  q:`100 independent tables; some fail; others should continue and log`,
-  a:`
+        children: [],
+      },
+      {
+        q: `100 independent tables; some fail; others should continue and log`,
+        a: `
  Same like multiple tables 2nd qustion , but add a sp after failure at each copy
   <pre>
  Copy data1
@@ -1340,21 +1393,74 @@ Stored procedure
     ├── run_id        → pipeline().RunId
     └── table_name    → claims
     </pre>
+  <img style="width:50% ;height:60%" src="../support/docs/adf/failure.png" alt="Description">
+
   `,
-  tip:`
- IN <b>ForEach isSequential = true</b> processes one by one, and if one iteration fails → ForEach stops, remaining tables skipped. <br>
- So for 100 independent tables always use isSequential = false (parallel) + error logging on failure path — ensures all tables are attempted regardless of individual failures.
+        tip: `
+ For 100 independent tables in ForEach always use isSequential = false (parallel) + error logging on failure path — ensures all tables are attempted regardless of individual failures.
   `,
-  children:[],
-},
-{
-  q:`10 expected files arrive at different times; wait until all arrive`,
-  a:``,
-  children:[],
-},
-{
-  q:`What if copy fails halfway`,
-  a:`
+        children: [],
+      },
+      {
+        q: `<strong style="color:#93DB0A">Poll an ADLS folder until all expected files arrive, even when the filenames contain dynamic suffixes such as timestamps or unique IDs.</strong>`,
+        a: `<pre>Lookup
+  ↓
+Until
+  ├── Get Metadata → childItems
+  ├── Filter → matching files
+  └── Wait 5 seconds
+       ↺ repeat until all expected files are found
+  ↓
+If Condition
+  ↓
+Execute Child Pipeline
+  ↓
+ForEach → Copy each file</pre>
+
+<p><strong> Lookup Activity</strong></p>
+<code language ='sql'>select string_agg(table_name, ',') as names from dbo.pipeline_control where is_active = 1</code> <br>
+<strong>result:</strong> :  "customers,products,orders,claims" 
+<br>
+
+<br>
+
+<p><strong> filter</strong></p>
+<code>@and( equals(item().type,'File'),contains(
+    split(activity('Lookup1').output.value[0].names,','), split(item().name,'_')[0])
+)</code>
+<p> extracts the dynamic filename prefix. : <code>split(item().name,'_')[0]</code> </p>
+<p> checks whether that prefix exists in the expected list from lookup. : <code>contains(...)</code> </p>
+<br>
+
+<p><strong> until</strong></p>
+<code>@greaterOrEquals( length(activity('Filter1').output.value),
+length(split(activity('Lookup1').output.value[0].names,',')))</code>
+<p>The loop stops when the number of matching files found is greater than or equal to the number of expected files.</p>
+
+<p><strong> Wait Activity</strong></p>
+
+<p>Waits 5 seconds after each check before the next polling iteration. This prevents continuously querying the storage location without an interval</p>
+
+<pre>Until
+ ├── Succeeded → If Condition → Execute Child Pipeline -> foreach ->Copy
+ │
+ └── Failed/Timeout → SP / Logic app</pre>
+
+<p> Parent → Child Pipeline</p>
+<p>The parent uses Execute Pipeline to invoke <code>pl_for_each_copy</code>.</p>
+<p>The child receives the filtered files through:</p>
+<code>pl_file_names = @activity('Filter1').output.value</code>
+<p>The child can then use a ForEach to process each file.</p>
+
+<img style="height:50% ; width:75%" src='../support/docs/adf/file_all.png'>
+
+        
+        `,
+        children: [],
+      },
+      {
+        q: `What if copy fails halfway`,
+        a: `
   <strong> SQL_SQL / ANy source - sql</strong> 
   <ul>
 <>Copy processes data in batches/parallel. If a SQL Copy fails halfway, some data may already be written to the target.</li>
@@ -1364,14 +1470,14 @@ Stored procedure
 <li>WE need to Use an idempotent target strategy (MERGE/upsert) to prevent duplicates instead of blind inserts</li>
 </ul>
   `,
-  children:[],
-},
-{
-  q:` SQL temporarily unavailable for 1–2 minutes`,
-  ans:` If the source SQL database is temporarily unavailable for 1–2 minutes, I configure retries on the Copy activity with an appropriate retry interval. ADF retries the connection automatically. If the database becomes available within the retry window, the Copy succeeds; otherwise, the activity fails and I handle the failure through the failure path/alerting.`,
-  children:[],
-}
-
-        ],
+        children: [],
+      },
+      {
+        q: ` SQL temporarily unavailable for 1–2 minutes`,
+        a: ` If the source SQL database is temporarily unavailable for 1–2 minutes, I configure retries on the Copy activity with an appropriate retry interval. ADF retries the connection automatically. If the database becomes available within the retry window, the Copy succeeds; otherwise, the activity fails and I handle the failure through the failure path/alerting.`,
+        children: [],
       }
+
+    ],
+  }
 ]
