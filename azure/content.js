@@ -277,13 +277,38 @@ HTTPS for data in transit.<br>
   {
     cat: `ADF`,
     q: ` ADF BASICS components`,
-    answer: `ADF is Azure's cloud-based ETL and data integration service. <br>
- It is used to ingest data from multiple sources, orchestrate transformations via Databricks or Data Flows, and load it into our data lake or warehouse. 
-<br>Its a orchestration layer — it doesn't store data, it moves and transforms it.  
-        `,
+    answer: `ADF is Azure's loud-based data integration and orchestration service used to extract, transform, and load data between different sources and destinations.<br>
+<ul><li>Used to build and schedule ETL/ELT pipelines.</li>
+<span style="color:#70C2E9">ADF VS DBX</span>ADF is primarily an orchestration and data integration tool, whereas Databricks is a data processing platform. In a project, I would typically use ADF to orchestrate the pipeline and Databricks to perform complex transformations.
+
+<h3 style="color:#93DB0A"> Integration RunTime </h3> Integration Runtime (IR) is the compute - infrastructure used by ADF to execute activities and provide connectivity between ADF and data sources.
+<br><b>ADF = Orchestrator ; 
+IR = Engine that executes/connects</b>
+<p style="color:#93CB0A">Three types</p>
+<ul>
+<li><strong>Azure IR:</strong> <ul><li>Fully managed by Azure,Serverless;Auto scales<li> mainly used for <strong>cloud-to-cloud</strong> data movement. (e.g. Blob → ADLS, Snowflake → ADLS) </li><li> <strong>Use when:</strong> both source and destination are cloud-based and public</li></ul>
+<li>
+  <strong>Self-Hosted IR (SHIR):</strong>
+  <ul>
+    <li>Software agent (Microsoft Integration Runtime) installed on a VM or on-prem machine , which allows ADF to communicate with and access the data source</li>
+    <li>Used to access <strong>on-prem or private network</strong> sources (SQL Server, Oracle, SAP).</li>
+    <li>We manage the machine, patching, and availability.</li>
+    <li> <strong>Use when:</strong> source is on-prem or behind a firewall/private network </li>
+  </ul>
+</li>
+<li>
+  <strong>Azure-SSIS IR:</strong>
+  <ul>
+    <li>Managed cluster in Azure to run existing <strong>SSIS packages (.dtsx)</strong> natively</li>
+    <li>SSIS(sql serer int service) = Microsoft's old on-prem ETL tool. Package (.dtsx) = equivalent of an ADF pipeline.</li>
+    <li>Used for <strong>lift & shift</strong> existing SSIS workloads without rewriting as adf pipelines , when migrating on-prem SSIS jobs to cloud</li>
+  </ul>
+</li>
+
+`,
     children: [
       {
-        q: `<p style="color:orange"> Pipeline ;  Linked service ; dataset ; ACtivity ; Integration Runtime ; Trigger ;  mapping DataFlow       
+        q: `<p ><span style="color:orange">Components</span>  Pipeline ;  Linked service ; dataset ; ACtivity ; Integration Runtime ; Trigger ;  mapping DataFlow       
         </p>`,
         a: ` 
  <table border="1" cellpadding="8" cellspacing="0">
@@ -295,25 +320,25 @@ HTTPS for data in transit.<br>
 
   <tr>
     <td><b>Pipeline</b></td>
-    <td>A pipeline is a logical grouping of activities that defines an end-to-end data workflow.It controls the sequence and flow of data-processing tasks.</td>
+    <td>Pipeline is a logical grouping of activities that together perform a data integration task. It controls the sequence and flow of tasks.</td>
     <td>Use it to orchestrate an ETL/ELT workflow from source to target.</td>
   </tr>
 
   <tr>
     <td><b>Linked Service</b></td>
-    <td>A linked service contains the connection information required to connect ADF to a data store or compute service.</td>
+    <td>A linked service contains the connection information required to connect ADF to a data store or compute service. It holds the endpoint and auth details</td>
     <td>Use it whenever ADF needs to connect to a source, target, or compute environment.</td>
   </tr>
 
   <tr>
     <td><b>Dataset</b></td>
-    <td>Datasets represent data structures within data stores — they point to or reference the data you want to use in your activities as inputs or outputs. such as a table, file, or folder.</td>
-    <td>Use it to identify the specific data an activity reads from or writes to.</td>
+    <td>A dataset represents the data structure and location of the data that an ADF activity reads from or writes to — it defines what data (file, table, container)  the Linked Service points to</td>
+    <td> LS → where & how to connect. Dataset → what data at that connection.</td>
   </tr>
 
   <tr>
     <td><b>Activity</b></td>
-    <td>An activity is an individual processing or control step inside a pipeline. <br> ADF activities are broadly categorized into three types:                <span style="color:yellow">Data Movement activities</span><br>
+    <td>Activity is a single step inside a pipeline that performs a specific action — it's the unit of work in ADF.<br> ADF activities are broadly categorized into three types:                <span style="color:yellow">Data Movement activities</span><br>
  , such as Copy Data,                <span style="color:yellow"> Data Transformation activities
  </span>
 , such as Mapping Data Flow and Databricks Notebook, and <span style="color:yellow"> Control Flow activities</span>, such as If Condition, ForEach, and Execute Pipeline</td>
@@ -348,101 +373,6 @@ HTTPS for data in transit.<br>
         `,
         children: [],
       },
-      //       {
-      //         q: `<p style="color:violet">ACtivities</p>`,
-      //         a: `<table border="1" cellpadding="8" cellspacing="0">
-      //   <tr>
-      //     <th>Activity</th>
-      //     <th>Interview Answer</th>
-      //     <th>When to Use</th>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>Copy Data</b></td>
-      //     <td>Copies data from a source to a destination.</td>
-      //     <td>Use for ingesting or moving data between systems.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>Mapping Data Flow</b></td>
-      //     <td>Visual, code-free transformation that runs on ADF-managed Spark compute.</td>
-      //     <td>Use for joins, aggregations, filters, derived columns, and other transformations.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>Databricks Notebook</b></td>
-      //     <td>Executes a Databricks notebook from an ADF pipeline.</td>
-      //     <td>Use for complex PySpark/Spark transformations and heavy processing.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>Stored Procedure</b></td>
-      //     <td>Executes a stored procedure in a supported database.</td>
-      //     <td>Use when database-side logic or transformations already exist.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>Lookup</b></td>
-      //     <td>Retrieves data or configuration values from a source.</td>
-      //     <td>Use to read control/configuration values such as file names, paths, or parameters.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>Get Metadata</b></td>
-      //     <td>Retrieves metadata about a file, folder, or dataset.</td>
-      //     <td>Use to check file existence, size, last modified time, child items, etc.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>ForEach</b></td>
-      //     <td>Iterates over a collection and executes activities for each item.</td>
-      //     <td>Use to process multiple files, tables, or records dynamically.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>If Condition</b></td>
-      //     <td>Executes different activities based on a Boolean condition.</td>
-      //     <td>Use for conditional branching, such as checking whether a file exists.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>Switch</b></td>
-      //     <td>Routes pipeline execution to different branches based on an expression value.</td>
-      //     <td>Use when there are multiple possible execution paths.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>Execute Pipeline</b></td>
-      //     <td>Invokes another pipeline from the current pipeline.</td>
-      //     <td>Use to create modular and reusable pipelines.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>Web Activity</b></td>
-      //     <td>Calls a REST API or web endpoint from the pipeline.</td>
-      //     <td>Use to trigger APIs or interact with external services.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>Set Variable</b></td>
-      //     <td>Assigns a value to a pipeline variable.</td>
-      //     <td>Use to store temporary values during pipeline execution.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>Wait</b></td>
-      //     <td>Pauses pipeline execution for a specified duration.</td>
-      //     <td>Use when a delay is required between activities.</td>
-      //   </tr>
-
-      //   <tr>
-      //     <td><b>Until</b></td>
-      //     <td>Repeatedly executes activities until a specified condition becomes true.</td>
-      //     <td>Use for polling or waiting until a condition is met.</td>
-      //   </tr>
-      // </table>`,
-      //         children: [],
-      //       },
       {
         q: `Activities`,
         a: `
@@ -811,11 +741,15 @@ Filename has a predictable dynamic value, e.g.:
 
 <hr>
 
-<h3 style="color:purple;">Web Activity</h3>
+<h3 style="color:#C4817B;">Web Activity VS WEbhooh</h3>
 
-<p>
-  Makes an <strong>HTTP/REST call</strong> to an endpoint from within the
-  pipeline.
+<ul><li><strong tyle="color:#93DB0A">Web Activity</strong >
+Calls an HTTP endpoint, waits for an immediate HTTP response (200/400/500), then moves on. Doesn't care if the underlying job finishes. Timeout → fails.
+Use for: notifications, quick API calls, Azure Functions.</li>
+
+<li><strong tyle="color:#93DB0A">Webhook Activity</strong>
+Calls an HTTP endpoint, ADF passes a callbackUrl in the request body. External system starts the job, may return a 202 Accepted immediately — but ADF doesn't proceed on that. ADF only moves forward when the external system POSTs back to the callbackUrl with success/failure after job completes. External system must be specifically built to extract and call back that URL. Timeout with no callback → fails.
+Use for: long-running external jobs (ML training, approval workflows).</li></ul>
 </p>
 
 <p>
@@ -823,21 +757,6 @@ Filename has a predictable dynamic value, e.g.:
   URL · Method (GET, POST, PUT) · Headers · Body (JSON payload)
 </p>
 
-<p>
-  <strong style="color:green;">Use When:</strong>
-</p>
-<ul>
-  <li>Call a REST API</li>
-  <li>Trigger an Azure Function or Logic App</li>
-  <li>Send notifications to an external system</li>
-  <li>Call an API to retrieve or submit information</li>
-</ul>
-
-<p>
-  <strong style="color:red;">Cannot:</strong>
-  Replace a full API integration layer. Complex authentication or business
-  logic may require Azure Function, Logic App, or another suitable service.
-</p>
 
 
 
@@ -988,11 +907,11 @@ END
         a:`
 
 <ul>
-  <li><strong style="color:#70C2E9" >Schedule Trigger:</strong> runs an ADF pipeline based on a predefined time schedule. it is used for regular time-based processing, such as running a pipeline every 15 minutes, hourly, or daily.</li>
-  <ul><li><strong>Stateless:</strong> It doesn't track individual scheduled windows or backfill missed occurrences.</li>
+  <li><strong style="color:#70C2E9" >Schedule Trigger:</strong> Automatically starts an ADF pipeline at a pre defined time or regular interval, like every 15 minutes, hourly, or daily..</li>
+  <ul><li><strong>Stateless:</strong>  Doesn't Tracks triggered pipeline execution status and can't backfill missed occurrences.</li>
   <li><strong>Multiple pipelines:</strong> One Schedule Trigger can trigger multiple pipelines.</li></ul>
 
-  <li><strong style="color:#70C2E9" >Tumbling Window Trigger:</strong> Runs a pipeline for fixed, non-overlapping time windows and is useful for <strong>historical backfilling</strong>.</li>
+  <li><strong style="color:#70C2E9" >Tumbling Window Trigger:</strong> triggers the pipeline for fixed, non-overlapping time windows and is useful for <strong>historical backfilling</strong>.</li>
   <ul><li><strong>Stateful:</strong> Tracks each window's execution status.</li>
   <li><strong>Window time:</strong> Provides <code>windowStartTime</code> and <code>windowEndTime</code>, which can be passed to the pipeline for incremental/time-based processing.</li>
   <li><strong>Max Concurrency:</strong> Controls how many windows can run in parallel. Default is <strong>1</strong>.</li>
@@ -1435,7 +1354,7 @@ Stored procedure
         children: [],
       },
       {
-        q: `<strong style="color:#93DB0A">Poll an ADLS folder until all expected files arrive, even when the filenames contain dynamic suffixes such as timestamps or unique IDs.</strong>`,
+        q: `<strong style="color:#93DB0A">Poll an ADLS folder until all expected files arrive like a list of 8, even when the filenames contain dynamic suffixes such as timestamps or unique IDs.</strong>`,
         a: `<pre>Lookup
   ↓
 Until
