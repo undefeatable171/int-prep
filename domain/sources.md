@@ -94,7 +94,7 @@ bronze layer
 - We read bronze data from postgres => Move parquet files of prev run in Lnding zone to archive => Overwrite landing with current run data.
 - in silver it reads landing folder and checks schema etc,..
 
-```python import datetime
+```python
 import datetime
 x = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
