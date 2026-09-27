@@ -238,7 +238,8 @@ Gold Layer - Derived Business Columns
 - **Trigger:** Every 4 hours, cron
 - **Tasks:** 6 parallel, independent DAG nodes
 - **Failure:** Retry 2x → pipeline fails → DE on-call → manual fix and rerun. Watermark unchanged, safe reprocessing.
-- **Control table:** Writes SUCCESS or FAILED per table per run
+- **Control table:** Every run at the begining a task for each table task  will check if prev run==SUCCESS else writes as skip and job is fails
+  - IF success then Writes RUNNING at begining of job as a sep task for every table, Writes SUCCESS or FAILED per table per run at last.
 
 ### Job 2 — Bronze Daily CSV
 
@@ -254,7 +255,8 @@ Gold Layer - Derived Business Columns
 - **Stage 1 — Silver (parallel):**
   - 8 transactional Silver tasks
   - CSV-backed tasks check folder and if no files — skip → no-op, carry forward
-  - Dedup → null handling → MERGE
+  - for non-csv , checks status , if not sucess then skips
+  - If bronze is success -> Dedup → null handling → MERGE
 
 ### Job 4 - Gold dims
 
@@ -281,6 +283,12 @@ Gold Layer - Derived Business Columns
 | Job 9 — provider_roster | Monthly  | Excel  | Bronze → Silver (reload) → Gold (reload ref_provider_roster) |
 
 ### Dependency Chain
+
+Jobs : 1,3,4,5 are orchestrated in a master job linearly with dependency as successfull.  If bronze fail silver,gold won't run and master job fails.
+
+It will fail repeatedly untill bronze is successfull.
+
+So bronze and gold writes to control table. and uses last updated watermark
 
 ```
 Job 1: Bronze PostgreSQL (4hr)
@@ -326,7 +334,7 @@ Jobs 6-9: Reference E2E pipelines (own cron, fully independent)
 
 ## cluster strategy
 
-We use job clusters across all pipelines — DBR 16.4 LTS(spark 3.5.2 , scala 2/12), standard DS3_v2(14 gb memory,4cores) autoscaling on Silver and Gold(1 to 8), Photon enabled where MERGE and aggregations benefit. Pipeline processes 8 to 10 GB per run, 45 to 50 GB daily.
+We use job clusters across all pipelines — We used Databricks Runtime 14.3 LTS, which comes with Spark 3.5.0 and Python 3.10.12. Standard D4s_V3(4 vCPU , 16 RAM)) workers with auto scaling on Silver and Gold(1 to 8), Photon enabled where MERGE and aggregations benefit. Pipeline processes 8 to 10 GB per run, 45 to 50 GB daily.
 
 # Requirement Documents (Quick Revision)
 
