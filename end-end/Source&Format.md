@@ -174,16 +174,19 @@ Parquet, ORC, Delta store typed structured data → no malformed-row handling ne
 ## SQL Write Operations
 
 
-| Statement                             | Schema Behavior                                                                | Equivalent PySpark                                    |
-| --------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `CREATE TABLE`                        | Defines schema explicitly                                                      | `.mode("errorIfExists")`                              |
-| `CREATE TABLE AS SELECT`              | Infers schema from query                                                       | `.mode("overwrite")` (first run)                      |
-| `CREATE OR REPLACE TABLE [AS SELECT]` | **Always replaces schema** — old table dropped, **History preserved in BOTH** | `.mode("overwrite").option("overwriteSchema","true")` |
-| `INSERT INTO`                         | Must match existing schema                                                     | `.mode("append")`                                     |
-| `ALTER TABLE ADD COLUMNS`             | Adds columns                                                                   | `mergeSchema` equivalent                              |
-| `ALTER TABLE DROP COLUMN`             | Removes column                                                                 | —                                                    |
-| `ALTER TABLE CHANGE COLUMN`           | Rename / reorder / comment                                                     | —                                                    |
-| `ALTER TABLE REPLACE COLUMNS`         | Full schema redesign                                                           | `overwriteSchema` equivalent                          |
+| Statement                                                                               | Schema Behavior                                                                | Equivalent PySpark                                    |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `CREATE TABLE name`                                                                     | Defines schema explicitly                                                      | `.mode("errorIfExists")`                              |
+| `CREATE TABLE nameAS SELECT`                                                            | Infers schema from query                                                       | `.mode("overwrite")` (first run)                      |
+| `CREATE OR REPLACE TABLE name [AS SELECT]`                                              | **Always replaces schema** — old table dropped, **History preserved in BOTH** | `.mode("overwrite").option("overwriteSchema","true")` |
+| `INSERT INTO tble_name`                                                                 | Must match existing schema                                                     | `.mode("append")`                                     |
+| `UPDATE table_name set name="hds" where ...`                                            | UPdate                                                                         |                                                       |
+| `ALTER TABLE table_name -> ADD COLUMNS (name string,age int) -> add column name string` | Adds columns                                                                   | `mergeSchema` equivalent                              |
+| `Alter table table_name RENAME COLUMN old_col TO new_col`;                              | Rename                                                                         |                                                       |
+| `ALTER TABLE table_name -> DROP COLUMN name -> drop columns(name , age)`                | Removes column                                                                 | —                                                    |
+| `ALTER TABLE table_name Alter column name COMMENT 'desc'                 `              | Rename / reorder / comment                                                     | —                                                    |
+| `ALTER TABLE tbl_name ALTER COLUMN col_name TYPE DOUBL`                                 | Type change                                                                    | -                                                     |
+
 
 ```
 Need to write to Delta?
