@@ -40,7 +40,8 @@ Without pagination, the API would try to return millions of records in a single 
         children: [{
           q: `how rdd/df acheives fault tolerence`,
           a: `💠 Spark achieves fault tolerance through lineage.<br>
-💠 Since RDDs and DataFrames are immutable, Spark tracks every transformation applied to create them. If an executor fails and a partition is lost, Spark doesn't recompute the whole dataset — it just replays the lineage for that specific partition.
+   💠 Lineage tracks how Each RDD  were built from other RDDs   . 
+   <br> 💠  If an executor fails and a partition is lost, Spark doesn't recompute the whole dataset — it just replays the lineage for that specific partition without running the whole job
 <br>💠 This works even for unpartitioned tables/parquet files because Spark creates its own internal partitions for distributed processing(likep1,p2..), so fault tolerance depends on Spark partitions rather than database table partitions.`,
           children: [],
         },
