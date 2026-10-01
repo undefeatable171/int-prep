@@ -3,13 +3,6 @@ layout: default
 title: Sources
 permalink: /tablesources/
 ---
-## End Goal
-
-We build a data pipeline for a US healthcare client on Azure Databricks. We pull clinical and financial data from PostgreSQL and flat files, process it through Medallion architecture — Bronze, Silver, Gold — and serve finance, clinical, and BI teams through Gold views refreshed every 4 hours. The outcome is faster visibility into claim denials,days in AR, prior Auth Approval rate etc — all from one trusted layer instead of teams querying raw databases.
-
-# Data Sources Cheat Sheet — US Healthcare Project
-
----
 
 ## Source 1 — PostgreSQL (Client's Internal OLTP System)
 
@@ -18,12 +11,13 @@ We build a data pipeline for a US healthcare client on Azure Databricks. We pull
 
 | Table                   | Key Columns                                                                  | What It Means                                                             | Fact/Dim     | Frequency |
 | ------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------- | -------------- | ----------- |
-| `patients` / `members`  | patient_id, member_id, dob, insurance_plan_id, enrollment_start/end          | Master patient registry — demographics, insurance plan, enrollment dates | Dim (SCD2)   | On change |
-| `encounters` / `visits` | encounter_id, patient_id, encounter_type, admission_date, drg_code, los_days | Every clinical visit — inpatient, outpatient, ER, telehealth             | Fact         | Daily     |
-| `claims`                | claim_id, encounter_id,patient_id, billed_amount, paid_amount, provider_npi  | Billing records the client submits to the payer (insurance company)       | Fact         | Daily     |
-| `diagnoses`             | diagnosis_id, encounter_id, icd10_code, diagnosis_type                       | ICD-10 codes attached to each encounter                                   | Fact (child) | Daily     |
-| `procedures`            | procedure_id, encounter_id, cpt_code, procedure_date                         | CPT codes — what procedures were done per visit                          | Fact (child) | Daily     |
-| `providers`             | provider_id, npi, specialty_code, in_network_flag, contract_start/end        | Provider master — NPI, specialty, in-network status, contract dates      | Dim (SCD2)   | On change |
+| `brz_memeber_master`  |  src_member_id, dob, insurance_plan_id,payer_id, enrollment_start/end  ,SSN_id        | Master patient registry — demographics, insurance plan, enrollment dates | Dim (SCD2)   | On change |
+| `brz_provider_master`             | src_provider_id, npi_nmbr, specialty_code, in_network_flag, contract_start/end        | Provider master — NPI, specialty, in-network status, contract dates      | Dim (SCD2)   | On change |
+| `brz_encounter_details` | src_encounter_id, src_patient_id, encounter_type, admission_date, in_pt_days | Every clinical visit — inpatient, outpatient, ER, telehealth             | Fact         | Daily     |
+| `brz_claim`                | claim_id,patient_id,insurence_plan_id, billed_amount, paid_amount, provider_npi  | Billing records the client submits to the payer (insurance company)       | Fact         | Daily     |
+| `brz_diagnosis`             | diagnosis_id, encounter_id, icd10_code, diagnosis_type                       | ICD-10 codes attached to each encounter                                   | Fact (child) | Daily     |
+| `brz_procedure`            | procedure_id, encounter_id, cpt_code, procedure_date                         | CPT codes — what procedures were done per visit                          | Fact (child) | Daily     |
+
 
 ---
 

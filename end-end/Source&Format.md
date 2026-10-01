@@ -59,15 +59,18 @@ properties = {
     "driver": "org.postgresql.Driver"
 }
 query = "(SELECT * FROM schema.table WHERE updated_at > '2025-01-01') as t";
-df = spark.read.jdbc(
-            url=url,
-            table=query,
-            properties=properties
-        ).option("partitionColumn", "id")
-         .option("lowerBound", lower)
-         .option("upperBound", upper)
-         .option("numPartitions", "8")
-         .load()
+df = spark.read
+    .format("jdbc")
+	.option("driver","org.postgresql.Driver")
+    .option("url", url)
+    .option("user", user)
+    .option("password", password)
+    .option("dbtable", query)
+    .option("partitionColumn", "emp_no")
+    .option("lowerBound", 10001)
+    .option("upperBound", 499999)
+    .option("numPartitions", 8)
+    .load()
 ```
 
 ---
@@ -187,7 +190,6 @@ Parquet, ORC, Delta store typed structured data → no malformed-row handling ne
 | `ALTER TABLE table_name Alter column name COMMENT 'desc'                 `              | Rename / reorder / comment                                                     | —                                                    |
 | `ALTER TABLE tbl_name ALTER COLUMN col_name TYPE DOUBL`                                 | Type change                                                                    | -                                                     |
 
-
 ```
 Need to write to Delta?
 │
@@ -275,19 +277,25 @@ Text-based, comma-separated. Human-readable. No embedded schema.
 ```python
 df = spark.read \
     .format("csv") \
+  	.schema(explicit_schema)\
     .option("header", "true") \
     .option("inferSchema", "false") \
-    .schema(explicit_schema) \
     .option("sep", "|") \
     .option("quote", '"') \
+  	.option("mode", "FAILFAST") \
     .load("path/to/file.csv")
 ```
 
 - **`sep`** — column delimiter. Default comma. Use `|`, `;`, `\t` if file uses different separator. Wrong sep = entire row reads as one column.
-- **`quote`** — enclosing character for fields containing delimiters. `1,John,"New York, USA"` without quote option splits into 3 columns incorrectly.
+- **`quote`** — enclosing character for fields containing delimiters. `1,John,"New York, USA"` without quote option splits into 4 columns incorrectly instead of 3 and since it has 3 it silently drops if falfast mode is not enabled.
 - Never use `inferSchema=True` in production — triggers full file scan, risk of type mismatches.
+- `inferSchema` is false by default in CSV,json. Parquet no infer available as its self describing. Excel false if native if used com.crealytics.spark.excel then true
+- `true/True` both works as string , True boolean also works but don't give.
+- The schema is applied by position, so column order must match the file.
 
 **Cons:** No data types (everything is text) · No compression · Full row scan — no column pruning · No schema enforcement
+
+HOW you read : I read CSV with `spark.read.format("csv")`, set `header=true`, and always pass an **explicit schema** instead of `inferSchema` for production — it's faster and avoids type surprises. I specify `sep` and `quote` based on the file, and use the `mode` option ( `FAILFAST`) is used since I need strict validation.
 
 ---
 
@@ -297,20 +305,25 @@ Semi-structured, key-value. Supports nested and hierarchical data.
 
 ```python
 df = spark.read \
+  	.format("json")
+	.option("multiLine", "true") \
     .schema(schema) \
-    .option("multiLine", "true") \   # only if JSON spans multiple lines — kills parallelism
-    .json("/path/input.json")
+	.option("mode", "FAILFAST") \# only if JSON spans multiple lines — kills parallelism
+    .load("/path/input.json")
 ```
+
+* I read JSON with `spark.read.format("json")`. The key option is `multiLine` — it's `false` by default for newline-delimited JSON, and I set it to `true` only when each file contains a single multi-line JSON object [](https://learn.microsoft.com/cs-cz/azure/Databricks/spark/api-options#1)[](https://docs.databricks.com/aws/en/query/formats/json). I pass an explicit schema when possible, and use the `mode` option (`PERMISSIVE`, `DROPMALFORMED`, `FAILFAST`) to control how corrupt records are handled
 
 **JSON file vs JSON string column — critical distinction:**
 
 
-| Method              | Used In                  | Purpose                                                         |
-| --------------------- | -------------------------- | ----------------------------------------------------------------- |
-| `response.json()`   | Python`requests` library | Converts an**HTTP API response** into a Python dictionary/list. |
-| `spark.read.json()` | PySpark                  | Reads**JSON files** into a Spark DataFrame.                     |
-| `from_json()`       | PySpark                  | Parses a**JSON string column** into a Struct/Array/Map.         |
-| `to_json()`         | PySpark                  | Spark struct to string (serialize)                              |
+| Method                                                                                                                                                  | Used In                  | Purpose                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `response.json()`                                                                                                                                       | Python`requests` library | Converts an**HTTP API response** into a Python dictionary/list.                                       |
+| `spark.read.json()`                                                                                                                                     | PySpark                  | Reads**JSON files** into a Spark DataFrame.                                                           |
+| `from_json(col,schema)`                                                                                                                                 | PySpark                  | Parses a**JSON string column** into a Struct/Array/Map. SChema is optional but Always explicit schema |
+| `to_json(col)`                                                                                                                                          | PySpark                  | Spark struct to string (serialize)                                                                    |
+| `withColumn("names", get_json_object(col("raw_response"), "$.details[0].name")) /  select get_json_object(raw_response, "$.details[0].name") as names ` | Pyspark                  | For gettinga field without parsing/ schema is not req for this                                        |
 
 ```python
 # Parse JSON string column → Struct
@@ -339,21 +352,33 @@ Binary format. Not natively supported by Spark — requires `spark-excel` third-
 ```python
 df = spark.read \
     .format("com.crealytics.spark.excel") \
-    .option("headerRows", "1") \
-    .option("dataAddress", "'Sheet1'!A1") \
-    .schema(explicit_schema) \
+    .option("header", "true") \
+  	.schema(explicit_schema)\
+    .option("dataAddress", "'Employee'!A1") \
+     .option("inferSchema","false")\
+  	.option("mode","FAILFAST")
     .load("path/to/file.xlsx")
 ```
 
-- **`dataAddress`** — specifies starting cell or range. Used to skip title/metadata rows or read a specific table within a sheet.
-  - `'Sheet1'!A1` → full sheet from A1
-  - `'Sheet1'!A3` → skip first 2 rows
-  - `'Employees'!A14:D50` → specific range only
-- `headerRows` -> Native spark only supports headerRows with 1 explains how many first n lines are headers. If 2 then merges those 2 as header; Don't use header in Excel . No use.
+- **`dataAddress`** — specifies starting cell or range. If full sheet is req , then skip it.
+  - `'Sheet1'!A1` → full sheet from A1 . Can skip if starts from A1
+  - `'Sheet1'!A3` → skip first 2 rows and read entire sheet
+  - `'Employees'!A14:D50` → specific range only . Containes row 14 to row 50 of A,B,C,D
+  - `"'employee'!A1:B1000"` -> Know last range Then use this
+  - If onlu 2 cols req , then read whole and select req cols from DF.
+- `header` -> True/false. treats first row of dataAddress as header if set to true.  IF A12:B1000 , then treats A12, B12 as headers and from 13 only data.
 
 **Cons:** Third-party libr
 
+Installation: Compute => select Cluster => **Libraries** ->  **Install new** => select maven => search packages => co.crealytics and use appropriate version (EX: `com.crealytics:spark-excel_2.12:0.13.5`)
+
 ary dependency (must be on all cluster nodes) · Not splittable — single executor reads entire file · Not suitable at scale — practical only for small human-generated reports
+
+Since we are using 14.3 LTS we don't have a natice excel reader. So i use `com.crealytics:spark-excel`, installed as a Maven library on the cluster and read with `.format('com.crealytics.spark.excel')`. I set `header` to true, pass an explicit schema for production reliability, and use `dataAddress` to target specific sheets or ranges and mode to Failfast since i need strict schema.
+
+It's the legacy Maven-based approach — works well on classic clusters and job clusters, but don't support serverless so its a limitations, From DBR 17.1+ we have a native excel reader and can directly like spark.read.format("excel").
+
+in COm.crealytics.spark.excel , the schema is applied by position, not by header name. So if the Excel file's column order changes, the data maps to the wrong fields silently. That's one of the key limitations compared to the native reader, which matches by name
 
 ---
 
