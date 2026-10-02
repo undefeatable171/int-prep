@@ -134,7 +134,7 @@ print("updated count:" ,updated)
     children: [
       {
         q: `What exactly is your role in the project?`,
-        a: `I work as a Data Engineer on a US healthcare project. My role involves developing, enhancing, and maintaining batch ETL pipelines on Azure Databricks, implementing data transformations, optimizing Spark workloads, and collaborating with downstream consumers, and other developers to deliver reliable data for downstream reporting and analytics `,
+        a: `I work as a Data Engineer on a US healthcare project. My role involves building and maintaining batch data pipelines on Azure Databricks, implementing SIlver and gold transformations, optimizing Spark workloads, and collaborating with downstream consumers, and other developers to deliver reliable data for downstream reporting and analytics `,
         children: [],
       },
       {
@@ -142,7 +142,7 @@ print("updated count:" ,updated)
         a: ` The work in our project is divided functionally, and I primarily work on the claims area. <br>I take end-to-end ownership of the claims-related processing—from implementing transformation logic and testing to deployment and troubleshooting. while collaborating with the rest of the team on the overall platform. `,
         children: [{
           q: `DO you own any pipeline`,
-          a: `Our project has pipelines across Bronze, Silver, and Gold. Work is divided functionally rather than by individual pipelines — I own the claims domain within Silver and Gold. So rather than counting pipelines, I'd say I manage the end-to-end data flow for the claims domain.`,
+          a: `Our project has pipelines across Bronze, Silver, and Gold. Work is divided functionally rather than by individual pipelines — I own the claims area within Silver and Gold. So rather than counting pipelines,I'd say I own the end-to-end data flow for claims.`,
           children: [],
         },],
       },

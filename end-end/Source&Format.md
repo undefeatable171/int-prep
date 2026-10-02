@@ -570,6 +570,20 @@ create table ustechcentral.test.test1 using delta location "abfss://data@undefea
 
 ---
 
+## Writing data
+
+```python
+spark.write.format("csv").option("header","true").option("sep","|").mode("overwrite").save(path)  
+spark.write.format("json").option("mode","overwrite").save(path) # No multiline in writing , it is read-only option
+spark.write.format("com.crealytics.spark.excel").option("header","true").option("dataAddress","'Sheet1'!A1").mode("overwrite").save(path)
+# dataAddress is valid and lets you target a sheet range, but it can't handle whole-column references like A:F due to an Apache POI limitation. 
+#You must use specific cell coordinates
+```
+
+- Writing CSV, Excel, or JSON in Spark always creates a folder, not a single file. The folder contains multiple part- files — one per partition — plus metadata files like _SUCCESS and _committed_ markers
+- If the data is small and I need a single file, I use .coalesce(1) before writing, but I avoid this on large datasets because it kills parallelism and risks OOM. Even with coalesce(1), the output is still a folder containing one part-00000-...csv file. The file name cannot be customized directly.
+- If I need a clean copy for archival — say, to move it to a specific location with a proper name — I use dbutils.fs.cp(source_path, target_path) after writing."
+
 ---
 
 # Data Ingestion Patterns — Reference Notes

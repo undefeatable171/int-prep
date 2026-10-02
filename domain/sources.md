@@ -3,21 +3,19 @@ layout: default
 title: Sources
 permalink: /tablesources/
 ---
-
 ## Source 1 — PostgreSQL (Client's Internal OLTP System)
 
 **Ingestion:** Incremental via `updated_at` watermark | **Destination:** Bronze (Parquet) → Silver (Delta) → Gold (Delta)
 
 
-| Table                   | Key Columns                                                                  | What It Means                                                             | Fact/Dim     | Frequency |
-| ------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------- | -------------- | ----------- |
-| `brz_memeber_master`  |  src_member_id, dob, insurance_plan_id,payer_id, enrollment_start/end  ,SSN_id        | Master patient registry — demographics, insurance plan, enrollment dates | Dim (SCD2)   | On change |
-| `brz_provider_master`             | src_provider_id, npi_nmbr, specialty_code, in_network_flag, contract_start/end        | Provider master — NPI, specialty, in-network status, contract dates      | Dim (SCD2)   | On change |
-| `brz_encounter_details` | src_encounter_id, src_patient_id, encounter_type, admission_date, in_pt_days | Every clinical visit — inpatient, outpatient, ER, telehealth             | Fact         | Daily     |
-| `brz_claim`                | claim_id,patient_id,insurence_plan_id, billed_amount, paid_amount, provider_npi  | Billing records the client submits to the payer (insurance company)       | Fact         | Daily     |
-| `brz_diagnosis`             | diagnosis_id, encounter_id, icd10_code, diagnosis_type                       | ICD-10 codes attached to each encounter                                   | Fact (child) | Daily     |
-| `brz_procedure`            | procedure_id, encounter_id, cpt_code, procedure_date                         | CPT codes — what procedures were done per visit                          | Fact (child) | Daily     |
-
+| Table                   | Key Columns                                                                            | What It Means                                                                                                 | Fact/Dim     | Frequency |
+| ------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | -------------- | ----------- |
+| `brz_memeber`           | mbi_id, dob, insurance_plan_id,payer_id, enrollment_start/end  ,SSN_id,benifitplanyear | Master patient registry — demographics, insurance plan, enrollment dates                                     | Dim (SCD2)   | On change |
+| `brz_provider`          | hcp_id,npi_id specialty_code, in_network_flag, contract_start/end ,                   | Provider master — NPI is national,hcp is local to our network. specialty, in-network status, contract dates | Dim (SCD2)   | On change |
+| `brz_encounter_details` | encounter_id, mbi, encounter_type, admission_date, inpatient_days                      | Every clinical visit — inpatient, outpatient, ER, telehealth                                                 | Fact         | Daily     |
+| `brz_claim`             | claim_id,mbi,insurence_plan_id, billed_amount, paid_amount, hcp_id                     | Billing records the client submits to the payer (insurance company)                                           | Fact         | Daily     |
+| `brz_diagnosis`         | diagnosis_id, encounter_id, icd10_code, diagnosis_type                                 | ICD-10 codes attached to each encounter                                                                       | Fact (child) | Daily     |
+| `brz_procedure`         | procedure_id, encounter_id, cpt_code, procedure_date                                   | CPT codes — what procedures were done per visit                                                              | Fact (child) | Daily     |
 
 ---
 
@@ -79,6 +77,7 @@ permalink: /tablesources/
 - Type casting (dates, decimals, booleans) to enforce consistent schema
 - Null value handling — drop rows with critical nulls (business key, foreign key, or required field) and log them for review
 - Source-aligned cleaning only — no business logic here (that's Gold)
+- We create concat_id for each table like concat_id(mbi+insurence_id) for members , concat_id(hcp_id,npi_id) for providers, concat_id(enc_id,encounter_type), concat_id() , (claim_id,mbi,plan_id) , (procedure_id,encounter_id)
 
 ---
 
