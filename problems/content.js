@@ -53,7 +53,7 @@ df.select(*[c.name  for c in df.schema.fields if isinstance(c.dataType,NumericTy
 
 #4-7) rename , adding suffix/prefix using toDF
 df.toDF(*[ "emp_"+c+"_new" for c in df.columns ])
-df.toDF(*[ c.upper() for c in df.columns ])
+df.toDF(*[ upper(name) for c in df.columns ])
 
 
 </code></pre>

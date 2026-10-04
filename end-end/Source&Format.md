@@ -282,7 +282,8 @@ df = spark.read \
     .option("inferSchema", "false") \
     .option("sep", "|") \
     .option("quote", '"') \
-  	.option("mode", "FAILFAST") \
+  	.option("mode", "PERMISSIVE") \
+    .option("badRecordsPath", "/volumes/badrecords/")
     .load("path/to/file.csv")
 ```
 
@@ -295,8 +296,10 @@ df = spark.read \
 
 **Cons:** No data types (everything is text) · No compression · Full row scan — no column pruning · No schema enforcement
 
-HOW you read : I read CSV with `spark.read.format("csv")`, set `header=true`, and always pass an **explicit schema** instead of `inferSchema` for production — it's faster and avoids type surprises. I specify `sep` and `quote` based on the file, and use the `mode` option ( `FAILFAST`) is used since I need strict validation.
+HOW you read : I read CSV with `spark.read.format("csv")`, set `header=true`, and always pass an **explicit schema** instead of `inferSchema` for production — it's faster and avoids type surprises. I specify `sep` and `quote` based on the file, and use the `mode` option ( `PERMISSIVE`) along with badrecordsPath is used if any data can't be parsed correctly for furthur validation.
 
+How to acees badrecords : path while readinG should be in JSON format: 'path//20261004T095451/bad_records/'
+outputs path , reason,record cols. whole column is present 
 ---
 
 ### JSON
@@ -308,7 +311,8 @@ df = spark.read \
   	.format("json")
 	.option("multiLine", "true") \
     .schema(schema) \
-	.option("mode", "FAILFAST") \# only if JSON spans multiple lines — kills parallelism
+	.option("mode", "PERMISSIVE") \# only if JSON spans multiple lines — kills parallelism
+  .option("rescuedDataColumn", "_rescued_data")
     .load("/path/input.json")
 ```
 
@@ -356,7 +360,8 @@ df = spark.read \
   	.schema(explicit_schema)\
     .option("dataAddress", "'Employee'!A1") \
      .option("inferSchema","false")\
-  	.option("mode","FAILFAST")
+  	.option("mode","PERMISSIVE")
+    .option("rescuedDataColumn", "_rescued_data")
     .load("path/to/file.xlsx")
 ```
 
