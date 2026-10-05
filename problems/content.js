@@ -709,7 +709,7 @@ emp.withColumn("bonus",when(col("dept_id")==101,round(col("salary")*1.2,2)).othe
       {
         q: `<p style="color:violet"> Calculate employee tenure from joining date.</p>`,
         a: `<pre><code class="language-python">
-emp.withColumn("tenure",date_diff(current_date(),col("joining_date"))).show()
+emp.withColumn("tenure",datediff(current_date(),col("joining_date"))).show()
   </code></pre>`,
         children: [],
       },
@@ -1093,7 +1093,10 @@ Same as above but remove filter and add cnt in select.
 percentiles and median        
         </p>`,
         a: `<pre><code class="language-python">
-pivoted_df = df.groupBy("product").pivot("month").sum("amount").orderBy("product")
+# name , month ,sales
+pivoted_df = df.groupBy("name").pivot("month").sum("sales").orderBy("name") # long to wide (row values to cols)
+
+unpivoted=df.select("names",expr("stack(2, 'Jan', Jan, 'Feb', Feb,'march' MAR) AS (month, sales)")) # need to fill all cols manually.
 
 # median and percentile
 # CONT equivalent: percentile_approx (interpolates)
@@ -1136,6 +1139,12 @@ ORDER BY department;
 </code></pre>
   `,
   tip:`
+groupBy → the rows that stay<br>
+
+pivot → the column whose values become new columns<br>
+
+agg → how to fill the cells<br>
+
   <table>
   <thead>
     <tr>
@@ -1197,7 +1206,7 @@ emp.withColumn("avgs",avg("salary").over(Window.partitionBy("dept_id"))).filter(
 # 3 who haven't placed orders
 emp.alias("c").join(ord.alias("o"),
     (col("c.cust_id") == col("o.cust_id")) & 
-    (col("o.order_date") >= current_date() - 90),
+    (col("o.order_date") >= add_months(current_date(), -3)),
     "left"
 ).filter(col("o.cust_id").isNull()) \
  .select("c.cust_id", "c.name").show()
@@ -1237,9 +1246,39 @@ select * , avg(salary) over() as comp_avg,avg(salary)  over(partition by dept_id
 with av as (select avg(salary) as avg_sal,dept_id from emp group by dept_id) 
 select * from emp join av using(dept_id) where  avg_sal > (select avg(salary) from emp)
 </code></pre>
+
+<pre><code class="language-sql">
+SELECT a.name, b.name
+FROM names a
+JOIN names b
+WHERE a.id < b.id;
+</code></pre>
   `,
         tip: `Spark SQL — OVER() with no args is valid, engine handles it internally.<br>
-PySpark — over() method requires an explicit WindowSpec object, empty over() throws an error. It's a Python API limitation, not a Spark engine limitation.
+PySpark — over() method requires an explicit WindowSpec object, empty over() throws an error. It's a Python API limitation, not a Spark engine limitation.<br>
+
+<table>
+  <thead>
+    <tr>
+      <th>Condition</th>
+      <th>Effect</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>a.name &lt; b.name</code></td>
+      <td>Keeps each pair once, in a fixed order ✅</td>
+    </tr>
+    <tr>
+      <td><code>a.name &lt;= b.name</code></td>
+      <td>Includes self-pairs (A,A) ⚠️</td>
+    </tr>
+    <tr>
+      <td><code>a.name != b.name</code></td>
+      <td>Removes self-pairs but keeps duplicates (A,B) and (B,A) ❌</td>
+    </tr>
+  </tbody>
+</table>
 `,
         children: [],
       },
@@ -1313,23 +1352,40 @@ If we are doing both deletes and inserts if not matched , then mentioning <br>
       {
         q: `<p style="color:violet">YTD/MTD sales</p>`,
         a: `<pre><code class="language-python">
-ytd_window = 
-    Window.partitionBy("customer", date_trunc("year", col("txn_date")))
+
+df = (df
+    .withColumn("txn_month", date_trunc("month", col("txn_date")))
+    .withColumn("txn_year",  date_trunc("year",  col("txn_date")))
+)
+
+ytd_window_running = 
+    Window.partitionBy("customer", "txn_year"))
           .orderBy("txn_date")
           .rowsBetween(Window.unboundedPreceding, Window.currentRow)
 
-mtd_window = 
-    Window.partitionBy("customer", date_trunc("month", col("txn_date")))
+mtd_window_runing = 
+    Window.partitionBy("customer", "txn_month"))
           .orderBy("txn_date")
           .rowsBetween(Window.unboundedPreceding, Window.currentRow)
 
-df.withColumn("YTD", sum("amount").over(ytd_window))
-      .withColumn("MTD", sum("amount").over(mtd_window))
-      .select("txn_id", "customer", "txn_date", "amount", "MTD", "YTD")
+complete_mtd = Window.partitionBy("customer", "txn_month")
+complete_ytd = Window.partitionBy("customer", "txn_year")
+
+
+df.withColumn("YTD", sum("amount").over(ytd_window_running))
+      .withColumn("MTD", sum("amount").over(mtd_window_running))
+      .withColumn("MTD_total",   sum("amount").over(complete_mtd))
+    .withColumn("YTD_total",   sum("amount").over(complete_ytd))
+      .select("txn_id", "customer", "txn_date", "amount", "MTD_running", "YTD_running")
       .orderBy("customer", "txn_date")
       .show()
   </code></pre>`,
-  tips:`YTD means from the start of year to todate. same for MTD`,
+  tips:`YTD means from the start of year to todate. same for MTD<br> 2 types complete and running <br>
+  Always ask running MTD or complete <br>
+  Rule 1 — Complete MTD/YTD: partition + sum → total for the period. <br>
+Rule 2 — Running MTD/YTD: partition + orderBy + rowsBetween(unboundedPreceding, currentRow) + sum → cumulative.
+  
+  `,
   children:[],
       },
       {
@@ -1377,6 +1433,41 @@ Given a table of employee work logs, find all continuous periods (islands) where
  <b>Just same but with no filte>=N</b>
   `,
   children:[],
+      },
+      {
+                q: `<p style="color:violet"> Find all users who have logged in for at least 3 consecutive Months. Return the user, streak start date, streak end date, and streak length. (Gaps and Islands)</p>`,
+                a:`<pre><code class="language-sql">
+                WITH monthly AS (
+    SELECT DISTINCT
+        name,
+        date_trunc('month', transaction_date) AS month
+    FROM cust
+),
+numbered AS (
+    SELECT
+        name,
+        month,
+        ROW_NUMBER() OVER (PARTITION BY name ORDER BY month) AS rn
+    FROM monthly
+),
+grouped AS (
+    SELECT
+        name,
+        month,
+        add_months(month, -rn) AS grp
+    FROM numbered
+)
+SELECT
+    name,
+    COUNT(*) AS consecutive_months,
+    MIN(month) AS start_month,
+    MAX(month) AS end_month
+FROM grouped
+GROUP BY name, grp
+HAVING COUNT(*) >= 3;
+                </code></pre>`,
+                children:[],
+
       },
       {
         q: `<p style="color:violet"> Sessionization: Given a table of user page view events, group events into sessions — a session ends when there is a gap of more than 30 minutes between consecutive events for the same user. Assign a session ID to each event and calculate session duration.</p>`,

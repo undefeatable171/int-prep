@@ -104,18 +104,21 @@ When reading multiple files, the approach depends on the format and whether sche
      <pre><code class="language-python">
   target_schema = StructType([...])  # explicit target
 
-dfs = []
-for file_path in file_list:
-    df = spark.read 
-        .schema(target_schema) 
-        .option("header", "true") 
-        .format("csv") 
-        .load(file_path)
-    dfs.append(df)
+def normalize(df, source_name):
+    for c in target_schema:
+        if c not in df.columns:
+            df = df.withColumn(c, lit(None))
+    # Cast each column to the canonical type
+    for c, t in target_schema.items():
+        df = df.withColumn(c, col(c).cast(t))
+    df = df.withColumn("source", lit(source_name))
+    return df.select(*target_schema.keys(), "source")
+
+    df=[normalize(spark.read.format("csv").option("header",true).load(f.path),f.name) for f  in dbutils.fs.ls("path")]
 
 # Union all — safe because all conform to same schema
 from functools import reduce
-df_final = reduce(lambda a, b: a.unionByName(b, allowMissingColumns=True), dfs)
+df_final = reduce(DataFrame.unionByName, df_list)
   </code></pre> 
      
  </li>
@@ -193,8 +196,7 @@ For evolution I enable  <span style="color:Green;"><b>  mergeSchema </b></span> 
 <li>Photon is Databricks' native vectorized execution engine written in C++ that runs automatically on Databricks clusters without any code changes. 
 </li>
 <li>
-Instead of processing one row at a time through the JVM like standard Spark, Photon processes entire column batches ( using CPU SIMD instructions ) — eliminating JVM garbage collection overhead and giving significantly faster performance on scans, joins, shuffles, and aggregations.
-</li><li>
+Instead of the JVM's row-oriented execution, it processes columnar batches natively, which significantly reduces JVM object allocation and garbage collection overhead. This makes scans, joins, shuffles, and aggregations much faster.</li><li>
 <span style="color:red">Does it replaces JVM:  </span>It doesn't replace Spark JVM entirely — driver, Catalyst Optimizer, and scheduling remain JVM — Photon only takes over supported operators <span style="color:violet"><b> inside executors</b></span>, handing back to JVM via PhotonColumnarToRow for unsupported ops like Python UDFs, which is why we prefer native Spark functions over UDFs in production.
 </li>
 </ul>
@@ -607,7 +609,8 @@ If reading a Delta table is taking longer than expected, I first check the physi
 In the  <span style="color:Violet;"><b>  physical plan </b></span>  , I check whether partition pruning, predicate pushdown, and column pruning are happening, so we're not scanning unnecessary data
         </li>
         <li>
-In the <span style="color:Violet;"><b>  Query Profile or Spark UI</b></span>  , I check bytes and files read versus pruned, number of partitions read, and scan duration.
+In the <span style="color:Violet;"><b>  Query Profile or Spark UI</b></span>  , I check stages => sort => long running stage => summery metric => Task count < executor cores or input Size / Records >200 MB indicates => All tasks huge (GBs each) → too few partitions, which usually goes along with spill. 
+Task count >> cores (1000 vs 16 executors) or ach task < 10 MB, often < 1 MB => All tasks tiny (KB range) with hundreds of tasks → too many small partitions (overhead).
         </li>
 <li>Based on what I find, I optimize accordingly. I select only required columns, apply filters as early as possible, and make sure queries use appropriate partition filters. If there are too many small files, I use OPTIMIZE for compaction. For frequently filtered columns, depending on the table design, I consider Z-ORDER or liquid clustering to improve data skipping.
 </li>
