@@ -601,6 +601,13 @@ array_agg(distinct salary ) is valid in sql but not in pyspark. Hence use collec
     q: `Basic coding questions/ 1 liners`,
     answer: ``,
     children: [
+      {
+        q: `<p style="color:violet">Deduplication</p>`,
+        a:`
+        
+        
+        `
+      },
 
       {
         q: `
@@ -973,7 +980,7 @@ w = Window.orderBy("ord_date").rowsBetween(-1, 1)
 df.withColumn("centered_avg", avg("rev").over(w))
   </code></pre>`,
 
-  tip:`Always rolling N means <b>rowsbetween(-N+1,0)</b><br>
+        tip: `Always rolling N means <b>rowsbetween(-N+1,0)</b><br>
 
 In Rolling <code>rangeBetween + unix_timestamp</code> is always safe when anything date-related is mentioned.
 Only switch to rowsBetween when they explicitly say rows/transactions/records.
@@ -1031,7 +1038,7 @@ c.groupBy("customer").agg(sum("change")).show()
 
 #filter if > 3 => above with filter
   </code></pre>`,
-   tip:`Always percentage change means: ((present-old)/old) *100`,
+        tip: `Always percentage change means: ((present-old)/old) *100`,
         children: [],
       },
       //first and last tranaction of each cust
@@ -1052,7 +1059,7 @@ df.groupBy("customer", "name")
       max("trn_date").alias("last_order")
   ).show()
   </code></pre>`,
-tip:`For first and last using windows, always use full window frame <b>for last</b> => rangebetwenn unbounded to unbounded, else it will put as current row.
+        tip: `For first and last using windows, always use full window frame <b>for last</b> => rangebetwenn unbounded to unbounded, else it will put as current row.
 <br> for first not mandatory since default of preceding and current gives first always.`,
         children: [],
       },
@@ -1077,7 +1084,7 @@ nex.withColumn("is_consecutive",
 Same as above but remove filter and add cnt in select.
 
   </code></pre>`,
-  tip:`When asked for `,
+        tip: `When asked for `,
         children: [],
       },
     ],
@@ -1138,7 +1145,7 @@ GROUP BY department
 ORDER BY department;
 </code></pre>
   `,
-  tip:`
+        tip: `
 groupBy → the rows that stay<br>
 
 pivot → the column whose values become new columns<br>
@@ -1322,7 +1329,7 @@ when not matched by source then delete
 
   </code></pre>
   `,
-  tip:`
+        tip: `
 <ul>
 <li>
 If we are doing both deletes and inserts if not matched , then mentioning <br>
@@ -1338,7 +1345,7 @@ If we are doing both deletes and inserts if not matched , then mentioning <br>
 
 
   `,
-  children:[],
+        children: [],
       }
 
     ],
@@ -1380,13 +1387,13 @@ df.withColumn("YTD", sum("amount").over(ytd_window_running))
       .orderBy("customer", "txn_date")
       .show()
   </code></pre>`,
-  tips:`YTD means from the start of year to todate. same for MTD<br> 2 types complete and running <br>
+        tips: `YTD means from the start of year to todate. same for MTD<br> 2 types complete and running <br>
   Always ask running MTD or complete <br>
   Rule 1 — Complete MTD/YTD: partition + sum → total for the period. <br>
 Rule 2 — Running MTD/YTD: partition + orderBy + rowsBetween(unboundedPreceding, currentRow) + sum → cumulative.
   
   `,
-  children:[],
+        children: [],
       },
       {
         q: `<p style="color:violet"> Find all users who have logged in for at least 3 consecutive days. Return the user, streak start date, streak end date, and streak length. (Gaps and Islands)</p>`,
@@ -1421,7 +1428,7 @@ grouped as ( select user_id , login_date,date_sub(login_date, r) g from rn )
 select user_id,min(login_date),max(login_date) ,count(*) from grouped group by user_id,g having count(*) >=3
   </code></pre>
   `,
-  tip:`
+        tip: `
   Minimum streak of N days → change HAVING COUNT(*) >= 3 to any N<br>
 Longest streak per user → wrap in another GROUP BY user_id + MAX(streak_length)<br>
 Current active streak → filter where streak_end = CURRENT_DATE<br>
@@ -1432,11 +1439,11 @@ Given a table of employee work logs, find all continuous periods (islands) where
  Return the employee, period start, period end, and number of days in each continuous period. 
  <b>Just same but with no filte>=N</b>
   `,
-  children:[],
+        children: [],
       },
       {
-                q: `<p style="color:violet"> Find all users who have logged in for at least 3 consecutive Months. Return the user, streak start date, streak end date, and streak length. (Gaps and Islands)</p>`,
-                a:`<pre><code class="language-sql">
+        q: `<p style="color:violet"> Find all users who have logged in for at least 3 consecutive Months. Return the user, streak start date, streak end date, and streak length. (Gaps and Islands)</p>`,
+        a: `<pre><code class="language-sql">
                 WITH monthly AS (
     SELECT DISTINCT
         name,
@@ -1466,7 +1473,7 @@ FROM grouped
 GROUP BY name, grp
 HAVING COUNT(*) >= 3;
                 </code></pre>`,
-                children:[],
+        children: [],
 
       },
       {
@@ -1481,12 +1488,12 @@ df.withColumn("prev",lag("event_time").over(w))
                 .select("event_id","user_id",date_format(col("event_time"),"HH:mm").alias("event"),"session_id").show()
 
   </code></pre>`,
-  tip:`
+        tip: `
 Step 1: LAG → get previous event time per user<br>
 Step 2: CASE → flag rows where gap > threshold (session boundary)<br>
 Step 3: Cumulative SUM of flags → session number within user<br>
 Step 4: GROUP BY user + session number → session summary`,
-  children:[],
+        children: [],
       }
     ],
 

@@ -5,11 +5,11 @@ permalink: /UC/
 ---
 ## 0. Unity catalog
 
-- Unity Catalog is Databricks' centralized governance layer for all data assets — tables, files, models, and notebooks — across workspaces.
+- Unity Catalog is Databricks' unified governance layer — it centralizes metadata management, access control, lineage, and audit for all data assets ables, files, models, and notebooks — across workspaces.
 - It provides a three-level namespace (`catalog.schema.table`), fine-grained access control down to row and column level, full data lineage, and audit logging — all in one place.
-- In our project we use it to enforce PHI access control via column-level security on patient and claims tables.
+- In our project We enforce PHI access through column masks and row filters
 - Unity Catalog supports both — column masking returns the column with hidden or nulled values, column-level deny drops the column from results entirely.
-  - In our healthcare pipeline we use masking(redacted) for PHI columns so downstream users see the structure but not the actual sensitive values."
+- In our healthcare pipeline we use masking(redacted) for PHI columns so downstream users see the structure but not the actual sensitive values."
 
 ## The Problem(before UC)
 

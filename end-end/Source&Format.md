@@ -299,7 +299,8 @@ df = spark.read \
 HOW you read : I read CSV with `spark.read.format("csv")`, set `header=true`, and always pass an **explicit schema** instead of `inferSchema` for production — it's faster and avoids type surprises. I specify `sep` and `quote` based on the file, and use the `mode` option ( `PERMISSIVE`) along with badrecordsPath is used if any data can't be parsed correctly for furthur validation.
 
 How to acees badrecords : path while readinG should be in JSON format: 'path//20261004T095451/bad_records/'
-outputs path , reason,record cols. whole column is present 
+outputs path , reason,record cols. whole column is present
+
 ---
 
 ### JSON
@@ -432,9 +433,17 @@ Parquet File
 
 ---
 
-## What is Delta?
+## What is Delta Lake?
 
-Open-source storage layer on top of Parquet. Adds ACID, versioning, and schema enforcement via the **_delta_log transaction log**.
+Delta Lake is a open source storage layer ,built on top of existing object storage like ADLS or S3, stores data as Parquet files, and adds ACID transactions ,schema evolution, schema enforcement, time travel using _delta_log transaction folder
+
+A *Delta table *is a specific table built using that technology. Delta Lake is what enables the lakehouse architecture: reliable tables on cheap object storage, without a separate warehouse.**
+
+**WHy we need DELTA** : Traditional data lakes store raw files with no coordination — no transaction log, no versioning, no schema enforcement — so concurrent reads and writes cause partial writes and inconsistent state. Delta Lake fixes that by adding a transaction log on top of your data, giving ACID guarantees, schema evolution, time travel, and unified batch plus streaming.
+
+That's what makes a lakehouse possible — low cost , scalabiluty of data lake with warehouse reliability."
+
+A Lakehouse  combines the low cost and scalability of data lakes with reliability ,governance. and performmce of data warehouses.
 
 ```python
 df = spark.read.format("delta").load("abfss://container@storage.dfs.core.windows.net/silver/patients/")
@@ -523,12 +532,12 @@ Read only required Parquet files → Return DataFrame
 ## ACID in Delta
 
 
-| Property        | How Delta delivers it                                                                                                   |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **Atomicity**   | New Parquet files written first; become visible only after atomic commit JSON appended to`_delta_log` — all or nothing |
-| **Consistency** | Every write validated against table schema before commit — table always structurally valid                             |
-| **Isolation**   | Snapshot isolation via OCC — each writer works on a consistent snapshot; conflicts fail at commit time                 |
-| **Durability**  | Once`_delta_log` + data files written to ADLS/S3 — permanent; full table state rebuildable after crash                 |
+| Property        | How Delta delivers it                                                                                                                                                                                   |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Atomicity**   | each writer creates new Parquet files, but they become visible only after an atomic commit — a JSON entry appended to`_delta_log` — it ensures all or nothing wither all files commited or none       |
+| **Consistency** | Every transaction is validated against table schema before commit — table always structurally valid                                                                                                    |
+| **Isolation**   | Snapshot isolation via optimistic concurrency control — readers and writers see a consistent snapshot; conflicting commits are detected at commit time and retried without any locks or blocking reads |
+| **Durability**  | Once json  commit file is appended to`_delta_log` + data files written to ADLS/S3 — permanent; full table state rebuildable after crash                                                                |
 
 ---
 
@@ -542,7 +551,9 @@ Read only required Parquet files → Return DataFrame
 
 Delta handles concurrent writes without locks. Conflicts validated only at commit time.
 
-Each writer reads the latest snapshot, writes new Parquet files, validates for conflicts, and commits. If another transaction modified the same data, the commit fails and hence the job fails. The orchestration layer (e.g., Databricks Workflows) can retry the job.
+Each writes works on the latest snapshot, writes new Parquet files, validates for conflicts, and commits. When comming , delta cheks the transaction log and if table changes since the read the commit fails and retries with the latest version ensuring data consistency without any **heavy lockings like traditional databases**.
+
+ The orchestration layer (e.g., Databricks Workflows) can retry the job.
 
 ### Write Flow
 

@@ -190,6 +190,11 @@ For evolution I enable  <span style="color:Green;"><b>  mergeSchema </b></span> 
         children: [],
       },
       {
+        q: `what is DBR`,
+        a: `DBR is Databricks Runtime — a curated, versioned runtime that bundles Apache Spark, Delta Lake, dbx native Photon execution engine, language runtimes, and Databricks optimizations, all tested together. <br>You pick a DBR version when you create a cluster; it determines which Spark, Delta, and library versions run. Production clusters use LTS versions like 14.3 LTS with Photon.`,
+        children: [],
+      },
+      {
         q: `What is PHoton engine and uses`,
         a: `
 <ul>
@@ -206,7 +211,7 @@ Instead of the JVM's row-oriented execution, it processes columnar batches nativ
       {
         q: `WHats DLt and why not used DLT but WFs`,
         a: `
-        Delta Live Tables (DLT) is a Databricks <b>declarative ETL framework</b> for building, orchestrating, and managing reliable ETL pipelines using SQL or PySpark.
+        Delta Live Tables (DLT) is a Databricks <b>declarative ETL framework</b> for building, orchestrating, and managing reliable ETL pipelines using SQL or PySpark. <br> You define datasets and transformations, and DLT handles orchestration, dependencies, retries, incremental processing, and data quality through EXPECT, EXPECT OR DROP, and EXPECT OR FAIL
         <ul>
         <li>
         In Pytin we define datasets using <pre><code class="language-python">@dlt.table</code></pre>, and to read an upstream DLT table, we use <pre><code class="language-python"> dlt.read("table_name") or dlt.read_stream("table_name") </code></pre> for streaming data. DLT analyzes these references to automatically determine dependencies.
@@ -457,6 +462,12 @@ Data Skipping → Skip the entire file.</code>`,
         ],
       },
       {
+        q:`what is small files`,
+        a:` The small files problem is when a Delta table ends up with thousands of tiny Parquet files instead of a few large ones — well below the optimal size of roughly 128 MB to 1 GB. It happens because of  frequent MERGEs, streaming micro-batches, over-partitioning, or too many shuffle partitions. <br>
+        It hurts because every extra file adds task scheduling overhead, metadata lookups, and file-open cost, which slows queries. Storage cost rises because each file carries footer, schema, and statistics overhead. And _delta_log metadata operations get slower as file count grows. `,
+        children:[],
+      },
+      {
         q: `(File Compaction)Optimize`,
         a: `<ol><li>Frequent writes, MERGEs, creates many small files, increasing task scheduling overhead, metadata lookups, and file-open costs, which slow down queries</li>
       <li> OPTIMIZE compacts many small Parquet files into fewer larger files, reducing task scheduling overhead, metadata operations, and file-open costs.</li>
@@ -592,6 +603,34 @@ DEEP CLONE customers / Shallow clone customers;
 
 
       },
+      {
+        q:`vaccume NOt a optimization`,
+        a:`Cleans up old and unrefenced files in deltalake to save storage and reduce costs`,
+        children:[],
+      },
+      {
+        q: `vector deletion`,
+        a: `A performance optimization in Delta Lake that marks specific rows as deleted without rewriting the entire Parquet file. Instead of rewriting a 1 GB file to remove 10 rows, Delta records "these row positions are deleted" in a small side file (the deletion vector) and commits that to the _delta_log. <br>
+        Before VD ,  DELETE MERGE rewrote entire files, even for one row. with VD only the affected rows are marked, no file rewrite which Results in much faster updates/deletes, less compute, cheaper.
+        <br><br> <b> Cons</b> The tradeoff is that the deleted rows are still physically present, so VACUUM alone won't reclaim the space because the file is still in active. You need REORG ... APPLY (PURGE) to rewrite the files without those rows, then VACUUM after retention to actually free the storage.
+        `,
+        children: [],
+      },
+      {
+        q: `Liquid clustering`,
+        a: `A Databricks feature that automatically organizes Delta table data by clustering it on one or more columns. <br>
+         It dynamically manages the physical data layout so related data is stored closer together, allowing data skipping using file-level metadata and the Delta transaction log to avoid reading irrelevant files. <br>
+         This improves query performance without using fixed partitions or manually running Z-ORDER.
+         
+         <b> Liquid Clustering is mainly useful for improving data skipping and reducing data scanned for filter-heavy queries. It can also benefit joins when the clustering columns are frequently used as join keys</b>
+         
+<pre><code class="language-sql"> CREATE TABLE sales
+USING DELTA
+LOCATION '/mnt/delta/sales'
+CLUSTER BY (customer_id, order_date); </code></pre>
+         `, 
+        children: [],
+      }
 
     ],
   },
@@ -912,6 +951,54 @@ salted_key dropped — clean output.
             children: [],
           },
         ],
+      },
+      {
+        q:`Groupbykey vs reducebykey`,
+        a:` They are rdd only ops.
+        <table>
+  <thead>
+    <tr>
+      <th>Function</th>
+      <th>One-line definition</th>
+      <th>When to use</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>reduceByKey</code></td>
+      <td>Combines values per key locally first, then shuffles partial results.</td>
+      <td>Sum, max, min, count — simple associative aggregations where value type stays the same.</td>
+    </tr>
+    <tr>
+      <td><code>groupByKey</code></td>
+      <td>Shuffles all values per key to one reducer, then you process them.</td>
+      <td>Median, percentile, sort, distinct — when you need the full list of values per key.</td>
+    </tr>
+    <tr>
+      <td><code>aggregateByKey</code></td>
+      <td>Like <code>reduceByKey</code>, but with a different input/output type and a zero value.</td>
+      <td>Aggregations that change type — e.g., collect into a set, average, top-N.</td>
+    </tr>
+    <tr>
+      <td><code>combineByKey</code></td>
+      <td>The most general — you control create, merge, and combine logic.</td>
+      <td>Custom aggregations that don't fit the others — full control, still map-side combines.</td>
+    </tr>
+  </tbody>
+</table>
+        `,
+        children:[],
+      },
+      {
+        q:`optimize vs auto compact `,
+        a:`Auto Compaction and OPTIMIZE both fix the small files problem, but they operate at different scopes and times.
+<br>
+Auto Compaction is incremental and automatic. It runs after a write, looks only at small files in the partitions affected by that write, and merges them if they fall below the target file size — typically 128 MB. It keeps newly written data healthy without manual intervention.
+<br>
+OPTIMIZE is manual or scheduled. It scans the entire table or specific partitions and bin-packs small files into larger ones — typically around 1 GB. It's used for historical cleanup and large-scale performance tuning, and it supports Z-ORDER, which Auto Compaction doesn't.
+<br>
+The tradeoff is cost: Auto Compaction is cheap because it's incremental. OPTIMIZE rewrites data and costs more, so it's scheduled — weekly or after heavy MERGE cycles.`,
+        children:[],
       },
       {
         q: ` Drop Vs Delete Vs Truncate`,
