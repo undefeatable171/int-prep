@@ -811,15 +811,18 @@ Once the root cause is identified, I'd implement or coordinate the fix, validate
       {
         q:` How do business teams give you requirements?`,
         a:`  Usually the business requirement starts with a business problem or a change in an
-existing process <br> The business discusses the requirement with the product team or
+existing process <br> The business discusses the requirement with the
 business analyst. The requirement is then documented as a user story with acceptance
-criteria. (onshore tech lead also there in that, we not) <br>  During refinement or grooming, the development team discusses the requirement, clarifies
+criteria. (onshore tech lead also there in that, we not) <br>  During refinement or grooming, we discusses the requirement, clarifies
 questions, identifies dependencies and estimates the effort.<br> Once the story is sufficiently clear and prioritized, it is taken into a sprint for
-implementation
+implementation.
+
+
 
 <br> <b> For example, if the business wants a new field in a downstream report, we first understand the business definition, identify the source and transformation logic, and assess the downstream impact. Then we implement the change, test it and validate the expected output.</b>
 
         `,
+        tip:`Prioritization happens in refinement — the PO orders the backlog and clarifies stories. In sprint planning, the team pulls the top-priority items that fit their capacity. So the order is set in refinement; planning is about commitment and capacity."`,
         children:[],
       }
 

@@ -19,14 +19,11 @@ SDLC is the structured process used to develop software. It includes 7 phases :
 
  It follows Sequential approach where One phase completes before the next starts
 
-- Requirements are fixed
-- Customer feedback mainly at the end
-
 ##### Best suited for : Banking ,Government , Safety-critical systems
 
-##### Pros : SImple , well-documented
+##### Pros : SImple , well-documented ,Requirements are fixed
 
-##### Cons : Difficult to accommodate changes ,Late feedback , Expensive rework
+##### Cons : Difficult to accommodate changes ,Late feedback as Customer feedback mainly at the end , Expensive rework
 
 ---
 
@@ -64,22 +61,13 @@ Scrum is the most popular **Agile framework**.
 
 ###### Artifacts: Product Backlog; Sprint Backlog; Product Increment
 
+ sprint backlog: The **Sprint Backlog** is the set of  **Product Backlog items selected for the current sprint** , plus a  **plan for delivering them** .
+
 ---
 
 ## DevOps
 
-↳ Complements Agile by automating build, test, deployment and operations
--------------------------------------------------------------------------
-
-# 4. Agile Work Hierarchy
-
-```text
-Epic
- └── Feature
-      └── User Story
-            ├── Task(s)
-            └── Bug(s)
-```
+  Complements Agile by automating build, test, deployment and operations
 
 ## Agile Work Items and Timeline
 
@@ -117,52 +105,15 @@ USER STory has : Acceptance criteria , description , notes , severity and priori
 
 PI planning 3 months => 2 weeks => wed - wed. => backog refinement : monday => sprint planning ; wed => retro : tues => 1 point=1 day=8 hrs  => febonicgu series (1,2,3,5,8) =>
 
-### pi planning: 3 months work , 2,3 days happens. dependency ,work planning
+ pi planning: 3 months work , 2 days happens. dependency ,work planning
 
-### 1. Business Requirement — Client Business Stakeholders
-
-Business stakeholders identify the actual business need and communicate the requirement to the client Product Owner.
-
-### 2. Product Owner — Client Side
-
-- The Product Owner orders/prioritizes the Product Backlog in Azure DevOps Boards based on business value.
-- The Scrum Team has access to the backlog, and during Sprint Planning, the **top-priority ready items are considered first.**
-
-### 3. Business Analyst — Client Side
-
-The BA works with business stakeholders/PO to detail the requirement, business rules, and acceptance criteria.
-
-### 4. Onshore Lead — TCS Side
-
-The onshore lead coordinates with the client BA/PO, understands the requirement, and adds the necessary project/technical context for the offshore team.
-
-### 5. User Story — Azure DevOps
-
-The requirement is captured as a User Story in Azure DevOps Boards, containing the description, acceptance criteria, relevant references, and required context/mapping docs if available. In our flow, the **onshore lead**typically creates/updates it based on the client requirement.
-
-### 6. Product Backlog — Azure DevOps Boards
-
-- A product backlog is a prioritized list of work items required for the product.
-- It can contain new features, enhancements, defects, technical improvements and other work.
-- The Product Owner is responsible for prioritizing the backlog based on business value
-
-### 7. Backlog Refinement
-
-- The onshore lead walks the team through upcoming stories →  team clarifies requirements →  During Backlog Refinement, we estimate the **story points using Voting and febonachy series(1, 3, 5, 8, 13). If estimates differ, we discuss and agree on the final story point.
-- Client BA/PO is involved when business clarification is required.
-
-### 8. Story Ready for Sprint
-
-Once the requirement and acceptance criteria are clear, dependencies are understood, and estimation is completed, we consider the story ready for Sprint Planning.
-
-### 9. Sprint Planning
-
-- PBIs are selected from the Product Backlog based on business priority, team capacity, historical velocity, and dependencies.; selected PBIs become part of the Sprint Backlog.
-- Our TL coordinates story ownership based on developer capacity and technical expertise, and the selected story is assigned to the respective developer in Azure DevOps
-
-### 10. Tasks
-
-- We create tasks like req anlysis , development , unit testing , documentation, test case prep
+- Usually the business requirement starts with a business problem or a change in an existing process.
+- The business discusses the requirement with the business analyst and the requirement is then documented as a user story with acceptance criteria.
+- During **backlog Refinement or grooming**, we discuss the requirement, clarify questions, identify dependencies, and estimate effort using story points (Fibonacci: 1, 3, 5, 8, 13). If estimates differ, we discuss and agree on a final story point. The client BA/PO is involved when business clarification is needed.
+- Once the story is sufficiently clear and prioritized, it is taken into sprint planning.
+- PBIs are selected based on business priority, team capacity, historical velocity, and dependencies — selected items become the Sprint Backlog.
+- Our TL coordinates story ownership based on developer capacity and expertise.
+- We then create tasks like requirement analysis, development, unit testing, documentation, and test case preparation.
 
 ### 11.
 
@@ -174,7 +125,7 @@ Development → **Unit Testing**(Developer validates the implemented logic)
 
 ## Scrum events
 
-- **Sprint Planning** : Select top-priority PBIs from the Product Backlog based on priority, velocity, capacity, and dependencies to form the Sprint Backlog.
+- **Sprint Planning** : Select top-priority PBIs from the Product Backlog based on priority, velocity, capacity ]to form the Sprint Backlog.
 - **Daily Scrum**:  daily meeting to discuss progress, today's work, and blockers (15-30 mins).
 - **Sprint Review** : Review/demo the completed work with stakeholders and collect feedback.
 - **Retrospective** : A sprint retrospective is a meeting held at the end of the sprint where the team
@@ -190,7 +141,7 @@ Development → **Unit Testing**(Developer validates the implemented logic)
 ##### PBI VS PB
 
 - Product Backlog = the complete ordered list of work.
-- PBI = an individual item in the Product Backlog. A User Story can be a PBI.
+- PBI = an individual item in the Product Backlog. A User Story , Bug , technical debt(DBR runtime change) , Spike (investigation)
 
 ##### velocity (past delivery) :
 
@@ -198,9 +149,7 @@ how many story points the team typically completes per Sprint, based on previous
 
 ##### capacity ( current availability ):
 
- how much the team is available in the current Sprint, considering team size, leaves, holidays, etc.
-
-##### How many sp per sprint
+ **available working time(hours)** in a sprint considering  leaves, holidays, etc.
 
 ##### On what basis you take sp in a sprint
 
@@ -224,28 +173,7 @@ The exact scale depends on the team's estimation approach.
 
 - We don't directly map story points to a fixed number of days.
 - During refinement or planning, the team estimates the story based on complexity, effort,dependencies and uncertainty.
-- Based on the team's historical velocity and available capacity for the sprint, we determine how many stories can realistically be completed
 - The actual duration can also depend on dependencies, testing, reviews and external teams.
-
-## END to END
-
-We follow an Agile Scrum methodology.
-
-> Requirements are maintained in the product backlog and prioritized by the Product Owner.
->
-> During backlog refinement, the team discusses the requirements, clarifies questions and
-> estimates the stories using story points.
->
-> During sprint planning, the team selects stories based on priority, capacity and
-> previous velocity.
->
-> During the sprint, we work on development, testing and code reviews. We have daily
-> stand-ups where we discuss progress, plans and blockers.
->
-> At the end of the sprint, completed work is demonstrated during the sprint review. Then
-> we conduct a retrospective to discuss what went well, what could be improved and what
-> actions we should take in the next sprint
->
 
 # 8. Key Takeaways
 
