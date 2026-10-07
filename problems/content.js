@@ -603,9 +603,48 @@ array_agg(distinct salary ) is valid in sql but not in pyspark. Hence use collec
     children: [
       {
         q: `<p style="color:violet">Deduplication</p>`,
-        a:`
-        
-        
+        a:`<pre><code class="language-sql">
+        -- ============================================================
+-- 3 WAYS TO FIND DUPLICATES ON (k1, k2) — ALL IN ONE QUERY
+-- Assumes table: t(id, k1, k2, val)
+
+-- ------------------------------------------------------------
+-- WAY 1: GROUP BY + HAVING  →  duplicate KEYS only
+-- Simplest, works everywhere, no window functions.
+-- ------------------------------------------------------------
+    SELECT k1, k2, COUNT(*) AS cnt
+    FROM t
+    GROUP BY k1, k2
+    HAVING COUNT(*) > 1
+
+
+-- ------------------------------------------------------------
+-- WAY 2: WINDOW FUNCTION  →  full duplicate ROWS (all members)
+-- COUNT(*) OVER keeps every row in the dup group.
+-- ------------------------------------------------------------
+dup_rows_window AS (
+    SELECT id, k1, k2, val,
+           COUNT(*) OVER (PARTITION BY k1, k2) AS cnt
+    FROM t
+),
+    SELECT id, k1, k2, val
+    FROM dup_rows_window
+    WHERE cnt = 1 -- latest only
+-- if dulicate rows to show cnt>1
+
+-- ------------------------------------------------------------
+-- WAY 4: IN + SUBQUERY  →  full duplicate ROWS via key list
+-- Reuses the GROUP BY idea as a filter. Readable, portable.
+-- ------------------------------------------------------------
+    SELECT *
+    FROM t
+    WHERE (k1, k2) IN (
+        SELECT k1, k2
+        FROM t
+        GROUP BY k1, k2
+        HAVING COUNT(*) > 1
+    )
+        </pre></code>    
         `
       },
 
