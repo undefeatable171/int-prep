@@ -2,50 +2,29 @@ const cats = ["Self Introduction", "Project Ownership", "Production Support & In
 const qs = [
   {
     cat: `Self Introduction`,
-    q: `Tell me about yourself <span style="color:green;"><b>Q25</b></span>`,
-    answer: `
-    <p><strong> Thank you for the opportunity.</strong></p>
-
-<p>
-My name is <strong>Prathap Gorantla</strong>, and I have around <strong>3 years of experience</strong> as a Data Engineer at <strong>Tata Consultancy Services</strong>.
-</p>
-<p>
-Currently, I'm working on a <strong>US healthcare project</strong> where we built a centralized data platform on <strong>Azure Databricks</strong> using the <strong>Medallion architecture</strong>. My primary responsibility is developing and maintaining batch ETL pipelines using <strong>PySpark</strong> and <strong>SQL</strong>. I work on ingesting data from PostgreSQL databases and file-based sources, transforming it across the <strong>Bronze, Silver, and Gold</strong> layers, and delivering curated datasets for downstream analytics.
-</p>
-<br>
-<p>
-As part of my work, I've implemented <strong>incremental data processing</strong> using watermark-based ingestion, <strong>Delta Lake MERGE</strong> operations, and <strong>SCD Type 2</strong> for dimension tables. I've also optimized Spark workloads using techniques like <strong>partitioning, broadcast joins, caching</strong>, and Delta optimizations such as <strong>OPTIMIZE, Z-ORDER, and VACUUM</strong>, which reduced a critical pipeline's runtime by around <strong>40–45%</strong>.
-</p>
-<br>
-<p>
-I also collaborate closely with <strong>BI, analytics teams</strong> to ensure reliable and timely data delivery. Along the way, I've earned both the <strong>Databricks Data Engineer Associate</strong> and <strong>Professional</strong> certifications, which strengthened my understanding of Spark and Delta Lake.
-</p>
-
-<p>
- I'm now looking for an opportunity to work on more challenging projects, gain exposure to different business domains and broaden my technical exposure.</p>
-    
-    `,
+    q: `Intro`,
+    answer: ` `,
     children: [
       {
         q: ` Walk me through your career journey`,
-        a: `I completed my graduation in 2023 and joined TCS as a Fresher. Over the past three years, I've worked on Azure-based data engineering projects using Databricks, PySpark, SQL. <br> Currently, I'm part of a US healthcare project where I develop and enhance batch ETL pipelines, implement incremental data ingestion, and build data transformations using the Medallion architecture.`,
-        children: [],
+        a: `I completed my graduation in 2023 and joined TCS as a Fresher. Over the past three years, I've worked on Azure-based data engineering projects using Databricks, PySpark, SQL. 
+<br> currently i am paort of a US healthcare project where idevelop and maintain batch data pipelines using Azure Databricks, PySpark, SQL and ADF, and ensure reliable data delivery for downstream analytics and reporting.`, children: [],
       },
       {
-        q:`role`,
-        a:` I work as a Data Engineer on a US healthcare project. My primary role is to develop and maintain batch data pipelines using Azure Databricks, PySpark, SQL and ADF, and ensure reliable data delivery for downstream analytics and reporting. `,
-        children:[]
+        q: `role`,
+        a: ` I work as a Data Engineer on a US healthcare project. My primary role is to develop and maintain batch data pipelines using Azure Databricks, PySpark, SQL and ADF, and ensure reliable data delivery for downstream analytics and reporting. `,
+        children: []
       },
       {
         q: `what is your current role and responsibilities? <span style="color:green;"><b>Q25</b></span>`,
-        a:` My responsibilities include developing and maintaining data pipelines, implementing transformations, data-quality validations, deduplication and incremental processing across the Medallion layers.<br> I also troubleshoot pipeline failures, optimize Spark workloads, support production issues, participate in requirement discussions and coordinate with the team during testing and deployments.`,
+        a: ` My responsibilities include developing and maintaining data pipelines, implementing transformations, data-quality validations, deduplication and incremental processing across the Medallion layers.<br> I also troubleshoot pipeline failures, optimize Spark workloads,participate in requirement discussions and coordinate with the team during testing and deployments.`,
         children: [],
       },
       {
         q: `how do you ensure reliability and quality of data in your pipelines?`,
         a: `We ensure reliability by using incremental processing to avoid reprocessing data, Delta Lake transactions for consistent writes, and Databricks Workflows to monitor pipeline execution and retry failed jobs where applicable. 
-      <br>For data quality, in the Silver layer we perform null schema validations ,null checks, data type standardization, deduplication using window functions.  <br>In the Gold layer, we perform business validations rather than technical validations. For example, we ensure every claim has valid patient and provider records, verify ICD/CPT codes against reference data, check patient eligibility on the service date, and validate that claim amounts paid  does not exceed the allowed amount as per the fee schedule brfore reporting reporting. (SEE Domain Gold data quality validations) <br>
-before the data is made available for downstream consumption.`,
+      <br>For data quality, in the Silver layer we perform null schema validations ,null checks, data type standardization, deduplication using window functions.  <br>In the Gold layer, we perform business validations rather than technical validations. For example, we ensure every claim has valid patient and provider records, verify ICD/CPT codes against reference data, check patient eligibility on the service date, and validates the expected vs actual reimburesmt 
+before the data is made available for downstream consumption. (SEE Domain Gold data quality validations) `,
         children: [
           {
             q: `does reconciliation  done in your pipelines?`,
@@ -80,10 +59,10 @@ print("updated count:" ,updated)
 
       },
       {
-            q: `what you discuss in your daily standups?`,
-            a: `During our daily stand-up, each team member gives a quick update on the work completed the previous day, the tasks planned for the current day, and any blockers. <br>We discuss the status of ongoing user stories, production issues if any pipelines failed, upcoming deployments, and dependencies on other teams like QA or BI. <br>If a discussion requires more detail, we usually take it offline after the stand-up so the meeting stays brief.`,
-            children: [],
-          },
+        q: `what you discuss in your daily standups?`,
+        a: `During our daily stand-up, each team member gives a quick update on the work completed the previous day, the tasks planned for the current day, and any blockers. <br>We discuss the status of ongoing user stories, production issues if any pipelines failed, upcoming deployments, and dependencies on other teams like QA or BI. <br>If a discussion requires more detail, we usually take it offline after the stand-up so the meeting stays brief.`,
+        children: [],
+      },
       {
         q: `What technologies do you work with?`,
         a: `My primary technologies are Azure Databricks, PySpark, SQL, Delta Lake, ADLS Gen2, and Git. I also work with Databricks Workflows for orchestration and Unity Catalog for data governance.`,
@@ -96,63 +75,41 @@ print("updated count:" ,updated)
       },
       {
         q: `what do you like most about your current role?`,
-        a: `What I enjoy most is building and optimizing ETL pipelines—taking a business requirement and translating it into an efficient and scalable PySpark solution.<br> implementing data transformations and continuously improving pipeline performance whenever opportunities arise. <br>It's rewarding to see the data I work on deliver clean, reliable information that supports reporting and analytics for business users `,
+        a: `What I enjoy most is solving the technical problems and optimizing spark workoads—taking a business requirement and translating it into an efficient and scalable PySpark solution.<br> and knowing the clean data I deliver powers real business decisions`,
         children: [],
       },
       {
-        q: `What motivates you?`,
-        a: ` "I enjoy solving technical problems, optimizing data pipelines, and learning new technologies. Seeing a solution successfully deployed and used by downstream teams is very motivating." `,
-        children: [],
-      },
-      {
-        q: `hobbies`,
-        a: `
-        My hobbies include playing badminton , table tennis with friends.From last few months i started going to the gym regularly. It helps me stay disciplined and maintain a healthy routine.<br>
-
-        `,
-        children: [],
-      },
-      {
-        q: `Do you have any other concerns? / questions`,
-        a: `Yes, thank you. Could you tell me a bit about the team I'll be working with and the kind of projects they're currently handling? Also, what would you expect from someone in this role during the first few months?`,
-        children: [],
-      },
-      {
-            q: `How do you keep yourself updated with new technologies? <span style="color:green;"><b>Q25</b></span> `,
-            a: ` Since data engineering technologies evolve quickly:
-        <br> I stay updated through Databricks release notes, official docs, and blogs. One thing I track closely is runtime versions — currently DBR 17.3 LTS is the stable production runtime based on Spark 4.0, DBR 18 runs on Spark 4.1, and DBR 19 Beta is on Spark 4.2. In production, most teams stick with LTS for stability and evaluate newer runtimes in lower environments first. <br>
+        q: `How do you keep yourself updated with new technologies? <span style="color:green;"><b>Q25</b></span> `,
+        a: `Data engineering technologies evolve quickly, so I stay updated through Databricks release notes, official docs, and blogs. I track runtime versions closely: DBR 19 is now generally available on Spark 4.2.0, while DBR 18 LTS and 17.3 LTS remain the stable production choices
        <br> Completing the Databricks Data Engineer Associate and Professional certifications also helped me strengthen my understanding of Spark and Delta Lake beyond my day-to-day project work.
                 `,
-            children: [
-              {
-                q: `whats new features/ news`,
-                a: ` One feature I found interesting in Spark 4.0 is the VARIANT data type — it simplifies working with semi-structured JSON. Earlier we had to use from_json() with a predefined schema, but now nested fields can be accessed directly without explicit parsing. 
+        children: [
+          {
+            q: `whats new features/ news`,
+            a: ` 2 feature I found interesting in Spark 4.0 is the VARIANT data type — it simplifies working with semi-structured JSON. Earlier we had to use from_json() with a predefined schema, but now nested fields can be accessed directly without explicit parsing. 
         <br>DBR 18 also introduced Real-Time Mode for Structured Streaming, enabling millisecond-latency workloads.
+
+        <hr>
+        One feature I found interesting is Unity Catalog JDBC connections — now GA in DBR 19. <br>
+                They make external database access governed at the connection level, and credentials stay hidden from the querying user.<br>
+                 Earlier, credentials were embedded in notebooks, which was a risk. Now it's a securable object in Unity Catalog, reusable across compute and stable across upgrades.
+                
       <pre><code class="language-python">df = df.withColumn("patient", from_json("json_col", schema))
                       df.select(col("patient.name"), col("patient.age")).show()
                       ##new
                       df.select(col("patient")["name"], col("patient")["age"]).show()
               </code></pre>`
-                ,
-                children: [],
-              },
-              {
-                q: `whats dbr`,
-                a: ` Databricks Runtime (DBR) is the optimized execution environment provided by Databricks. It includes Apache Spark plus Databricks-specific enhancements like Delta Lake, Photon, Unity Catalog integration, security patches, and performance optimizations.`,
-                children: [],
-              },
-              {
-                q: `Difference between Databricks Runtime (DBR) versions`,
-                a: `Each new DBR version bundles a newer Spark version along with improvements in performance, security, bug fixes, Delta Lake, ML libraries, and new Databricks features. Upgrading gives access to new capabilities while maintaining compatibility. `,
-                children: [],
-              }
-            ],
+            ,
+            children: [],
           },
-          {
-            q:`what are you learning now`,
-            a:` Currently, I'm strengthening my knowledge of Databricks and Spark optimization, especially partitioning, data skew, join optimization and Delta Lake performance. <br>I'm also learning Azure Data Factory to expand my understanding of cloud-based orchestration and improve my overall end-to-end data engineering knowledge. `,
-            children:[],
-          }
+
+        ],
+      },
+      {
+        q: `what are you learning now`,
+        a: ` Currently, I'm strengthening my knowledge of Databricks and Spark optimization, especially partitioning, data skew, join optimization and Delta Lake performance. <br>I'm also learning Azure Data Factory to expand my understanding of cloud-based orchestration and improve my overall end-to-end data engineering knowledge. `,
+        children: [],
+      }
 
 
 
@@ -167,15 +124,11 @@ print("updated count:" ,updated)
     children: [
       {
         q: `which part of project do you own`,
-        a: ` The work in our project is divided functionally, and I primarily work on the claims area. <br>I take end-to-end ownership of the claims-related processing—from implementing transformation logic and testing to deployment and troubleshooting. while collaborating with the rest of the team on the overall platform. `,
-        children: [{
-          q: `DO you own any pipeline`,
-          a: `Our project has pipelines across Bronze, Silver, and Gold. Work is divided functionally rather than by individual pipelines — I own the claims area within Silver and Gold. So rather than counting pipelines,I'd say I own the end-to-end data flow for claims.`,
-          children: [],
-        },],
+        a: ` The work in our project is divided functionally rather than by individual pipelines, and I primarily work on the claims area. <br>I take end-to-end ownership of the claims-related processing—from implementing inc ingetion , transformation logic and testing to deployment and troubleshooting. while collaborating with the rest of the team on the overall platform. So rather than counting pipelines,I'd say I own the end-to-end data flow for claims. `,
+        children: [],
       },
       {
-        q: `What does ownership mean to you?`,
+        q: `What does ownership mean to you? How do you handle ownership?`,
         a: ` 
         To me, ownership means taking responsibility for a task from start to finish. It includes understanding the requirement, delivering a well-tested solution, communicating risks early, and staying accountable until the issue is fully resolved. I ensure the outcome is reliable and meets the expected quality."
         `,
@@ -184,14 +137,14 @@ print("updated count:" ,updated)
       {
         q: `How do you balance speed and quality?`,
         a: ` "I balance speed and quality by focusing on the core requirement first, then validating it properly before moving on.<br>
-         I avoid over-engineering early, but I never skip  data validation to save time <br> 
+         I avoid over-engineering in early stage when the time is limited <br> 
         The one place I don't compromise is validation — skipping data checks to save time always costs more time later when bad data reaches downstream.
         `,
         children: [],
       },
       {
         q: `Describe a time you took ownership./ Tell me about a decision you made independently.`,
-        a: ` One example was when one of our daily pipeline executions started taking significantly longer than usual as data volume increased. <br>
+        a: ` One example was when our gold pipeline executions started taking significantly longer than usual as data volume increased. <br>
         Although it wasn't assigned specifically to me, I investigated the issue using the Spark UI and execution plan. I identified inefficient joins and full table scans during merge operations. So (.... 40-45 %optimization )`,
         children: [],
       },
@@ -207,12 +160,7 @@ print("updated count:" ,updated)
       },
       {
         q: `How do you ensure quality before deployment?`,
-        a: ` "Before deployment, I ensure the code meets both functional and quality standards. I perform unit testing, validate source-to-target data counts, null handling, duplicates, and business rules. <br>I also test edge cases, verify pipeline execution, and ensure existing functionality isn't impacted. <br> Finally, I raise a pull request, address code review comments, and once the changes are cross-tested and approved, they are deployed through our CI/CD pipeline.`,
-        children: [],
-      },
-      {
-        q: `How do you handle ownership?`,
-        a: ` I take ownership by understanding the requirement, delivering a well-tested solution, and following it through until completion. If I encounter any issues or risks, I communicate them early, work on the root cause, and ensure they're resolved."`,
+        a: ` "Before deployment, I ensure the code meets both functional and quality standards. I perform unit testing, validate source-to-target data counts, null handling, duplicates, and business rules. <br>I also test edge cases and ensure existing functionality isn't impacted. <br> Finally, I raise a pull request, address code review comments, and once the changes are cross-tested and approved, they are deployed through our CI/CD pipeline.`,
         children: [],
       },
       {
@@ -224,16 +172,8 @@ For high-impact decisions, such as a rollback or schema change, I involve the ne
         children: [],
       },
 
-      {
-        q: ` What is the most difficult business logic you've written?`,
-        a: `The most complex logic I've written was SCD Type 2 MERGE for the dimension table — handling new records, updates, and expirations in a single MERGE while maintaining history. The tricky part was getting the MERGE conditions right so updates correctly expired the old version, set the end date, flipped the current flag, and inserted the new version — all atomically without gaps or overlaps in the history.`,
-        children: [],
-      },
-      {
-        q: `--- Describe a difficult bug.`,
-        a: ``,
-        children: [],
-      },
+
+
       {
         q: ` --- What happens after your work is completed?`,
         a: `Once the Gold layer is refreshed, the curated data becomes available for downstream consumers such as finance, operations, BI, and data science teams.
@@ -378,8 +318,20 @@ I would review the job logs, Spark logs, and error messages to identify the root
         ],
       },
       {
-        q: `What production issue took the longest to resolve / Tell me about a production issue you resolved.? <span style="color:green;"><b>Q25</b></span>`,
+        q: `Tell me about a production issue you resolved.? <span style="color:green;"><b>Q25</b></span>`,
         a: `(One production issue that took the longest to resolve involved a)/Once there is a  sudden increase in rejected procedures during the Silver processing. Our pipeline itself was healthy, but many records started failing validation. We investigated the rejected records and found that the upstream application had started sending an unexpected value in one of the business-critical columns, which violated our validation rules. We coordinated with the upstream team to confirm the change, assessed its business impact, updated the transformation and validation logic after approval, reprocessed the affected data, and verified the downstream reports.`,
+        children: [],
+      },
+      {
+        q: `--- Describe a difficult bug. / What production issue took the longest to resolve`,
+        a: `We had a pipeline silently dropping records — no error, no alert, just fewer rows in the target than expected. It only happened for certain payers, so it didn't reproduce every run. <br>
+I traced it to a merge on member ID — some upstream records had trailing spaces in the ID, so those rows didn't match and got dropped.<br>
+The fix was simple — but finding it was hard. It was a silent failure: no error, no alert. It only happened for certain payers, so it didn't reproduce every run. And the code looked correct — the issue was trailing spaces in the data, not the join syntax. It took time to trace because nothing pointed to it directly. Also added reconciliation after that.
+`, children: [],
+      },
+      {
+        q: ` What is the most difficult business logic you've written?`,
+        a: `The most complex logic I've written was SCD Type 2 MERGE for the dimension table — handling new records, updates, and expirations in a single MERGE while maintaining history. The tricky part was getting the MERGE conditions right so updates correctly expired the old version, set the end date, flipped the current flag, and inserted the new version — all atomically without gaps or overlaps in the history.`,
         children: [],
       },
     ],
@@ -393,14 +345,13 @@ I would review the job logs, Spark logs, and error messages to identify the root
       {
         q: `If you could redesign the project today, what would you improve?`,
         a: ` <li>I would consider using Delta for the Bronze layer as well to benefit from schema enforcement and easier reprocessing</li>
-    <li>I would also evaluate Auto Loader for file ingestion to simplify handling of new files and schema evolution. Apart from these improvements, the current architecture has been stable and scalable for our workload </li> `,
-        children: [
+I would also use partioned jdbc reads by default spark will create a single connection ......`,        children: [
           {
-            q: `If Delta Bronze and Auto Loader are better, why didn't you implement them?`,
+            q: `If Delta Bronze and partioned JDBC are better, why didn't you implement them?`,
             a: `
         <li>Those are good improvements, but every design decision depends on the project requirements.</li>
         <li>In our project, Bronze was only a raw landing layer where we stored immutable source data without any updates or deletes. Since we didn't need ACID transactions or MERGE operations at that stage, Parquet was sufficient and kept storage and processing lightweight.</li>
-        <li>Similarly, our file sources were delivered on a fixed schedule—typically one file per day—so a scheduled batch ingestion met the business requirement. Auto Loader is more beneficial when you're continuously receiving large numbers of files or dealing with frequent schema evolution. Given our volume and delivery pattern, the additional complexity wasn't justified </li>   
+        <li>Similarly, for our moderate data with a single jdbc connection we can meet the sla so the additional complexity with partioned JDBC reads  wasn't justified as it may overload the source postgres sql. <br>if tomorrow the data volume isinc and SLA is going to miss then we can use that </li>   
         `,
             children: [
               {
@@ -429,9 +380,7 @@ There are a few key factors I consider while designing a data pipeline.
     </li>
 
     <li>
-        <b style="color:#D32F2F;">Source System Characteristics</b> I identify the source type — whether it's a database, files, or an API — whether we need full or incremental loads, and how schema changes will be handled.
-       
-    </li>
+        <b style="color:#D32F2F;">Source System Characteristics</b> is it a database, files, or an API? Do we need full or incremental loads? How will schema changes be handled?
 
     <li>
         <b style="color:#D32F2F;"> Data Quality</b>
@@ -467,12 +416,12 @@ There are a few key factors I consider while designing a data pipeline.
         children: [],
       },
       {
-        q:` How do you handle schema changes`,
-        a:` First, I check whether the schema change is planned or unplanned. <br>If it's a planned change, we handle it through the proper change request process, assess the impact on downstream systems, update the schema and transformations, test it, and then deploy it.
+        q: ` How do you handle schema changes`,
+        a: ` First, I check whether the schema change is planned or unplanned. <br>If it's a planned change, we handle it through the proper change request process, assess the impact on downstream systems, update the schema and transformations, test it, and then deploy it.
 <br>If it's an unplanned or unexpected change, I would not allow it to directly flow into downstream layers. I would investigate the impact, notify the relevant team, and either quarantine or stop the affected processing until the change is understood and handled safely.<br> Depending on the requirement, Delta Lake schema evolution can be used for compatible changes."`,
-        children:[],
+        children: [],
       },
-       {
+      {
         q: `How do you handle requirement changes?`,
         a: `
         I handle requirement changes by first understanding the impact on the current sprint, the upstream source, and the downstream transformations. If the change is small, I adjust the logic, retest, and move forward.<br>
@@ -480,7 +429,7 @@ There are a few key factors I consider while designing a data pipeline.
         `,
         children: [],
       },
-     
+
     ],
 
   },////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// new 
@@ -541,12 +490,10 @@ There are a few key factors I consider while designing a data pipeline.
         `,
             children: [],
           },
-          
+
           {
             q: `what is biggest challenging part of your projct? <span style="color:green;"><b>Q25</b></span>`,
-            a: `The most challenging part is ensuring reliable incremental processing while maintaining data quality --  processing only new or changed records without duplicates or missing data, while handling schema changes, late-arriving files, and production failures, all with downstream reporting depending on it<br>
-        To handle this we use Delta Lake's MERGE for upserts, watermark-based incremental loads to track what's been processed, and data quality checks at the Silver layer before anything reaches Gold. For schema changes ,We follow a fixed schema contract — if an unexpected schema change comes in, the pipeline fails fast. Any intentional change goes through a CR process and is updated before deployment.  <br>
-        And another major challenge was Gold layer performance as the volume grows .....(project prep content )
+            a: ` implementing SCD 2 logic
         `,
             children: [],
           },
@@ -561,7 +508,7 @@ There are a few key factors I consider while designing a data pipeline.
             a: ` The major performance improvement done by me is Reducing the long running Gold layer pipeline runtime by 40–45% through Spark and Delta Lake optimizations — broadcast hints for small reference tables, OPTIMIZE for file compaction, and Z-ORDER to improve MERGE performance `,
             children: [],
           },
-          
+
           {
             q: `handle multiple tasks / prioritize multiple tasks`,
             a: `
@@ -574,11 +521,6 @@ There are a few key factors I consider while designing a data pipeline.
 
         ],
 
-      },
-      {
-        q: `What would you do if you didn't know how to solve a problem?`,
-        a: ` "I first try to understand the problem by reviewing the code, and documentation. If I can't resolve it within a reasonable time, I discuss it with my Team Lead or an experienced teammate, implement the solution, and make sure I understand the root cause so I can handle similar issues independently in the future.`,
-        children: [],
       },
       {
         q: `<span style="color:green;"> <b>critisism , failure, feedback</b></span>  `,
@@ -598,7 +540,7 @@ I believe good feedback improves both code quality and professional growth."
             a: ` During a code review, I received feedback that my join implementation could be simplified and made more maintainable. I discussed the suggestions with the reviewer, updated the code, and adopted those practices in later tasks." `,
             children: [],
           },
-          
+
           {
             q: ` <span style="color:green"> Tell me about a failure. / mistake and how you handled/ what you learn </span>`,
             a: `<span style="color:orange"> Early in the project, I developed a transformation that worked correctly but took much longer than expected with production-sized data. 
@@ -685,11 +627,6 @@ At the start of the day, I review my assigned tasks and any dependencies, such a
         children: [],
       },
       {
-        q: `What if you realize you'll miss a deadline?`,
-        a: ` I communicate the risk as early as possible, explain the reason, provide a revised estimate, and discuss options such as reducing scope or getting additional support. Early communication helps the team plan effectively `,
-        children: [],
-      },
-      {
         q: `--- Since how long have you been working on this project?`,
         a: ` I've been working on this healthcare project for around 1.5 years, where I've been involved in developing and enhancing multiple production data pipelines."`,
         children: [],
@@ -762,11 +699,10 @@ Once the root cause is identified, I'd implement or coordinate the fix, validate
           },
           {
             q: `can you give an example of a data quality issue you investigated?"`,
-            a: `
-        I haven't personally handled a major production data quality incident yet. Most of our pipelines were stable, and our Ops team usually monitored production. <br>
-        However, we did implement data quality checks like schema validation, null handling, datatype validation, and deduplication in the Silver layer. <br>
-        If a data issue was escalated to our team, my approach would be to trace the data from Gold to Silver to Bronze, identify the root cause, fix it, validate the data, and document the RCA."
-        `,
+            a: `We had a pipeline silently dropping records — no error, no alert, just fewer rows in the target than expected. It only happened for certain payers, so it didn't reproduce every run. <br>
+I traced it to a merge on member ID — some upstream records had trailing spaces in the ID, so those rows didn't match and got dropped.<br>
+The fix was simple — but finding it was hard. It was a silent failure: no error, no alert. It only happened for certain payers, so it didn't reproduce every run. And the code looked correct — the issue was trailing spaces in the data, not the join syntax. It took time to trace because nothing pointed to it directly. Also added reconciliation after that.
+ `,
             children: [],
           },
         ],
@@ -809,8 +745,8 @@ Once the root cause is identified, I'd implement or coordinate the fix, validate
         children: [],
       },
       {
-        q:` How do business teams give you requirements?`,
-        a:`  Usually the business requirement starts with a business problem or a change in an
+        q: ` How do business teams give you requirements?`,
+        a: `  Usually the business requirement starts with a business problem or a change in an
 existing process <br> The business discusses the requirement with the
 business analyst. The requirement is then documented as a user story with acceptance
 criteria. (onshore tech lead also there in that, we not) <br>  During refinement or grooming, we discusses the requirement, clarifies
@@ -822,8 +758,8 @@ implementation.
 <br> <b> For example, if the business wants a new field in a downstream report, we first understand the business definition, identify the source and transformation logic, and assess the downstream impact. Then we implement the change, test it and validate the expected output.</b>
 
         `,
-        tip:`Prioritization happens in refinement — the PO orders the backlog and clarifies stories. In sprint planning, the team pulls the top-priority items that fit their capacity. So the order is set in refinement; planning is about commitment and capacity."`,
-        children:[],
+        tip: `Prioritization happens in refinement — the PO orders the backlog and clarifies stories. In sprint planning, the team pulls the top-priority items that fit their capacity. So the order is set in refinement; planning is about commitment and capacity."`,
+        children: [],
       }
 
     ],
@@ -836,9 +772,9 @@ implementation.
     answer: ``,
     children: [
       {
-        q:`what if you don't know how to deal with a prod issue`,
-        a:` "If I don't know how to solve a production issue, I wouldn't make an untested change or guess. <br>First, I would understand the impact and investigate using logs, monitoring, documentation, and previous incidents. I'd try to narrow down the root cause within a reasonable time.<br> If I still need help, I'd involve the appropriate senior or SME with the investigation I've already done. At the same time, I'd keep the relevant stakeholders informed about the impact and status. Once resolved, I'd document the root cause and solution to prevent the issue from recurring."`,
-        children:[],
+        q: `what if you don't know how to deal with a prod issue`,
+        a: ` "If I don't know how to solve a production issue, I wouldn't make an untested change or guess. <br>First, I would understand the impact and investigate using logs, monitoring, documentation, and previous incidents. I'd try to narrow down the root cause within a reasonable time.<br> If I still need help, I'd involve the appropriate senior or SME with the investigation I've already done. At the same time, I'd keep the relevant stakeholders informed about the impact and status. Once resolved, I'd document the root cause and solution to prevent the issue from recurring."`,
+        children: [],
       },
       {
         q: `have you lead a team / team leader <span style="color:green;"><b>Q25</b></span>`,
@@ -872,9 +808,9 @@ This helps avoid rework and ensures everyone has the same understanding.`,
             children: [],
           },
           {
-            q:`when mark user story point as completed`,
-            a:` if accepetene criteria is met. `,
-            children:[],
+            q: `when mark user story point as completed`,
+            a: ` if accepetene criteria is met. `,
+            children: [],
 
           },
           {
@@ -887,7 +823,7 @@ This helps avoid rework and ensures everyone has the same understanding.`,
             a: ` The common approaches are Waterfall and Agile. In modern projects, Agile is often combined with DevOps practices, where Agile manages the development process and DevOps automates building, testing, deployment, and operations through CI/CD`,
             children: [],
           },
-           {
+          {
             q: `Difference between Waterfall, Agile, and DevOps?`,
             a: ` Waterfall follows a sequential approach with fixed requirements. Agile develops software in short iterations with continuous customer feedback, while DevOps extends Agile by automating build, testing, deployment, and monitoring to enable faster and more frequent releases.`,
             children: [],
@@ -898,10 +834,16 @@ This helps avoid rework and ensures everyone has the same understanding.`,
             children: [],
           },
           {
+            q:`ticketing tool`,
+            a:`In our project, we use Azure DevOps — it's where we track user stories, tasks, bugs, and defects. It's also integrated with our CI/CD pipelines, so code changes and deployments link back to the work item`,
+            children:[],
+
+          },
+          {
             q: `Have you deployed your pipelines?`,
             a: ` Yes. We use Azure DevOps-based CI/CD pipelines for deployments. My responsibility is to raise pull requests, complete code reviews, resolve comments and support deployment activities while the release process is handled through the pipeline.`,
             children: [],
-          },  
+          },
           {
             q: `which development methodology is used in your project`,
             a: ` We followed Agile using the Scrum framework with two-week sprints. `,
@@ -924,6 +866,7 @@ In our daily stand-up, we discuss completed work, today's plan, and any blockers
 <br>
 Along with Azure DevOps, I maintain a personal task list to prioritize development, testing, code reviews, and deployment activities based on sprint priorities.
         `,
+        tip:` Status: New => Active => Resolved => closed as columns. Inside items : new active commited , resolved , completed , qa review`,
             children: [],
           },
         ],
@@ -953,17 +896,6 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
         children: [],
       },
       {
-        q: `--- Walk me through how a requirement gets delivered / end-end flow of your project (business perspective)`,
-        a: `<ul><li>The flow starts with the client sharing business requirements with the Business Analyst. The BA documents the requirements and prepares user stories, which are discussed during backlog refinement and sprint planning. Based on priority, the Scrum Master and Technical Lead assign tasks to the developers.</li><li> Before starting development, we review the requirements, clarify any doubts with the BA or Technical Lead, and then begin implementation. After development, we perform unit testing and peer or cross-testing, where another developer validates the changes.</li> <li> We then raise a Pull Request in Azure DevOps for code review by the Technical Lead. Once approved, the changes are deployed through the Azure DevOps CI/CD pipeline. If any change requests come after deployment, they follow the same process </li> </ul> `,
-        children: [
-          {
-            q: `Who tells you the requirements`,
-            a: ` The Business Analyst explains the business requirements. If we need any technical clarification, we discuss it with the BA or our Technical Lead before starting development `,
-            children: [],
-          },
-        ],
-      },
-      {
         q: `how many members in your team`,
         a: ` Our core development team consisted of 6 members—4 Data Engineers, including me, 1 Technical Lead, and 1 Scrum Master. We worked collaboratively during each sprint. The Technical Lead provided technical guidance and reviewes our code, while the Scrum Master facilitated sprint planning, daily stand-ups <br> 💠 <b>DOn't mention but remember:</b> Business Analyst were part of the larger project team`,
         children: [
@@ -984,12 +916,6 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
             children: [],
           },
         ],
-      },
-     
-      {
-        q: `--- How does the task get assigned to you?`,
-        a: ` During sprint planning, user stories are discussed and estimated by the team. Based on sprint priorities, workload, and ownership, the Scrum Master or Technical Lead assigns tasks to developers. Once assigned, I analyze the requirements, estimate the effort, and begin development`,
-        children: [],
       },
       {
         q: `Do you prefer individual work or team work? <span style="color:green;"><b>Q25</b></span>`,
@@ -1082,7 +1008,7 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
       },
       {
         q: `will you leave US ater somtime ? how long you stay`,
-        a: ` My focus is to contribute and continue growing. As long as I'm working on challenging projects, learn new technologies, and add value, I'd be happy to build a long-term career with the organization.`,
+        a: ` My focus is to contribute to the client and continue growing technically. As long as I'm working on challenging projects, learn new technologies, and i can add value to the client, I'd be happy to build a long-term career with the organization.`,
         children: [],
       },
 
@@ -1094,64 +1020,58 @@ Along with Azure DevOps, I maintain a personal task list to prioritize developme
         children: [],
       },
       {
-        q: `What distinguishes you from other candidates?/ Why should I trust you with production work?`,
+        q: `What distinguishes you from other candidates?/ Why should I trust you with production work?/select you over someone with more experience`,
         a: ` 
-        What sets me apart is that / I combine hands-on Databricks development with a strong focus on reliability and performance.<br>
-        In my current healthcare project, I’ve worked on production-grade Azure Databricks pipelines handling 45–50 GB of data daily, with incremental ingestion, Delta MERGE, validation checks, and Spark optimization that reduced runtime by 40–45%. <br>
-I focus on delivering solutions that are accurate, reliable, and ready for production
-        `,
-        children: [],
-      },
-
-      
-      {
-        q: `Why should I select you over someone with more experience?`,
-        a: ` 
-        Experience is important, but I believe the ability to learn quickly, adapt, and consistently deliver quality work is equally valuable.<br> In my current healthcare project, I’ve worked on production-grade Azure Databricks pipelines handling 45–50 GB of data daily, with incremental ingestion, Delta MERGE, validation checks, and Spark optimization that reduced runtime by 40–45%.
-I focus on delivering solutions that are accurate, reliable, and ready for production. So I'm confident I can contribute effectively while continuing to grow.
+        What sets me apart is that / I combine hands-on Databricks development with thinking beyond the pipeline.
+<br>
+Early in my career, I measured success by whether the pipeline ran. Now I measure it by whether the business trusts the data.
+<br>
+That means understanding who consumes it, what decision it drives, and fixing root causes — not just symptoms.
+<br>
+I build pipelines people can rely on.
         `,
         children: [],
       },
     ],
 
-  },{
-    cat:`Companies`,
-    q:`infy`,
-    a:``,
+  }, {
+    cat: `Companies`,
+    q: `infy`,
+    a: ``,
     children: [
-          {
-            q: ` Why do you want to join Infosys? `,
-            a: ` Based on the JD, I believe my technical skills and production experience align well with your requirements<br>Beyond the tech fit, Infosys Topaz is their AI-first platform focused on enterprise-scale data and AI transformation — making data AI-ready across engineering, governance, and GenAI. <br> That's exactly the direction I want to grow in, and this role gives me that exposure across diverse domains and larger-scale engagements`,
-            children: [],
-          },
-                {
- q:`What do you know about INfosys`,
-        a:` Infosys is a global IT services and consulting company headquartered in Bengaluru, India, founded in 1981 by N. R. Narayana Murthy and six other co-founders.
+      {
+        q: ` Why do you want to join Infosys? `,
+        a: ` Based on the JD, I believe my technical skills and production experience align well with your requirements<br>Beyond the tech fit, Infosys Topaz is their AI-first platform focused on enterprise-scale data and AI transformation — making data AI-ready across engineering, governance, and GenAI. <br> That's exactly the direction I want to grow in, and this role gives me that exposure across diverse domains and larger-scale engagements`,
+        children: [],
+      },
+      {
+        q: `What do you know about INfosys`,
+        a: ` Infosys is a global IT services and consulting company headquartered in Bengaluru, India, founded in 1981 by N. R. Narayana Murthy and six other co-founders.
 <br>It provides services in digital transformation, cloud, AI, data analytics, cybersecurity, enterprise applications, and software development to clients across industries such as healthcare, banking, retail, manufacturing, and telecom.
 <br>CEO:salil parekh`,
-        children:[],
-      },    
-          {
-            q: `but Both TCS and Infosys are service-based companies.`,
-            a: ` I agree, and my decision isn't based on the company type — it's about the opportunities available. Different organizations have different clients, projects, and technologies. <br> I feel this is the right time to broaden my experience in a new environment, take on more ownership, and work on diverse data engineering engagements.`,
-            children: [],
-          },
-        ],
+        children: [],
+      },
+      {
+        q: `but Both TCS and Infosys are service-based companies.`,
+        a: ` I agree, and my decision isn't based on the company type — it's about the opportunities available. Different organizations have different clients, projects, and technologies. <br> I feel this is the right time to broaden my experience in a new environment, take on more ownership, and work on diverse data engineering engagements.`,
+        children: [],
+      },
+    ],
   },
   {
-    q:`EXL`,
-    a:``,
-    children:[
-{
-  q:`What is EXL/what you know`,
-  a:` EXL is a global data, AI, analytics, and digital operations company, with strong expertise in industries like healthcare, insurance, and banking. It combines domain expertise with data and AI to help clients solve business problems and improve outcomes.<br>`,
-  children:[],
-},
-{
-  q:`why EXL`,
-  a:`What particularly interests me is EXL’s focus on combining domain expertise with data and AI to solve real business problems. I’ve worked on a US healthcare data platform using Azure, Databricks, PySpark, and SQL, so I see a strong connection between my experience and the healthcare data solutions EXL delivers for its clients.`,
-  children:[],
-}
+    q: `EXL`,
+    a: ``,
+    children: [
+      {
+        q: `What is EXL/what you know`,
+        a: ` EXL is a global data, AI and  analytics  company, with strong expertise in industries like healthcare, insurance, and banking. It combines domain expertise with data and AI to help clients solve business problems and improve outcomes.<br>`,
+        children: [],
+      },
+      {
+        q: `why EXL`,
+        a: `What particularly interests me is EXL’s focus on combining domain expertise with data and AI to solve real business problems. I’ve worked on a US healthcare data platform using Azure, Databricks, PySpark, and SQL, so I see a strong connection between my experience and the healthcare  solutions EXL delivers for its clients.`,
+        children: [],
+      }
 
     ],
   }
