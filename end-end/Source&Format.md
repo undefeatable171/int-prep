@@ -730,15 +730,11 @@ Auto Loader maintains a checkpoint with metadata of processed files. On each run
 
 ---
 
-## 5. Summary Matrix
+### Checkpointing & Exactly once semantics
 
-
-| Ingestion Strategy | Processing Mode | Write Strategy | Example                                   |
-| -------------------- | ----------------- | ---------------- | ------------------------------------------- |
-| Full Load          | Batch           | Overwrite      | Reload reference table                    |
-| Incremental        | Batch           | Append         | Immutable event/log data (Bronze)         |
-| Incremental        | Batch           | Merge          | Mutable tables with updates (Silver/Gold) |
-| CDC                | Streaming/Batch | Merge          | Apply inserts, updates, deletes           |
+- Checkpointing is how Spark tracks its progress — it saves source offsets and state to durable storage. If a streaming job fails, it resumes from the last checkpoint instead of reprocessing or losing data.
+- Exactly-once means every record is processed precisely one time — no loss, no duplicates — even across failures.
+- They work together: checkpointing ensures Spark knows where it left off, and an idempotent or transactional sink like Delta Lake ensures records aren't duplicated when it resumes. In our batch pipelines, we achieve the same effect using Delta MERGE on claim ID — so reruns update instead of appending duplicates."
 
 ---
 

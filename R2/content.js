@@ -1071,8 +1071,27 @@ I build pipelines people can rely on.
         q: `why EXL`,
         a: `What particularly interests me is EXL’s focus on combining domain expertise with data and AI to solve real business problems. I’ve worked on a US healthcare data platform using Azure, Databricks, PySpark, and SQL, so I see a strong connection between my experience and the healthcare  solutions EXL delivers for its clients.`,
         children: [],
-      }
+      },
+    
 
     ],
+  },
+  {
+    q:`Deloitte`,
+    a:``,
+    children:[
+      {
+        q:`what is deloitte`,
+        a:`Deloitte is one of the Big Four professional services firms, providing services in consulting, technology, audit, tax, and risk advisory. It helps organizations solve business problems, improve their operations, and adopt modern technologies such as cloud, data analytics, and AI.`,
+        children:[],
+      },
+      {
+        q:`why deloitte`,
+        a:`  Deloitte is a global leader in professional services with a strong culture of learning, global exposure, inclusion, and innovation. <br>
+        Its purpose of 'Making an Impact That Matters' and focus on AI-driven transformation excite me. I see Deloitte as the right place to grow my career while doing meaningful work
+        `,
+        children:[]
+      }
+    ]
   }
 ]

@@ -177,6 +177,7 @@ Gold Layer - Derived Business Columns
 - **denial_flag:** `1` if the claim status is **DENIED**, else `0`.
 - **auth_match_flag:** `1` if the encounter falls within an approved authorization period.
 - **service_before_auth_flag:** `1` if the service occurred before the authorization start date.
+- 1 claim has claim_id + cpt_code + service_date as primary key. each may have multiple records for each CPT
 
 ---
 
